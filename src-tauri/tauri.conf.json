@@ -2,7 +2,7 @@
   "build": {
     "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run start",
-    "frontendDist": "..../dist/n3rgy-angular/browser",
+    "frontendDist": "..\\dist\\n3rgy-angular\\browser",
     "devUrl": "http://localhost:4200"
   },
   "bundle": {
@@ -38,11 +38,11 @@
         "depends": []
       }
     },
-    "createUpdaterArtifacts": "v1Compatible"
+    "createUpdaterArtifacts": false
   },
   "productName": "n3rgy-explorer",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "io.github.rars.n3rgy",
   "plugins": {},
   "app": {
     "windows": [

@@ -6,42 +6,43 @@ import { NavigationBarComponent } from './components/navigation-bar/navigation-b
 import { MatIconRegistry } from '@angular/material/icon';
 
 import Database from '@tauri-apps/plugin-sql';
+import { DataDownloadingComponent } from './components/data-downloading/data-downloading.component';
 // when using `"withGlobalTauri": true`, you may use
 // const V = window.__TAURI_PLUGIN_SQL__;
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ApiModule, CommonModule, NavigationBarComponent],
+  imports: [
+    RouterOutlet,
+    ApiModule,
+    CommonModule,
+    NavigationBarComponent,
+    DataDownloadingComponent,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
   public data: any;
-  public message: string = '';
 
   public constructor(private readonly matIconRegistry: MatIconRegistry) {
     this.matIconRegistry.setDefaultFontSetClass('material-symbols-outlined');
   }
 
   public ngOnInit(): void {
-    this.message += 'Initialising...';
-    this.fetchData();
+    // this.fetchData();
+    // this.rustClient();
   }
 
   async fetchData() {
     try {
-      this.message += 'Fetching data...';
       const db = await Database.load('sqlite:./my_n3rgy.db');
       const data = await db.select(
-        'SELECT timestamp, energy_consumption_kwh FROM electricity_consumption;'
+        'SELECT timestamp, energy_consumption_kwh FROM electricity_consumption;',
         //`SELECT * FROM sqlite_master WHERE type='table';`
       );
-      this.message += 'Fetched data...';
       this.data = data;
-      this.message += 'Assigned data...';
-    } catch (e) {
-      this.message += `Error: ${e}`;
-    }
+    } catch (e) {}
   }
 }

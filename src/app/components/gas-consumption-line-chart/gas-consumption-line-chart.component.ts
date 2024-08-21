@@ -9,6 +9,7 @@ import {
   combineLatest,
   filter,
   forkJoin,
+  from,
   map,
   Observable,
   of,
@@ -19,6 +20,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DateService } from '../../services/date/date.service';
 import { addDays, startOfToday } from 'date-fns';
 import { MatSelectModule } from '@angular/material/select';
+import { invoke } from '@tauri-apps/api/core';
 
 type Aggregation = 'raw' | 'daily' | 'monthly';
 
@@ -51,7 +53,7 @@ export class GasConsumptionLineChartComponent implements OnInit {
 
   public constructor(
     private readonly dateService: DateService,
-    private readonly gasService: GasService
+    private readonly gasService: GasService,
   ) {
     combineLatest([
       getValueStream(this.startDateControl),
@@ -71,31 +73,75 @@ export class GasConsumptionLineChartComponent implements OnInit {
 
           switch (aggregation) {
             case 'monthly': {
-              data = this.gasService.apiGasConsumptionMonthlyGet(
+              /*data = this.gasService.apiGasConsumptionMonthlyGet(
                 startDate,
                 endDate
+              );*/
+
+              data = from(
+                invoke<{ timestamp: string; value: number }[]>(
+                  'get_monthly_gas_consumption',
+                  { startDate, endDate },
+                ),
+              ).pipe(
+                map((x) =>
+                  x.map(({ timestamp, value }) => ({
+                    timestamp,
+                    energyConsumptionM3: value,
+                  })),
+                ),
               );
+
               break;
             }
             case 'daily': {
-              data = this.gasService.apiGasConsumptionDailyGet(
+              /* data = this.gasService.apiGasConsumptionDailyGet(
                 startDate,
                 endDate
+              ); */
+
+              data = from(
+                invoke<{ timestamp: string; value: number }[]>(
+                  'get_daily_gas_consumption',
+                  { startDate, endDate },
+                ),
+              ).pipe(
+                map((x) =>
+                  x.map(({ timestamp, value }) => ({
+                    timestamp,
+                    energyConsumptionM3: value,
+                  })),
+                ),
               );
+
               break;
             }
             case 'raw':
             default: {
-              data = this.gasService.apiGasConsumptionRawGet(
+              data = from(
+                invoke<{ timestamp: string; value: number }[]>(
+                  'get_raw_gas_consumption',
+                  { startDate, endDate },
+                ),
+              ).pipe(
+                map((x) =>
+                  x.map(({ timestamp, value }) => ({
+                    timestamp,
+                    energyConsumptionM3: value,
+                  })),
+                ),
+              );
+
+              /* data = this.gasService.apiGasConsumptionRawGet(
                 startDate,
                 endDate
-              );
+              );*/
             }
           }
 
           return forkJoin([data, of(aggregation)]);
         }),
-        takeUntilDestroyed()
+        takeUntilDestroyed(),
       )
       .subscribe(([values, aggregation]) => {
         this.loading = false;
@@ -105,8 +151,8 @@ export class GasConsumptionLineChartComponent implements OnInit {
           aggregation === 'raw'
             ? 'minute'
             : aggregation === 'daily'
-            ? 'day'
-            : 'month';
+              ? 'day'
+              : 'month';
 
         this.chartConfiguration = {
           type: 'line',

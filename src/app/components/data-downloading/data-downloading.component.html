@@ -1,0 +1,8 @@
+<div class="container mx-auto px-4">
+  <p>Downloading... ({{ percentage$ | async }}%)</p>
+  {{ message$ | async }}
+  <mat-progress-bar
+    mode="determinate"
+    [value]="percentage$ | async"
+  ></mat-progress-bar>
+</div>
