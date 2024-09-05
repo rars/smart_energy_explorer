@@ -159,7 +159,7 @@ export class GasConsumptionLineChartComponent implements OnInit {
           data: {
             datasets: [
               {
-                label: 'Energy Consumption (M3)',
+                label: 'Gas',
                 data: values.map((x) => ({
                   x: x.timestamp
                     ? new Date(Date.parse(x.timestamp))
@@ -170,6 +170,8 @@ export class GasConsumptionLineChartComponent implements OnInit {
             ],
           },
           options: {
+            responsive: true,
+            maintainAspectRatio: false,
             scales: {
               x: {
                 type: 'time',

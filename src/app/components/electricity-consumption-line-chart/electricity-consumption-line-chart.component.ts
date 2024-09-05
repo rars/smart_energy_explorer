@@ -59,7 +59,7 @@ export class ElectricityConsumptionLineChartComponent implements OnInit {
 
   public constructor(
     private readonly dateService: DateService,
-    private readonly electricityService: ElectricityService
+    private readonly electricityService: ElectricityService,
   ) {
     combineLatest([
       getValueStream(this.startDateControl),
@@ -79,20 +79,41 @@ export class ElectricityConsumptionLineChartComponent implements OnInit {
 
           switch (aggregation) {
             case 'daily': {
-               /* data = this.electricityService.apiElectricityConsumptionDailyGet(
+              /* data = this.electricityService.apiElectricityConsumptionDailyGet(
                 startDate,
                 endDate
               );*/
 
-              data = from(invoke<{timestamp: string, value: number}[]>('get_daily_electricity_consumption', {startDate, endDate}))
-              .pipe(map(x => x.map(({timestamp, value}) => ({timestamp, energyConsumptionKwh: value}))));
+              data = from(
+                invoke<{ timestamp: string; value: number }[]>(
+                  'get_daily_electricity_consumption',
+                  { startDate, endDate },
+                ),
+              ).pipe(
+                map((x) =>
+                  x.map(({ timestamp, value }) => ({
+                    timestamp,
+                    energyConsumptionKwh: value,
+                  })),
+                ),
+              );
 
               break;
             }
             case 'monthly': {
-
-              data = from(invoke<{timestamp: string, value: number}[]>('get_monthly_electricity_consumption', {startDate, endDate}))
-              .pipe(map(x => x.map(({timestamp, value}) => ({timestamp, energyConsumptionKwh: value}))));
+              data = from(
+                invoke<{ timestamp: string; value: number }[]>(
+                  'get_monthly_electricity_consumption',
+                  { startDate, endDate },
+                ),
+              ).pipe(
+                map((x) =>
+                  x.map(({ timestamp, value }) => ({
+                    timestamp,
+                    energyConsumptionKwh: value,
+                  })),
+                ),
+              );
 
               /*
               data =
@@ -104,8 +125,19 @@ export class ElectricityConsumptionLineChartComponent implements OnInit {
             }
             case 'raw':
             default: {
-              data = from(invoke<{timestamp: string, value: number}[]>('get_raw_electricity_consumption', {startDate, endDate}))
-              .pipe(map(x => x.map(({timestamp, value}) => ({timestamp, energyConsumptionKwh: value}))));
+              data = from(
+                invoke<{ timestamp: string; value: number }[]>(
+                  'get_raw_electricity_consumption',
+                  { startDate, endDate },
+                ),
+              ).pipe(
+                map((x) =>
+                  x.map(({ timestamp, value }) => ({
+                    timestamp,
+                    energyConsumptionKwh: value,
+                  })),
+                ),
+              );
 
               /* data = this.electricityService.apiElectricityConsumptionRawGet(
                 startDate,
@@ -117,10 +149,10 @@ export class ElectricityConsumptionLineChartComponent implements OnInit {
           return forkJoin([data, of(aggregation)]);
         }),
         takeUntilDestroyed(),
-        catchError(err => {
+        catchError((err) => {
           window.alert(`Error: ${err}`);
           return of([undefined, undefined]);
-        })
+        }),
       )
       .subscribe(([values, aggregation]) => {
         this.loading = false;
@@ -135,15 +167,15 @@ export class ElectricityConsumptionLineChartComponent implements OnInit {
           aggregation === 'raw'
             ? 'minute'
             : aggregation === 'daily'
-            ? 'day'
-            : 'month';
+              ? 'day'
+              : 'month';
 
         this.chartConfiguration = {
           type: 'line',
           data: {
             datasets: [
               {
-                label: 'Energy Consumption (kWh)',
+                label: 'Electricity',
                 data: values.map((x) => ({
                   x: x.timestamp
                     ? new Date(Date.parse(x.timestamp))
@@ -154,6 +186,8 @@ export class ElectricityConsumptionLineChartComponent implements OnInit {
             ],
           },
           options: {
+            responsive: true,
+            maintainAspectRatio: false,
             scales: {
               x: {
                 type: 'time',
@@ -172,7 +206,7 @@ export class ElectricityConsumptionLineChartComponent implements OnInit {
               y: {
                 title: {
                   display: true,
-                  text: 'value',
+                  text: 'Energy Consumption (kWh)',
                 },
               },
             },

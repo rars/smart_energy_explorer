@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ApiModule } from './core/modules/n3rgyapi';
 import { CommonModule } from '@angular/common';
@@ -24,6 +24,9 @@ import { DataDownloadingComponent } from './components/data-downloading/data-dow
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
+  public width = 800;
+  public height = 300;
+
   public data: any;
 
   public constructor(private readonly matIconRegistry: MatIconRegistry) {
@@ -33,7 +36,31 @@ export class AppComponent implements OnInit {
   public ngOnInit(): void {
     // this.fetchData();
     // this.rustClient();
+    //this.resizeWindow();
   }
+
+  @HostListener('window:resize', ['$event'])
+  public onResize(event: Event) {
+    if (event.target) {
+      const target = event.target as unknown as Window;
+      this.width = target.innerWidth;
+      this.height = target.innerHeight;
+    }
+  }
+
+  /*resizeWindow() {
+    const appWindow = Window.getCurrent();
+    const { width, height } = this.getContentSize();
+    appWindow.setSize(new LogicalSize(width, height));
+  }
+
+  getContentSize() {
+    const content = document.getElementById('main-content');
+    return {
+      width: content?.offsetWidth ?? 800,
+      height: content?.offsetHeight ?? 400,
+    };
+  }*/
 
   async fetchData() {
     try {

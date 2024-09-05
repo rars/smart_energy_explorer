@@ -1,33 +1,45 @@
-<h3>Gas consumption</h3>
+<div class="w-full h-full flex flex-col">
+  <h3>Gas consumption</h3>
 
-<div class="form-field-container">
-  <mat-form-field>
-    <mat-label> Date range </mat-label>
-    <mat-date-range-input [rangePicker]="picker">
-      <input
-        matStartDate
-        placeholder="Start date"
-        [formControl]="startDateControl"
-      />
-      <input matEndDate placeholder="End date" [formControl]="endDateControl" />
-    </mat-date-range-input>
-    <mat-hint>DD/MM/YYYY - DD/MM/YYYY</mat-hint>
-    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-    <mat-date-range-picker #picker></mat-date-range-picker>
-  </mat-form-field>
+  <div class="form-field-container">
+    <mat-form-field>
+      <mat-label> Date range </mat-label>
+      <mat-date-range-input [rangePicker]="picker">
+        <input
+          matStartDate
+          placeholder="Start date"
+          [formControl]="startDateControl"
+        />
+        <input
+          matEndDate
+          placeholder="End date"
+          [formControl]="endDateControl"
+        />
+      </mat-date-range-input>
+      <mat-hint>DD/MM/YYYY - DD/MM/YYYY</mat-hint>
+      <mat-datepicker-toggle
+        matIconSuffix
+        [for]="picker"
+      ></mat-datepicker-toggle>
+      <mat-date-range-picker #picker></mat-date-range-picker>
+    </mat-form-field>
 
-  <mat-form-field>
-    <mat-label>Aggregation</mat-label>
-    <mat-select [formControl]="aggregationControl">
-      <mat-option value="raw">Raw</mat-option>
-      <mat-option value="daily">Daily</mat-option>
-      <mat-option value="monthly">Monthly</mat-option>
-    </mat-select>
-  </mat-form-field>
+    <mat-form-field>
+      <mat-label>Aggregation</mat-label>
+      <mat-select [formControl]="aggregationControl">
+        <mat-option value="raw">Raw</mat-option>
+        <mat-option value="daily">Daily</mat-option>
+        <mat-option value="monthly">Monthly</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  @if (loading) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  } @else {
+    <app-chart
+      [chartConfiguration]="chartConfiguration"
+      class="grow"
+    ></app-chart>
+  }
 </div>
-
-@if (loading) {
-<mat-progress-bar mode="indeterminate"></mat-progress-bar>
-} @else {
-<app-chart [chartConfiguration]="chartConfiguration"></app-chart>
-}

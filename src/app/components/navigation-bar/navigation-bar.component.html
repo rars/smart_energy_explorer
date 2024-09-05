@@ -1,31 +1,33 @@
 <mat-toolbar color="primary">
-  <div class="container mx-auto p-4">
+  <div class="flex flex-row w-full items-center">
+    <h1>n3rgy viewer</h1>
+    <div class="grow"></div>
     <div class="flex items-center">
-      <h1>n3rgy viewer</h1>
-      <div class="grow"></div>
-      <div class="flex items-center">
-        <button mat-button [matMenuTriggerFor]="electricityMenu">
-          <mat-icon>bolt</mat-icon> Electricity
-        </button>
-        <mat-menu #electricityMenu="matMenu">
-          <button mat-menu-item routerLink="electricity">Consumption</button>
-          <button mat-menu-item>Tariff</button>
-        </mat-menu>
+      <button mat-button [matMenuTriggerFor]="electricityMenu">
+        <mat-icon>bolt</mat-icon> Electricity
+      </button>
+      <mat-menu #electricityMenu="matMenu">
+        <button mat-menu-item routerLink="electricity">Consumption</button>
+        <button mat-menu-item>Tariff</button>
+      </mat-menu>
 
-        <button mat-button [matMenuTriggerFor]="gasMenu">
-          <mat-icon>mode_heat</mat-icon> Gas
-        </button>
-        <mat-menu #gasMenu="matMenu">
-          <button mat-menu-item routerLink="gas">Consumption</button>
-          <button mat-menu-item>Tariff</button>
-        </mat-menu>
+      <button mat-button [matMenuTriggerFor]="gasMenu">
+        <mat-icon>mode_heat</mat-icon> Gas
+      </button>
+      <mat-menu #gasMenu="matMenu">
+        <button mat-menu-item routerLink="gas">Consumption</button>
+        <button mat-menu-item>Tariff</button>
+      </mat-menu>
 
-        <button type="button" mat-icon-button (click)="toggleTheme()">
-          <mat-icon>{{
-            (isLightMode$ | async) ? "dark_mode" : "light_mode"
-          }}</mat-icon>
-        </button>
-      </div>
+      <button mat-icon-button routerLink="settings">
+        <mat-icon>settings</mat-icon>
+      </button>
+
+      <button type="button" mat-icon-button (click)="toggleTheme()">
+        <mat-icon>{{
+          (isLightMode$ | async) ? 'dark_mode' : 'light_mode'
+        }}</mat-icon>
+      </button>
     </div>
   </div>
 </mat-toolbar>

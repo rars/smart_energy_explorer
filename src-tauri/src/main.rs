@@ -8,8 +8,15 @@ use chrono::Datelike;
 use chrono::Duration;
 use chrono::Local;
 use chrono::NaiveDate;
+use chrono::NaiveDateTime;
+use data::energy_profile::EnergyProfile;
+use data::energy_profile::EnergyProfileRepository;
+use data::energy_profile::SqliteEnergyProfileRepository;
+use db::create_energy_profile;
+use db::get_energy_profile;
 use db::insert_electricity_consumption;
 use db::insert_gas_consumption;
+use db::update_energy_profile;
 use diesel::SqliteConnection;
 use n3rgy::{
     Client, ElectricityConsumption, EnvironmentAuthorizationProvider, GasConsumption,
@@ -21,8 +28,13 @@ use tauri::AppHandle;
 use tauri::Emitter;
 use tauri::Manager;
 
+use log::{debug, error, info, warn};
+use tauri_plugin_log::Target;
+use tauri_plugin_log::TargetKind;
+
 use std::env;
 
+mod data;
 mod db;
 mod schema;
 
@@ -41,7 +53,7 @@ async fn get_raw_electricity_consumption(
     start_date: String,
     end_date: String,
 ) -> Result<Vec<ElectricityConsumption>, GetRecordsError> {
-    println!("get_raw_electricity_consumption called");
+    debug!("get_raw_electricity_consumption called");
 
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
@@ -105,7 +117,7 @@ async fn get_daily_electricity_consumption(
     start_date: String,
     end_date: String,
 ) -> Result<Vec<DailyElectricityConsumption>, GetRecordsError> {
-    println!("get_daily_electricity_consumption called");
+    debug!("get_daily_electricity_consumption called");
 
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
@@ -148,7 +160,7 @@ async fn get_monthly_electricity_consumption(
     start_date: String,
     end_date: String,
 ) -> Result<Vec<MonthlyElectricityConsumption>, GetRecordsError> {
-    println!("get_monthly_electricity_consumption called");
+    debug!("get_monthly_electricity_consumption called");
 
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
@@ -191,7 +203,7 @@ async fn get_raw_gas_consumption(
     start_date: String,
     end_date: String,
 ) -> Result<Vec<GasConsumption>, GetRecordsError> {
-    println!("get_raw_gas_consumption called");
+    debug!("get_raw_gas_consumption called");
 
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
@@ -231,7 +243,7 @@ async fn get_daily_gas_consumption(
     start_date: String,
     end_date: String,
 ) -> Result<Vec<DailyGasConsumption>, GetRecordsError> {
-    println!("get_daily_gas_consumption called");
+    debug!("get_daily_gas_consumption called");
 
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
@@ -274,7 +286,7 @@ async fn get_monthly_gas_consumption(
     start_date: String,
     end_date: String,
 ) -> Result<Vec<MonthlyGasConsumption>, GetRecordsError> {
-    println!("get_monthly_gas_consumption called");
+    debug!("get_monthly_gas_consumption called");
 
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
@@ -309,6 +321,50 @@ async fn get_monthly_gas_consumption(
     } else {
         return Err(GetRecordsError::Custom("Database query failed 2".into()));
     }
+}
+
+#[tauri::command]
+fn get_energy_profiles(
+    app_state: tauri::State<'_, AppState>,
+) -> Result<Vec<EnergyProfile>, GetRecordsError> {
+    let mut db_connection = app_state
+        .db
+        .lock()
+        .map_err(|e| GetRecordsError::Custom(format!("Failed to lock db: {}", e)))?;
+
+    db::get_all_energy_profiles(&mut db_connection)
+        .map_err(|e| GetRecordsError::Custom(format!("Database query failed: {}", e)))
+}
+
+#[tauri::command]
+fn update_energy_profile_settings(
+    app_state: tauri::State<'_, AppState>,
+    energy_profile_id: i32,
+    is_active: bool,
+    start_date: String,
+) -> Result<(), GetRecordsError> {
+    let start = parse_iso_string_to_naive_date(&start_date)?;
+
+    let mut db_connection = app_state
+        .db
+        .lock()
+        .map_err(|e| GetRecordsError::Custom(format!("Failed to lock db: {}", e)))?;
+
+    debug!(
+        "Updating {}, {}, {}",
+        energy_profile_id, is_active, start_date
+    );
+
+    if let Ok(ep) = db::update_energy_profile_settings(
+        &mut db_connection,
+        energy_profile_id,
+        is_active,
+        start.into(),
+    ) {
+        return Ok(());
+    }
+
+    return Err(GetRecordsError::Custom("Database query failed".into()));
 }
 
 trait DataLoader<T, E> {
@@ -362,50 +418,149 @@ impl DataLoader<GasConsumption, GetRecordsError> for GasConsumptionDataLoader {
 
 async fn download_history<T, U>(
     app_handle: AppHandle,
-    num_months: u32,
     data_loader: T,
-) -> Result<(), GetRecordsError>
+    until_date_time: NaiveDateTime,
+) -> Result<NaiveDate, GetRecordsError>
 where
     T: DataLoader<U, GetRecordsError>,
 {
+    let until_date = until_date_time.date();
+
     let today = Local::now().naive_local().date();
     let mut end_date = today;
-    let mut start_of_month = NaiveDate::from_ymd_opt(end_date.year(), end_date.month(), 1).unwrap();
+    let mut start_of_period =
+        NaiveDate::from_ymd_opt(end_date.year(), end_date.month(), 1).unwrap();
 
-    for m in 0..num_months {
-        let records = data_loader.load(start_of_month, end_date).await?;
+    if start_of_period < until_date {
+        start_of_period = until_date;
+    }
 
-        println!(
+    let total_days = today.signed_duration_since(until_date).num_days();
+
+    while start_of_period >= until_date && start_of_period < end_date {
+        let records = data_loader.load(start_of_period, end_date).await?;
+
+        info!(
             "For {} to {}, inserting {} records.",
-            start_of_month,
+            start_of_period,
             end_date,
             records.len()
         );
 
         if records.len() > 0 {
             data_loader.insert_data(records);
-
-            end_date = start_of_month;
-            let end_of_previous_month = start_of_month - Duration::days(1);
-            start_of_month = NaiveDate::from_ymd_opt(
-                end_of_previous_month.year(),
-                end_of_previous_month.month(),
-                1,
-            )
-            .unwrap();
         }
 
-        let percentage = (100 * (m + 1)) / 12;
+        end_date = start_of_period;
+        let end_of_previous_month =
+            NaiveDate::from_ymd_opt(start_of_period.year(), start_of_period.month(), 1).unwrap()
+                - Duration::days(1);
+        start_of_period = NaiveDate::from_ymd_opt(
+            end_of_previous_month.year(),
+            end_of_previous_month.month(),
+            1,
+        )
+        .unwrap();
+
+        if start_of_period < until_date {
+            start_of_period = until_date;
+        }
+
+        let days_remaining = end_date.signed_duration_since(until_date).num_days();
+
+        let percentage = 100.0 * (1.0 - (days_remaining as f64 / total_days as f64));
 
         app_handle
             .emit(
                 "downloadUpdate",
                 DownloadUpdateEvent {
-                    percentage: percentage,
-                    message: format!("New message {}", percentage),
+                    percentage: percentage.round() as u32,
+                    message: format!("Downloading {}...", percentage),
                 },
             )
-            .unwrap();
+            .map_err(|e| {
+                GetRecordsError::Custom(format!("Could not emit downloadUpdate event: {}", e))
+            })?;
+    }
+
+    app_handle
+        .emit(
+            "downloadUpdate",
+            DownloadUpdateEvent {
+                percentage: 100,
+                message: "Download complete".into(),
+            },
+        )
+        .map_err(|e| {
+            GetRecordsError::Custom(format!("Could not emit downloadUpdate event: {}", e))
+        })?;
+
+    Ok(today)
+}
+
+fn get_or_create_energy_profile(
+    connection: Arc<Mutex<SqliteConnection>>,
+    name: &str,
+) -> Result<EnergyProfile, GetRecordsError> {
+    let mut conn = connection
+        .lock()
+        .map_err(|e| GetRecordsError::Custom(format!("Failed to acquire db lock: {}", e)))?;
+
+    let mut repository = SqliteEnergyProfileRepository::new(&mut conn);
+
+    match repository.get_energy_profile(name) {
+        Ok(profile) => Ok(profile),
+        Err(get_error) => match repository.create_energy_profile(name) {
+            Ok(profile) => Ok(profile),
+            Err(create_error) => Err(GetRecordsError::Custom(format!(
+                "Failed to fetch profile {}, get error: {}, create error: {}",
+                name, get_error, create_error
+            ))),
+        },
+    }
+}
+
+async fn check_for_new_data<T, U>(
+    app_handle: AppHandle,
+    connection: Arc<Mutex<SqliteConnection>>,
+    profile_name: &str,
+    data_loader: T,
+) -> Result<(), GetRecordsError>
+where
+    T: DataLoader<U, GetRecordsError>,
+{
+    let profile = get_or_create_energy_profile(connection.clone(), profile_name)?;
+
+    if profile.is_active {
+        let until_date_time = profile.last_date_retrieved.unwrap_or(profile.start_date);
+
+        let last_date_retrieved =
+            download_history(app_handle.clone(), data_loader, until_date_time).await?;
+
+        let mut conn = connection
+            .lock()
+            .map_err(|e| GetRecordsError::Custom(format!("Failed to lock connection: {}", e)))?;
+
+        match update_energy_profile(
+            &mut conn,
+            profile.energy_profile_id,
+            profile.is_active,
+            profile.start_date,
+            last_date_retrieved.into(),
+        ) {
+            Ok(_) => info!("Successfully updated {} consumption profile", profile_name),
+            Err(error) => {
+                return Err(GetRecordsError::Custom(format!(
+                    "Failed to update {} consumption profile, error: {}",
+                    profile_name, error
+                )));
+            }
+        }
+    } else {
+        info!(
+            "{} profile is not active. Will not download historical data.",
+            profile_name
+        );
     }
 
     Ok(())
@@ -416,15 +571,12 @@ async fn background_task(
     client: Arc<Client<EnvironmentAuthorizationProvider>>,
     connection: Arc<Mutex<SqliteConnection>>,
 ) -> Result<(), GetRecordsError> {
-    println!("Background task running");
+    debug!("Background task running");
 
-    let num_months = 12;
-
-    println!("Downloading electricity consumption");
-
-    download_history(
+    check_for_new_data(
         app_handle.clone(),
-        num_months,
+        connection.clone(),
+        "electricity",
         ElectricityConsumptionDataLoader {
             client: client.clone(),
             connection: connection.clone(),
@@ -432,11 +584,10 @@ async fn background_task(
     )
     .await?;
 
-    println!("Downloading gas consumption");
-
-    download_history(
+    check_for_new_data(
         app_handle.clone(),
-        num_months,
+        connection.clone(),
+        "gas",
         GasConsumptionDataLoader {
             client: client.clone(),
             connection: connection.clone(),
@@ -471,7 +622,7 @@ fn main() {
                 db::establish_connection(db_path.to_str().expect("db path needed"));
             db::run_migrations(&mut connection);
 
-            println!("App data directory: {}", app_data_dir.display());
+            debug!("App data directory: {}", app_data_dir.display());
 
             let app_state = AppState {
                 client: Arc::new(Client::new(EnvironmentAuthorizationProvider, None)),
@@ -488,9 +639,9 @@ fn main() {
             // Spawn a background thread
             async_runtime::spawn(async move {
                 match background_task(app_handle, client, db).await {
-                    Ok(_) => println!("Background task completed successfully"),
+                    Ok(_) => debug!("Background task completed successfully"),
                     Err(e) => {
-                        println!("Background task panicked: {:?}", e);
+                        error!("Background task panicked: {:?}", e);
                         // Handle the panic (e.g., restart the task, log the error, etc.)
                     }
                 }
@@ -499,13 +650,23 @@ fn main() {
             Ok(())
         })
         .plugin(tauri_plugin_sql::Builder::default().build())
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .targets([
+                    Target::new(TargetKind::Stdout),
+                    Target::new(TargetKind::Webview),
+                ])
+                .build(),
+        )
         .invoke_handler(tauri::generate_handler![
             get_raw_electricity_consumption,
             get_daily_electricity_consumption,
             get_monthly_electricity_consumption,
             get_raw_gas_consumption,
             get_daily_gas_consumption,
-            get_monthly_gas_consumption
+            get_monthly_gas_consumption,
+            get_energy_profiles,
+            update_energy_profile_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

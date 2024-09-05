@@ -1,4 +1,4 @@
-@use "@angular/material" as mat;
+@use '@angular/material' as mat;
 
 @tailwind base;
 @tailwind components;
@@ -41,6 +41,8 @@ html {
   @include mat.menu-theme($light-theme);
   @include mat.select-theme($light-theme);
   @include mat.toolbar-theme($light-theme);
+  @include mat.slide-toggle-theme($light-theme);
+  @include mat.card-theme($light-theme);
 
   // Apply the dark theme only when the user prefers light themes.
   .dark {
@@ -57,14 +59,18 @@ html {
     @include mat.menu-color($dark-theme);
     @include mat.select-color($dark-theme);
     @include mat.toolbar-color($dark-theme);
+    @include mat.slide-toggle-color($dark-theme);
+    @include mat.card-color($dark-theme);
   }
 }
 
 html,
 body {
-  height: 100%;
+  height: 100vh;
+  width: 100vw;
 }
 body {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  padding: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }

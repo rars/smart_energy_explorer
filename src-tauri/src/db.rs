@@ -1,12 +1,15 @@
-use crate::schema::{electricity_consumption, gas_consumption};
-use chrono::{NaiveDate, NaiveDateTime};
+use crate::data::energy_profile::EnergyProfile;
+use crate::schema::{electricity_consumption, energy_profile, gas_consumption};
+use chrono::{Local, NaiveDate, NaiveDateTime};
 use diesel::dsl::sql;
 use diesel::insert_into;
 use diesel::sql_types::{Date, Double};
 use diesel::sqlite::SqliteConnection;
 use diesel::{prelude::*, upsert::excluded};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use log::error;
 use n3rgy::{ElectricityConsumption, GasConsumption};
+use serde::Serialize;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
@@ -34,6 +37,90 @@ struct NewElectricityConsumption {
 struct NewGasConsumption {
     timestamp: NaiveDateTime,
     energy_consumption_m3: f64,
+}
+/*
+#[derive(Serialize, Queryable, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EnergyProfile {
+    pub energy_profile_id: i32,
+    pub name: String,
+    pub is_active: bool,
+    pub start_date: NaiveDateTime,
+    pub last_date_retrieved: Option<NaiveDateTime>,
+}
+    */
+
+#[derive(Insertable)]
+#[diesel(table_name = energy_profile)]
+struct NewEnergyProfile<'a> {
+    name: &'a str,
+    is_active: bool,
+    start_date: NaiveDateTime,
+}
+
+pub fn get_energy_profile(conn: &mut SqliteConnection, name: &str) -> QueryResult<EnergyProfile> {
+    energy_profile::table
+        .filter(energy_profile::name.eq(name))
+        .get_result(conn)
+}
+
+pub fn get_all_energy_profiles(conn: &mut SqliteConnection) -> QueryResult<Vec<EnergyProfile>> {
+    energy_profile::table.load::<EnergyProfile>(conn)
+}
+
+pub fn create_energy_profile<T: AsRef<str>>(
+    conn: &mut SqliteConnection,
+    name: T,
+) -> QueryResult<EnergyProfile> {
+    let name_ref = name.as_ref();
+    let start_date = Local::now().naive_local();
+
+    let new_profile = NewEnergyProfile {
+        name: name_ref,
+        is_active: true,
+        start_date,
+    };
+
+    diesel::insert_into(energy_profile::table)
+        .values(&new_profile)
+        .execute(conn)?;
+
+    get_energy_profile(conn, name_ref)
+}
+
+pub fn update_energy_profile(
+    conn: &mut SqliteConnection,
+    energy_profile_id_param: i32,
+    new_is_active: bool,
+    new_start_date: NaiveDateTime,
+    new_last_date_retrieved: NaiveDateTime,
+) -> QueryResult<EnergyProfile> {
+    use crate::schema::energy_profile::dsl::*;
+
+    diesel::update(energy_profile.find(energy_profile_id_param))
+        .set((
+            is_active.eq(new_is_active),
+            start_date.eq(new_start_date),
+            last_date_retrieved.eq(new_last_date_retrieved),
+        ))
+        .execute(conn)?;
+
+    energy_profile.find(energy_profile_id_param).first(conn)
+}
+
+pub fn update_energy_profile_settings(
+    conn: &mut SqliteConnection,
+    energy_profile_id_param: i32,
+    new_is_active: bool,
+    new_start_date: NaiveDateTime,
+) -> QueryResult<EnergyProfile> {
+    use crate::schema::energy_profile::dsl::*;
+
+    diesel::update(energy_profile.find(energy_profile_id_param))
+        .set((is_active.eq(new_is_active), start_date.eq(new_start_date)))
+        .execute(conn)?;
+
+    energy_profile.find(energy_profile_id_param).first(conn)
 }
 
 pub fn insert_electricity_consumption(
@@ -88,7 +175,7 @@ pub fn insert_gas_consumption(conn: &mut SqliteConnection, records: Vec<GasConsu
                 )
                 .execute(conn)
                 .map_err(|e| {
-                    println!("Error inserting new gas consumption entry: {:?}", e);
+                    error!("Error inserting new gas consumption entry: {:?}", e);
                     e
                 })?;
         }
