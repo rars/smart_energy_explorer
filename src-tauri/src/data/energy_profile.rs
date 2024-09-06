@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 use chrono::{Local, NaiveDateTime};
 use diesel::prelude::*;
+use log::debug;
 use serde::Serialize;
 
 use crate::schema::energy_profile;
@@ -88,7 +89,9 @@ impl EnergyProfileRepository for SqliteEnergyProfileRepository {
             .values(&new_profile)
             .execute(&mut *conn)?;
 
-        self.get_energy_profile(name)
+        energy_profile::table
+            .filter(energy_profile::name.eq(name))
+            .get_result(&mut *conn)
     }
 
     fn update_energy_profile(
