@@ -1,8 +1,7 @@
 use std::sync::{Arc, Mutex, MutexGuard};
 
-use chrono::{Local, NaiveDateTime};
+use chrono::{Datelike, Local, NaiveDateTime};
 use diesel::prelude::*;
-use log::debug;
 use serde::Serialize;
 
 use crate::schema::energy_profile;
@@ -75,7 +74,10 @@ impl EnergyProfileRepository for SqliteEnergyProfileRepository {
     }
 
     fn create_energy_profile(&self, name: &str) -> QueryResult<EnergyProfile> {
-        let start_date = Local::now().naive_local();
+        let start_of_current_month = Local::now().date_naive().with_day(1).unwrap();
+        let end_of_previous_month = start_of_current_month.pred_opt().unwrap();
+
+        let start_date: NaiveDateTime = end_of_previous_month.with_day(1).unwrap().into();
 
         let new_profile = NewEnergyProfile {
             name: name,

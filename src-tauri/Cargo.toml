@@ -15,17 +15,18 @@ rust-version = "1.60"
 tauri-build = { version = "2.0.0-rc", features = [] }
 
 [dependencies]
-log = "^0.4"
-tauri-plugin-log = "2.0.0-rc"
 chrono = { version = "0.4", features = ["serde"] }
 diesel = { version = "2.0.0", features = ["sqlite", "chrono"] }
 diesel_migrations = "2.0"
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "2.0.0-rc", features = [] }
-tokio = { version = "1", features = ["full"] }
+log = "^0.4"
 n3rgy = { path = "../../n3rgy-rs" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tauri = { version = "2.0.0-rc", features = [] }
+tauri-plugin-dialog = "2.0.0-alpha.2"
+tauri-plugin-log = "2.0.0-rc"
 thiserror = "1.0"
+tokio = { version = "1", features = ["full"] }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

@@ -1,6 +1,6 @@
 import { CommonModule, JsonPipe, TitleCasePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,6 +11,8 @@ import { FormBuilder, FormGroup, FormArray } from '@angular/forms';
 import { invoke } from '@tauri-apps/api/core';
 import { from } from 'rxjs';
 import { DateService } from '../../services/date/date.service';
+import { CanComponentDeactivate } from '../../unsaved-changes.guard';
+import { confirm } from '@tauri-apps/plugin-dialog';
 
 @Component({
   selector: 'app-settings',
@@ -30,7 +32,7 @@ import { DateService } from '../../services/date/date.service';
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, CanComponentDeactivate {
   public form: FormGroup;
   public data?: any;
 
@@ -73,5 +75,16 @@ export class SettingsComponent implements OnInit {
         isActive: this.isActive.value,
       }),
     ).subscribe();*/
+  }
+
+  public async canDeactivate(): Promise<boolean> {
+    if (this.form.dirty) {
+      const confirmation = await confirm(
+        'There are unsaved changes. Do you want to discard these changes?',
+        { title: 'Discard changes?', kind: 'warning' },
+      );
+      return confirmation;
+    }
+    return true;
   }
 }
