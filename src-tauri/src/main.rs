@@ -24,6 +24,7 @@ use n3rgy::{
     Client, ElectricityConsumption, EnvironmentAuthorizationProvider, GasConsumption,
     GetRecordsError,
 };
+use serde::Deserialize;
 use serde::Serialize;
 use tauri::async_runtime;
 use tauri::AppHandle;
@@ -351,29 +352,43 @@ fn get_energy_profiles(
         .map_err(|e| ApiError::Custom(format!("Database query failed: {}", e)))
 }
 
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EnergyProfileUpdateParam {
+    pub energy_profile_id: i32,
+    pub is_active: bool,
+    pub start_date: String,
+}
+
 #[tauri::command]
 fn update_energy_profile_settings(
     app_state: tauri::State<'_, AppState>,
-    energy_profile_id: i32,
-    is_active: bool,
-    start_date: String,
+    energy_profile_updates: Vec<EnergyProfileUpdateParam>,
 ) -> Result<(), ApiError> {
-    let start = parse_iso_string_to_naive_date(&start_date)?;
-
-    debug!(
-        "Updating {}, {}, {}",
-        energy_profile_id, is_active, start_date
-    );
+    let update_settings: Result<Vec<_>, ApiError> = energy_profile_updates
+        .iter()
+        .map(|x| {
+            Ok((
+                x.energy_profile_id,
+                x.is_active,
+                parse_iso_string_to_naive_date(&x.start_date)?,
+            ))
+        })
+        .collect();
 
     let repository = SqliteEnergyProfileRepository::new(app_state.db.clone());
 
-    if let Ok(ep) =
-        repository.update_energy_profile_settings(energy_profile_id, is_active, start.into())
-    {
-        return Ok(());
+    for (energy_profile_id, is_active, start) in update_settings? {
+        debug!("Updating {}, {}, {}", energy_profile_id, is_active, start);
+
+        let _ = repository.update_energy_profile_settings(
+            energy_profile_id,
+            is_active,
+            start.into(),
+        )?;
     }
 
-    return Err(ApiError::Custom("Database query failed".into()));
+    Ok(())
 }
 
 trait DataLoader<T> {

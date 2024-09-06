@@ -43,6 +43,7 @@ html {
   @include mat.toolbar-theme($light-theme);
   @include mat.slide-toggle-theme($light-theme);
   @include mat.card-theme($light-theme);
+  @include mat.typography-hierarchy($light-theme);
 
   // Apply the dark theme only when the user prefers light themes.
   .dark {

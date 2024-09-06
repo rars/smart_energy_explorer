@@ -1,6 +1,11 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import {
+  ApplicationConfig,
+  ErrorHandler,
+  provideZoneChangeDetection,
+} from '@angular/core';
 import { provideRouter } from '@angular/router';
 
+import { GlobalErrorHandler } from './services/error/global-error-handler';
 import { routes } from './app.routes';
 import {
   provideHttpClient,
@@ -21,5 +26,6 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     { provide: MAT_DATE_LOCALE, useValue: enGB },
     provideDateFnsAdapter(),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
   ],
 };

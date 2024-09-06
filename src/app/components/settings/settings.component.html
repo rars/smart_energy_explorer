@@ -1,6 +1,5 @@
-<h2>Settings</h2>
-{{ data | json }}
-<form [formGroup]="form">
+<h6>Settings</h6>
+<form [formGroup]="form" (ngSubmit)="update()">
   <div formArrayName="profiles" class="flex flex-row space-x-2">
     <mat-card
       *ngFor="let profile of profiles.controls; let i = index"
@@ -28,9 +27,11 @@
           <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
         </div>
       </mat-card-content>
-      <mat-card-actions>
-        <button mat-button (click)="update()">Save</button>
-      </mat-card-actions>
     </mat-card>
+  </div>
+  <div class="mt-4">
+    <button mat-raised-button type="submit" [disabled]="!form.dirty">
+      Save All Changes
+    </button>
   </div>
 </form>

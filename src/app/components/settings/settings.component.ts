@@ -13,6 +13,7 @@ import { from } from 'rxjs';
 import { DateService } from '../../services/date/date.service';
 import { CanComponentDeactivate } from '../../unsaved-changes.guard';
 import { confirm } from '@tauri-apps/plugin-dialog';
+import { is } from 'date-fns/locale';
 
 @Component({
   selector: 'app-settings',
@@ -56,6 +57,7 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
       for (const p of x) {
         this.profiles.push(
           this.fb.group({
+            energyProfileId: p.energyProfileId,
             name: p.name,
             startDate: new Date(p.startDate),
             isActive: p.isActive,
@@ -66,15 +68,26 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
   }
 
   public update(): void {
-    /*from(
-      invoke('update_energy_profile_settings', {
-        energyProfileId: this.data.energyProfileId,
-        startDate: this.dateService.formatISODate(
-          this.startDateControl.value ?? new Date(),
-        ),
-        isActive: this.isActive.value,
-      }),
-    ).subscribe();*/
+    if (this.form.valid && this.form.dirty) {
+      this.form.disable();
+
+      const energyProfileUpdates = this.form.value.profiles.map((x: any) => {
+        return {
+          energyProfileId: x.energyProfileId,
+          startDate: this.dateService.formatISODate(x.startDate),
+          isActive: x.isActive,
+        };
+      });
+
+      from(
+        invoke('update_energy_profile_settings', {
+          energyProfileUpdates,
+        }),
+      ).subscribe(() => {
+        this.form.markAsPristine();
+        this.form.enable();
+      });
+    }
   }
 
   public async canDeactivate(): Promise<boolean> {
