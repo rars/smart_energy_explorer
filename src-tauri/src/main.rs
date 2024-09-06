@@ -41,9 +41,11 @@ mod data;
 mod db;
 mod schema;
 
+#[derive(Clone)]
 struct AppState {
     client: Arc<Client<EnvironmentAuthorizationProvider>>,
     db: Arc<Mutex<SqliteConnection>>,
+    downloading: Arc<Mutex<bool>>,
 }
 
 fn parse_iso_string_to_naive_date(iso_date_str: &str) -> Result<NaiveDate, ApiError> {
@@ -391,6 +393,24 @@ fn update_energy_profile_settings(
     Ok(())
 }
 
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct StatusResponse {
+    pub is_downloading: bool,
+}
+
+#[tauri::command]
+fn get_app_status(app_state: tauri::State<'_, AppState>) -> Result<StatusResponse, ApiError> {
+    let downloading = app_state
+        .downloading
+        .lock()
+        .map_err(|e| ApiError::Custom(format!("Could not lock downloading status: {}", e)))?;
+
+    Ok(StatusResponse {
+        is_downloading: *downloading,
+    })
+}
+
 trait DataLoader<T> {
     type LoadError: Error + Send + Sync + 'static;
     type InsertError: Error + Send + Sync + 'static;
@@ -507,30 +527,24 @@ where
 
         let percentage = 100.0 * (1.0 - (days_remaining as f64 / total_days as f64));
 
-        app_handle
-            .emit(
-                "downloadUpdate",
-                DownloadUpdateEvent {
-                    percentage: percentage.round() as u32,
-                    message: format!("Downloading {}...", percentage),
-                },
-            )
-            .map_err(|e| {
-                AppError::CustomError(format!("Could not emit downloadUpdate event: {}", e))
-            })?;
-    }
-
-    app_handle
-        .emit(
+        emit_event(
+            &app_handle,
             "downloadUpdate",
             DownloadUpdateEvent {
-                percentage: 100,
-                message: "Download complete".into(),
+                percentage: percentage.round() as u32,
+                message: format!("Downloading {}...", percentage),
             },
-        )
-        .map_err(|e| {
-            AppError::CustomError(format!("Could not emit downloadUpdate event: {}", e))
-        })?;
+        )?;
+    }
+
+    emit_event(
+        &app_handle,
+        "downloadUpdate",
+        DownloadUpdateEvent {
+            percentage: 100,
+            message: "Download complete".into(),
+        },
+    )?;
 
     Ok(today)
 }
@@ -598,35 +612,81 @@ where
     Ok(())
 }
 
-async fn background_task(
-    app_handle: AppHandle,
-    client: Arc<Client<EnvironmentAuthorizationProvider>>,
-    connection: Arc<Mutex<SqliteConnection>>,
-) -> Result<(), AppError> {
+fn emit_event<T>(app_handle: &AppHandle, event: &str, payload: T) -> Result<(), AppError>
+where
+    T: Serialize + Clone,
+{
+    app_handle
+        .emit(event, payload)
+        .map_err(|e| AppError::CustomError(format!("Could not emit {} event: {}", event, e)))?;
+
+    Ok(())
+}
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AppStatusUpdateEvent {
+    pub is_downloading: bool,
+}
+
+async fn background_task(app_handle: AppHandle, app_state: AppState) -> Result<(), AppError> {
     debug!("Background task running");
 
+    {
+        let mut downloading = app_state
+            .downloading
+            .lock()
+            .map_err(|e| AppError::CustomError(format!("Failed to acquire lock, error: {}", e)))?;
+
+        *downloading = true;
+    }
+
+    emit_event(
+        &app_handle,
+        "appStatusUpdate",
+        AppStatusUpdateEvent {
+            is_downloading: true,
+        },
+    )?;
+
     check_for_new_data(
         app_handle.clone(),
-        connection.clone(),
+        app_state.db.clone(),
         "electricity",
         ElectricityConsumptionDataLoader {
-            client: client.clone(),
-            connection: connection.clone(),
+            client: app_state.client.clone(),
+            connection: app_state.db.clone(),
         },
     )
     .await?;
 
     check_for_new_data(
         app_handle.clone(),
-        connection.clone(),
+        app_state.db.clone(),
         "gas",
         GasConsumptionDataLoader {
-            client: client.clone(),
-            connection: connection.clone(),
+            client: app_state.client.clone(),
+            connection: app_state.db.clone(),
         },
     )
     .await?;
 
+    {
+        let mut downloading = app_state
+            .downloading
+            .lock()
+            .map_err(|e| AppError::CustomError(format!("Failed to acquire lock, error: {}", e)))?;
+
+        *downloading = false;
+    }
+
+    emit_event(
+        &app_handle,
+        "appStatusUpdate",
+        AppStatusUpdateEvent {
+            is_downloading: false,
+        },
+    )?;
     // Sleep for a specified duration
     // tokio::time::sleep(std::time::Duration::from_secs(60 * 60)).await; // Run every 1 hour
 
@@ -660,10 +720,10 @@ fn main() {
             let app_state = AppState {
                 client: Arc::new(Client::new(EnvironmentAuthorizationProvider, None)),
                 db: Arc::new(Mutex::new(connection)),
+                downloading: Arc::new(Mutex::new(false)),
             };
 
-            let client = app_state.client.clone();
-            let db = app_state.db.clone();
+            let app_state_clone = app_state.clone();
 
             app.manage(app_state);
 
@@ -671,7 +731,7 @@ fn main() {
 
             // Spawn a background thread
             async_runtime::spawn(async move {
-                match background_task(app_handle, client, db).await {
+                match background_task(app_handle, app_state_clone).await {
                     Ok(_) => debug!("Background task completed successfully"),
                     Err(e) => {
                         error!("Background task panicked: {:?}", e);
@@ -700,7 +760,8 @@ fn main() {
             get_daily_gas_consumption,
             get_monthly_gas_consumption,
             get_energy_profiles,
-            update_energy_profile_settings
+            update_energy_profile_settings,
+            get_app_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

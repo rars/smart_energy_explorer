@@ -7,6 +7,7 @@ import { MatIconRegistry } from '@angular/material/icon';
 
 import Database from '@tauri-apps/plugin-sql';
 import { DataDownloadingComponent } from './components/data-downloading/data-downloading.component';
+import { StatusBarComponent } from './status-bar/status-bar.component';
 // when using `"withGlobalTauri": true`, you may use
 // const V = window.__TAURI_PLUGIN_SQL__;
 
@@ -19,6 +20,7 @@ import { DataDownloadingComponent } from './components/data-downloading/data-dow
     CommonModule,
     NavigationBarComponent,
     DataDownloadingComponent,
+    StatusBarComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',

@@ -4,11 +4,11 @@
   <div class="grow shrink flex flex-col">
     <div>{{ data | json }}</div>
 
-    <app-data-downloading></app-data-downloading>
-
     <div class="grow shrink">
       <router-outlet></router-outlet>
     </div>
+
+    <app-status-bar></app-status-bar>
 
     <!--footer>
       <div class="py-3">
