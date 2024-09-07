@@ -364,6 +364,7 @@ pub struct EnergyProfileUpdateParam {
 
 #[tauri::command]
 fn update_energy_profile_settings(
+    app_handle: AppHandle,
     app_state: tauri::State<'_, AppState>,
     energy_profile_updates: Vec<EnergyProfileUpdateParam>,
 ) -> Result<(), ApiError> {
@@ -389,6 +390,18 @@ fn update_energy_profile_settings(
             start.into(),
         )?;
     }
+
+    let app_state_clone = (*app_state).clone();
+
+    tauri::async_runtime::spawn(async move {
+        match background_task(app_handle, app_state_clone).await {
+            Ok(_) => debug!("Background task completed successfully"),
+            Err(e) => {
+                error!("Background task panicked: {:?}", e);
+                // Handle the panic (e.g., restart the task, log the error, etc.)
+            }
+        }
+    });
 
     Ok(())
 }

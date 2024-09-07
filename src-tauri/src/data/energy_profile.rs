@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use chrono::{Datelike, Local, NaiveDateTime};
+use diesel::dsl::*;
 use diesel::prelude::*;
 use serde::Serialize;
 
@@ -111,7 +112,11 @@ impl EnergyProfileRepository for SqliteEnergyProfileRepository {
             .set((
                 is_active.eq(new_is_active),
                 start_date.eq(new_start_date),
-                last_date_retrieved.eq(new_last_date_retrieved),
+                last_date_retrieved.eq(case_when(
+                    start_date.gt(new_start_date),
+                    None::<NaiveDateTime>,
+                )
+                .otherwise(new_last_date_retrieved)),
             ))
             .execute(&mut *conn)?;
 
@@ -131,7 +136,15 @@ impl EnergyProfileRepository for SqliteEnergyProfileRepository {
         let mut conn = self.connection();
 
         diesel::update(energy_profile.find(energy_profile_id_param))
-            .set((is_active.eq(new_is_active), start_date.eq(new_start_date)))
+            .set((
+                is_active.eq(new_is_active),
+                start_date.eq(new_start_date),
+                last_date_retrieved.eq(case_when(
+                    start_date.gt(new_start_date),
+                    None::<NaiveDateTime>,
+                )
+                .otherwise(last_date_retrieved)),
+            ))
             .execute(&mut *conn)?;
 
         energy_profile
