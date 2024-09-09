@@ -8,12 +8,17 @@
 
 @include mat.core();
 
+$scale: -1;
+
 // Define a dark theme
 $dark-theme: mat.define-theme(
   (
     color: (
       theme-type: dark,
       primary: mat.$violet-palette,
+    ),
+    density: (
+      scale: $scale,
     ),
   )
 );
@@ -24,6 +29,9 @@ $light-theme: mat.define-theme(
     color: (
       theme-type: light,
       primary: mat.$violet-palette,
+    ),
+    density: (
+      scale: $scale,
     ),
   )
 );

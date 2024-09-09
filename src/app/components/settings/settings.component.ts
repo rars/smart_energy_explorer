@@ -13,7 +13,7 @@ import { from } from 'rxjs';
 import { DateService } from '../../services/date/date.service';
 import { CanComponentDeactivate } from '../../unsaved-changes.guard';
 import { confirm } from '@tauri-apps/plugin-dialog';
-import { is } from 'date-fns/locale';
+import { ApiKeyFormComponent } from '../api-key-form/api-key-form.component';
 
 @Component({
   selector: 'app-settings',
@@ -29,6 +29,7 @@ import { is } from 'date-fns/locale';
     MatButtonModule,
     MatCardModule,
     CommonModule,
+    ApiKeyFormComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',

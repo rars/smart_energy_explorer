@@ -20,10 +20,10 @@ use data::energy_profile::EnergyProfileRepository;
 use data::energy_profile::SqliteEnergyProfileRepository;
 
 use diesel::SqliteConnection;
-use n3rgy::{
-    Client, ElectricityConsumption, EnvironmentAuthorizationProvider, GasConsumption,
-    GetRecordsError,
-};
+use keyring::Entry;
+use n3rgy::AuthorizationProvider;
+use n3rgy::StaticAuthorizationProvider;
+use n3rgy::{Client, ElectricityConsumption, GasConsumption, GetRecordsError};
 use serde::Deserialize;
 use serde::Serialize;
 use tauri::async_runtime;
@@ -43,9 +43,9 @@ mod schema;
 
 #[derive(Clone)]
 struct AppState {
-    client: Arc<Client<EnvironmentAuthorizationProvider>>,
     db: Arc<Mutex<SqliteConnection>>,
     downloading: Arc<Mutex<bool>>,
+    client_available: Arc<Mutex<bool>>,
 }
 
 fn parse_iso_string_to_naive_date(iso_date_str: &str) -> Result<NaiveDate, ApiError> {
@@ -393,15 +393,8 @@ fn update_energy_profile_settings(
 
     let app_state_clone = (*app_state).clone();
 
-    tauri::async_runtime::spawn(async move {
-        match background_task(app_handle, app_state_clone).await {
-            Ok(_) => debug!("Background task completed successfully"),
-            Err(e) => {
-                error!("Background task panicked: {:?}", e);
-                // Handle the panic (e.g., restart the task, log the error, etc.)
-            }
-        }
-    });
+    auto_dispatch_download_tasks(app_handle, app_state_clone)
+        .map_err(|e| ApiError::Custom(e.to_string()))?;
 
     Ok(())
 }
@@ -410,6 +403,7 @@ fn update_energy_profile_settings(
 #[serde(rename_all = "camelCase")]
 pub struct StatusResponse {
     pub is_downloading: bool,
+    pub is_client_available: bool,
 }
 
 #[tauri::command]
@@ -419,9 +413,77 @@ fn get_app_status(app_state: tauri::State<'_, AppState>) -> Result<StatusRespons
         .lock()
         .map_err(|e| ApiError::Custom(format!("Could not lock downloading status: {}", e)))?;
 
+    let client_available = app_state
+        .client_available
+        .lock()
+        .map_err(|e| ApiError::Custom(format!("Could not lock client available status: {}", e)))?;
+
     Ok(StatusResponse {
         is_downloading: *downloading,
+        is_client_available: *client_available,
     })
+}
+
+#[tauri::command]
+fn store_api_key(
+    app_handle: AppHandle,
+    app_state: tauri::State<'_, AppState>,
+    api_key: String,
+) -> Result<(), ApiError> {
+    let entry = Entry::new("n3rgy.rars.github.io", "api_key")
+        .map_err(|e| ApiError::Custom(e.to_string()))?;
+
+    entry
+        .set_password(&api_key)
+        .map_err(|e| ApiError::Custom(e.to_string()))?;
+
+    auto_dispatch_download_tasks(app_handle, (*app_state).clone())
+        .map_err(|e| ApiError::Custom(e.to_string()))?;
+
+    Ok(())
+}
+
+fn get_api_key() -> Result<Option<String>, AppError> {
+    let entry = Entry::new("n3rgy.rars.github.io", "api_key")
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    match entry.get_password() {
+        Ok(password) => return Ok(Some(password)),
+        Err(e) => {
+            return match e {
+                keyring::Error::NoEntry => Ok(None),
+                _ => Err(AppError::CustomError(e.to_string())),
+            }
+        }
+    }
+}
+
+fn auto_dispatch_download_tasks(
+    app_handle: AppHandle,
+    app_state: AppState,
+) -> Result<(), AppError> {
+    let api_key_option = get_api_key()?;
+
+    if let Some(api_key) = api_key_option {
+        info!("Dispatching data download task");
+        let authorization_provider = StaticAuthorizationProvider::new(api_key);
+
+        let client = Arc::new(Client::new(authorization_provider, None));
+
+        async_runtime::spawn(async move {
+            match check_and_download_consumption_data(app_handle, app_state, client).await {
+                Ok(_) => debug!("Consumption data download task completed successfully"),
+                Err(e) => {
+                    error!("Consumption data download task panicked: {:?}", e);
+                    // Handle the panic (e.g., restart the task, log the error, etc.)
+                }
+            }
+        });
+    } else {
+        info!("No API key found, skipping data download task");
+    }
+
+    Ok(())
 }
 
 trait DataLoader<T> {
@@ -432,12 +494,18 @@ trait DataLoader<T> {
     fn insert_data(&self, data: Vec<T>) -> Result<(), Self::InsertError>;
 }
 
-struct ElectricityConsumptionDataLoader {
-    client: Arc<Client<EnvironmentAuthorizationProvider>>,
+struct ElectricityConsumptionDataLoader<T>
+where
+    T: AuthorizationProvider,
+{
+    client: Arc<Client<T>>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
-impl DataLoader<ElectricityConsumption> for ElectricityConsumptionDataLoader {
+impl<T> DataLoader<ElectricityConsumption> for ElectricityConsumptionDataLoader<T>
+where
+    T: AuthorizationProvider,
+{
     type LoadError = GetRecordsError;
     type InsertError = RepositoryError;
 
@@ -456,12 +524,18 @@ impl DataLoader<ElectricityConsumption> for ElectricityConsumptionDataLoader {
     }
 }
 
-struct GasConsumptionDataLoader {
-    client: Arc<Client<EnvironmentAuthorizationProvider>>,
+struct GasConsumptionDataLoader<T>
+where
+    T: AuthorizationProvider,
+{
+    client: Arc<Client<T>>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
-impl DataLoader<GasConsumption> for GasConsumptionDataLoader {
+impl<T> DataLoader<GasConsumption> for GasConsumptionDataLoader<T>
+where
+    T: AuthorizationProvider,
+{
     type LoadError = GetRecordsError;
     type InsertError = RepositoryError;
 
@@ -642,7 +716,14 @@ pub struct AppStatusUpdateEvent {
     pub is_downloading: bool,
 }
 
-async fn background_task(app_handle: AppHandle, app_state: AppState) -> Result<(), AppError> {
+async fn check_and_download_consumption_data<T>(
+    app_handle: AppHandle,
+    app_state: AppState,
+    client: Arc<Client<T>>,
+) -> Result<(), AppError>
+where
+    T: AuthorizationProvider,
+{
     debug!("Background task running");
 
     {
@@ -667,7 +748,7 @@ async fn background_task(app_handle: AppHandle, app_state: AppState) -> Result<(
         app_state.db.clone(),
         "electricity",
         ElectricityConsumptionDataLoader {
-            client: app_state.client.clone(),
+            client: client.clone(),
             connection: app_state.db.clone(),
         },
     )
@@ -678,7 +759,7 @@ async fn background_task(app_handle: AppHandle, app_state: AppState) -> Result<(
         app_state.db.clone(),
         "gas",
         GasConsumptionDataLoader {
-            client: app_state.client.clone(),
+            client: client.clone(),
             connection: app_state.db.clone(),
         },
     )
@@ -721,19 +802,25 @@ fn main() {
                 .app_data_dir()
                 .expect("Failed to resolve app data directory");
 
-            // Define the path for the database file
+            debug!("App data directory: {}", app_data_dir.display());
+
             let db_path = app_data_dir.join("db.sqlite");
 
             let mut connection =
                 db::establish_connection(db_path.to_str().expect("db path needed"));
             db::run_migrations(&mut connection);
 
-            debug!("App data directory: {}", app_data_dir.display());
+            let username = whoami::username();
+
+            let client_available = match get_api_key() {
+                Ok(Some(_)) => true,
+                _ => false,
+            };
 
             let app_state = AppState {
-                client: Arc::new(Client::new(EnvironmentAuthorizationProvider, None)),
                 db: Arc::new(Mutex::new(connection)),
                 downloading: Arc::new(Mutex::new(false)),
+                client_available: Arc::new(Mutex::new(client_available)),
             };
 
             let app_state_clone = app_state.clone();
@@ -742,16 +829,7 @@ fn main() {
 
             let app_handle = app.handle().clone();
 
-            // Spawn a background thread
-            async_runtime::spawn(async move {
-                match background_task(app_handle, app_state_clone).await {
-                    Ok(_) => debug!("Background task completed successfully"),
-                    Err(e) => {
-                        error!("Background task panicked: {:?}", e);
-                        // Handle the panic (e.g., restart the task, log the error, etc.)
-                    }
-                }
-            });
+            auto_dispatch_download_tasks(app_handle, app_state_clone)?;
 
             Ok(())
         })
@@ -766,15 +844,16 @@ fn main() {
                 .build(),
         )
         .invoke_handler(tauri::generate_handler![
-            get_raw_electricity_consumption,
+            get_app_status,
             get_daily_electricity_consumption,
-            get_monthly_electricity_consumption,
-            get_raw_gas_consumption,
             get_daily_gas_consumption,
-            get_monthly_gas_consumption,
             get_energy_profiles,
-            update_energy_profile_settings,
-            get_app_status
+            get_monthly_electricity_consumption,
+            get_monthly_gas_consumption,
+            get_raw_electricity_consumption,
+            get_raw_gas_consumption,
+            store_api_key,
+            update_energy_profile_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

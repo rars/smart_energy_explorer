@@ -1,4 +1,4 @@
-<h6>Settings</h6>
+<h2 class="mat-title-large">Settings</h2>
 
 <form [formGroup]="form" (ngSubmit)="update()">
   <div formArrayName="profiles" class="flex flex-row space-x-2">
@@ -36,3 +36,6 @@
     </button>
   </div>
 </form>
+<div class="mt-4">
+  <app-api-key-form></app-api-key-form>
+</div>
