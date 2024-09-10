@@ -1,0 +1,61 @@
+<h2 class="mat-title-large">Electricity Tariff</h2>
+@if (standingChargesDataSource) {
+  <div class="mb-4">
+    <table
+      mat-table
+      [dataSource]="standingChargesDataSource"
+      class="mat-elevation-z8"
+    >
+      <!--- Note that these columns can be defined in any order.
+          The actual rendered columns are set as a property on the row definition" -->
+
+      <ng-container matColumnDef="startDate">
+        <th mat-header-cell *matHeaderCellDef>Start Date</th>
+        <td mat-cell *matCellDef="let element">{{ element.startDate }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="standingChargePence">
+        <th mat-header-cell *matHeaderCellDef>Standing Charge (p)</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element.standingChargePence }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedStandingChargeColumns"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedStandingChargeColumns"
+      ></tr>
+    </table>
+  </div>
+}
+
+@if (unitPricesDataSource) {
+  <div>
+    <table
+      mat-table
+      [dataSource]="unitPricesDataSource"
+      class="mat-elevation-z8"
+    >
+      <!--- Note that these columns can be defined in any order.
+            The actual rendered columns are set as a property on the row definition" -->
+
+      <ng-container matColumnDef="priceEffectiveTime">
+        <th mat-header-cell *matHeaderCellDef>Effective From</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element.priceEffectiveTime }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="unitPricePence">
+        <th mat-header-cell *matHeaderCellDef>Unit Price (p)</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element.unitPricePence }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedUnitPriceColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedUnitPriceColumns"></tr>
+    </table>
+  </div>
+}

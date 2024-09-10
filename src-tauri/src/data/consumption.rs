@@ -11,6 +11,8 @@ use n3rgy::{ElectricityConsumption, GasConsumption};
 
 use crate::schema::{electricity_consumption, gas_consumption};
 
+use super::RepositoryError;
+
 #[derive(Insertable)]
 #[diesel(table_name = electricity_consumption)]
 struct NewElectricityConsumption {
@@ -37,14 +39,6 @@ pub struct GasConsumptionRecord {
     pub gas_consumption_id: i32,
     pub timestamp: NaiveDateTime,
     pub energy_consumption_m3: f64,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum RepositoryError {
-    #[error("Could not connect to database: {0}")]
-    ConnectionError(String),
-    #[error("Database error: {0}")]
-    DieselError(#[from] diesel::result::Error),
 }
 
 type RepositoryResult<T> = Result<T, RepositoryError>;

@@ -52,6 +52,7 @@ html {
   @include mat.slide-toggle-theme($light-theme);
   @include mat.card-theme($light-theme);
   @include mat.typography-hierarchy($light-theme);
+  @include mat.table-theme($light-theme);
 
   // Apply the dark theme only when the user prefers light themes.
   .dark {
@@ -70,6 +71,7 @@ html {
     @include mat.toolbar-color($dark-theme);
     @include mat.slide-toggle-color($dark-theme);
     @include mat.card-color($dark-theme);
+    @include mat.table-color($dark-theme);
   }
 }
 

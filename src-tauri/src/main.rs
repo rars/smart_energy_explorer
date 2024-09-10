@@ -1,7 +1,9 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::cmp;
 use std::error::Error;
+use std::future::Future;
 use std::sync::Arc;
 use std::sync::Mutex;
 
@@ -12,16 +14,22 @@ use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 
 use data::consumption::ConsumptionRepository;
-use data::consumption::RepositoryError;
 use data::consumption::SqliteElectricityConsumptionRepository;
 use data::consumption::SqliteGasConsumptionRepository;
 use data::energy_profile::EnergyProfile;
 use data::energy_profile::EnergyProfileRepository;
 use data::energy_profile::SqliteEnergyProfileRepository;
+use data::tariff::SqliteElectricityTariffRepository;
+use data::tariff::SqliteGasTariffRepository;
+use data::tariff::TariffRepository;
+use data::RepositoryError;
 
+// use diesel::serialize::Result;
 use diesel::SqliteConnection;
 use keyring::Entry;
 use n3rgy::AuthorizationProvider;
+use n3rgy::ElectricityTariff;
+use n3rgy::GasTariff;
 use n3rgy::StaticAuthorizationProvider;
 use n3rgy::{Client, ElectricityConsumption, GasConsumption, GetRecordsError};
 use serde::Deserialize;
@@ -124,6 +132,8 @@ pub enum ApiError {
     DatabaseError(#[from] diesel::result::Error),
     #[error("Date parse error: {0}")]
     ChronoParseError(#[from] chrono::ParseError),
+    #[error("Repository error: {0}")]
+    RepositoryError(#[from] RepositoryError),
 }
 
 impl serde::Serialize for ApiError {
@@ -343,6 +353,123 @@ async fn get_monthly_gas_consumption(
     }
 }
 
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct StandingCharge {
+    start_date: NaiveDateTime,
+    standing_charge_pence: f64,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct UnitPrice {
+    price_effective_time: NaiveDateTime,
+    unit_price_pence: f64,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct TariffHistoryResponse {
+    standing_charges: Vec<StandingCharge>,
+    unit_prices: Vec<UnitPrice>,
+}
+
+#[tauri::command]
+async fn get_electricity_tariff_history(
+    app_state: tauri::State<'_, AppState>,
+) -> Result<TariffHistoryResponse, ApiError> {
+    let db_connection_clone = app_state.db.clone();
+
+    let standing_charge_history = async_runtime::spawn_blocking(move || {
+        let repository = SqliteElectricityTariffRepository::new(db_connection_clone);
+
+        repository.get_standing_charge_history()
+    })
+    .await
+    .map_err(|e| ApiError::Custom(format!("Error: {}", e)))?
+    .map_err(ApiError::RepositoryError)?;
+
+    let db_connection_clone = app_state.db.clone();
+
+    let unit_price_history = async_runtime::spawn_blocking(move || {
+        let repository = SqliteElectricityTariffRepository::new(db_connection_clone);
+
+        repository.get_unit_price_history()
+    })
+    .await
+    .map_err(|e| ApiError::Custom(format!("Error: {}", e)))?
+    .map_err(ApiError::RepositoryError)?;
+
+    let standing_charges = standing_charge_history
+        .iter()
+        .map(|x| StandingCharge {
+            start_date: x.start_date,
+            standing_charge_pence: x.standing_charge_pence,
+        })
+        .collect::<Vec<_>>();
+
+    let unit_prices = unit_price_history
+        .iter()
+        .map(|x| UnitPrice {
+            price_effective_time: x.price_effective_time,
+            unit_price_pence: x.unit_price_pence,
+        })
+        .collect::<Vec<_>>();
+
+    Ok(TariffHistoryResponse {
+        standing_charges,
+        unit_prices,
+    })
+}
+
+#[tauri::command]
+async fn get_gas_tariff_history(
+    app_state: tauri::State<'_, AppState>,
+) -> Result<TariffHistoryResponse, ApiError> {
+    let db_connection_clone = app_state.db.clone();
+
+    let standing_charge_history = async_runtime::spawn_blocking(move || {
+        let repository = SqliteGasTariffRepository::new(db_connection_clone);
+
+        repository.get_standing_charge_history()
+    })
+    .await
+    .map_err(|e| ApiError::Custom(format!("Error: {}", e)))?
+    .map_err(ApiError::RepositoryError)?;
+
+    let db_connection_clone = app_state.db.clone();
+
+    let unit_price_history = async_runtime::spawn_blocking(move || {
+        let repository = SqliteGasTariffRepository::new(db_connection_clone);
+
+        repository.get_unit_price_history()
+    })
+    .await
+    .map_err(|e| ApiError::Custom(format!("Error: {}", e)))?
+    .map_err(ApiError::RepositoryError)?;
+
+    let standing_charges = standing_charge_history
+        .iter()
+        .map(|x| StandingCharge {
+            start_date: x.start_date,
+            standing_charge_pence: x.standing_charge_pence,
+        })
+        .collect::<Vec<_>>();
+
+    let unit_prices = unit_price_history
+        .iter()
+        .map(|x| UnitPrice {
+            price_effective_time: x.price_effective_time,
+            unit_price_pence: x.unit_price_pence,
+        })
+        .collect::<Vec<_>>();
+
+    Ok(TariffHistoryResponse {
+        standing_charges,
+        unit_prices,
+    })
+}
+
 #[tauri::command]
 fn get_energy_profiles(
     app_state: tauri::State<'_, AppState>,
@@ -494,6 +621,7 @@ trait DataLoader<T> {
     fn insert_data(&self, data: Vec<T>) -> Result<(), Self::InsertError>;
 }
 
+#[derive(Clone)]
 struct ElectricityConsumptionDataLoader<T>
 where
     T: AuthorizationProvider,
@@ -524,6 +652,38 @@ where
     }
 }
 
+#[derive(Clone)]
+struct ElectricityTariffDataLoader<T>
+where
+    T: AuthorizationProvider,
+{
+    client: Arc<Client<T>>,
+    connection: Arc<Mutex<SqliteConnection>>,
+}
+
+impl<T> DataLoader<ElectricityTariff> for ElectricityTariffDataLoader<T>
+where
+    T: AuthorizationProvider,
+{
+    type LoadError = GetRecordsError;
+    type InsertError = RepositoryError;
+
+    async fn load(
+        &self,
+        start: NaiveDate,
+        end: NaiveDate,
+    ) -> Result<Vec<ElectricityTariff>, Self::LoadError> {
+        Ok(self.client.get_electricity_tariff(start, end).await?)
+    }
+
+    fn insert_data(&self, data: Vec<ElectricityTariff>) -> Result<(), Self::InsertError> {
+        SqliteElectricityTariffRepository::new(self.connection.clone()).insert(data)?;
+
+        Ok(())
+    }
+}
+
+#[derive(Clone)]
 struct GasConsumptionDataLoader<T>
 where
     T: AuthorizationProvider,
@@ -549,6 +709,37 @@ where
 
     fn insert_data(&self, data: Vec<GasConsumption>) -> Result<(), Self::InsertError> {
         SqliteGasConsumptionRepository::new(self.connection.clone()).insert(data)?;
+
+        Ok(())
+    }
+}
+
+#[derive(Clone)]
+struct GasTariffDataLoader<T>
+where
+    T: AuthorizationProvider,
+{
+    client: Arc<Client<T>>,
+    connection: Arc<Mutex<SqliteConnection>>,
+}
+
+impl<T> DataLoader<GasTariff> for GasTariffDataLoader<T>
+where
+    T: AuthorizationProvider,
+{
+    type LoadError = GetRecordsError;
+    type InsertError = RepositoryError;
+
+    async fn load(
+        &self,
+        start: NaiveDate,
+        end: NaiveDate,
+    ) -> Result<Vec<GasTariff>, Self::LoadError> {
+        Ok(self.client.get_gas_tariff(start, end).await?)
+    }
+
+    fn insert_data(&self, data: Vec<GasTariff>) -> Result<(), Self::InsertError> {
+        SqliteGasTariffRepository::new(self.connection.clone()).insert(data)?;
 
         Ok(())
     }
@@ -654,14 +845,14 @@ fn get_or_create_energy_profile(
     })
 }
 
-async fn check_for_new_data<T, U>(
-    app_handle: AppHandle,
+async fn check_for_new_data<F, Fut>(
     connection: Arc<Mutex<SqliteConnection>>,
     profile_name: &str,
-    data_loader: T,
+    download_action: F,
 ) -> Result<(), AppError>
 where
-    T: DataLoader<U>,
+    F: FnOnce(NaiveDateTime) -> Fut,
+    Fut: Future<Output = Result<NaiveDate, AppError>>,
 {
     let profile = get_or_create_energy_profile(connection.clone(), profile_name)?;
 
@@ -675,8 +866,7 @@ where
 
     let until_date_time = profile.last_date_retrieved.unwrap_or(profile.start_date);
 
-    let last_date_retrieved =
-        download_history(app_handle.clone(), data_loader, until_date_time).await?;
+    let last_date_retrieved = download_action(until_date_time).await?;
 
     let repository = SqliteEnergyProfileRepository::new(connection);
 
@@ -743,24 +933,68 @@ where
         },
     )?;
 
+    let electricity_consumption_data_loader = ElectricityConsumptionDataLoader {
+        client: client.clone(),
+        connection: app_state.db.clone(),
+    };
+
+    let electricity_tariff_data_loader = ElectricityTariffDataLoader {
+        client: client.clone(),
+        connection: app_state.db.clone(),
+    };
+
+    let app_handle_clone = app_handle.clone();
+
     check_for_new_data(
-        app_handle.clone(),
         app_state.db.clone(),
         "electricity",
-        ElectricityConsumptionDataLoader {
-            client: client.clone(),
-            connection: app_state.db.clone(),
+        move |until_date_time| async move {
+            let date_one = download_history(
+                app_handle_clone.clone(),
+                electricity_consumption_data_loader,
+                until_date_time,
+            )
+            .await?;
+
+            let date_two = download_history(
+                app_handle_clone,
+                electricity_tariff_data_loader,
+                until_date_time,
+            )
+            .await?;
+
+            Ok(cmp::max(date_one, date_two))
         },
     )
     .await?;
 
+    let gas_consumption_data_loader = GasConsumptionDataLoader {
+        client: client.clone(),
+        connection: app_state.db.clone(),
+    };
+
+    let gas_tariff_data_loader = GasTariffDataLoader {
+        client: client.clone(),
+        connection: app_state.db.clone(),
+    };
+
+    let app_handle_clone = app_handle.clone();
+
     check_for_new_data(
-        app_handle.clone(),
         app_state.db.clone(),
         "gas",
-        GasConsumptionDataLoader {
-            client: client.clone(),
-            connection: app_state.db.clone(),
+        move |until_date_time| async move {
+            let date_one = download_history(
+                app_handle_clone.clone(),
+                gas_consumption_data_loader,
+                until_date_time,
+            )
+            .await?;
+
+            let date_two =
+                download_history(app_handle_clone, gas_tariff_data_loader, until_date_time).await?;
+
+            Ok(cmp::max(date_one, date_two))
         },
     )
     .await?;
@@ -781,6 +1015,7 @@ where
             is_downloading: false,
         },
     )?;
+
     // Sleep for a specified duration
     // tokio::time::sleep(std::time::Duration::from_secs(60 * 60)).await; // Run every 1 hour
 
@@ -847,13 +1082,15 @@ fn main() {
             get_app_status,
             get_daily_electricity_consumption,
             get_daily_gas_consumption,
+            get_electricity_tariff_history,
+            get_gas_tariff_history,
             get_energy_profiles,
             get_monthly_electricity_consumption,
             get_monthly_gas_consumption,
             get_raw_electricity_consumption,
             get_raw_gas_consumption,
             store_api_key,
-            update_energy_profile_settings
+            update_energy_profile_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

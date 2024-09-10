@@ -9,6 +9,22 @@ diesel::table! {
 }
 
 diesel::table! {
+    electricity_standing_charge (electricity_standing_charge_id) {
+        electricity_standing_charge_id -> Integer,
+        start_date -> Timestamp,
+        standing_charge_pence -> Double,
+    }
+}
+
+diesel::table! {
+    electricity_unit_price (electricity_unit_price_id) {
+        electricity_unit_price_id -> Integer,
+        price_effective_time -> Timestamp,
+        unit_price_pence -> Double,
+    }
+}
+
+diesel::table! {
     energy_profile (energy_profile_id) {
         energy_profile_id -> Integer,
         name -> Text,
@@ -26,8 +42,28 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    gas_standing_charge (gas_standing_charge_id) {
+        gas_standing_charge_id -> Integer,
+        start_date -> Timestamp,
+        standing_charge_pence -> Double,
+    }
+}
+
+diesel::table! {
+    gas_unit_price (gas_unit_price_id) {
+        gas_unit_price_id -> Integer,
+        price_effective_time -> Timestamp,
+        unit_price_pence -> Double,
+    }
+}
+
 diesel::allow_tables_to_appear_in_same_query!(
     electricity_consumption,
+    electricity_standing_charge,
+    electricity_unit_price,
     energy_profile,
     gas_consumption,
+    gas_standing_charge,
+    gas_unit_price,
 );

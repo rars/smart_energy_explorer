@@ -8,7 +8,7 @@
       </button>
       <mat-menu #electricityMenu="matMenu">
         <button mat-menu-item routerLink="electricity">Consumption</button>
-        <button mat-menu-item>Tariff</button>
+        <button mat-menu-item routerLink="electricity/tariff">Tariff</button>
       </mat-menu>
 
       <button mat-button [matMenuTriggerFor]="gasMenu">
@@ -16,7 +16,7 @@
       </button>
       <mat-menu #gasMenu="matMenu">
         <button mat-menu-item routerLink="gas">Consumption</button>
-        <button mat-menu-item>Tariff</button>
+        <button mat-menu-item routerLink="gas/tariff">Tariff</button>
       </mat-menu>
 
       <button mat-icon-button routerLink="settings">
