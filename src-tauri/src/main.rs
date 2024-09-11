@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::cmp;
+use std::collections::BTreeMap;
 use std::error::Error;
 use std::future::Future;
 use std::sync::Arc;
@@ -32,6 +33,7 @@ use n3rgy::ElectricityTariff;
 use n3rgy::GasTariff;
 use n3rgy::StaticAuthorizationProvider;
 use n3rgy::{Client, ElectricityConsumption, GasConsumption, GetRecordsError};
+use schema::electricity_unit_price::price_effective_time;
 use serde::Deserialize;
 use serde::Serialize;
 use tauri::async_runtime;
@@ -549,6 +551,88 @@ fn get_app_status(app_state: tauri::State<'_, AppState>) -> Result<StatusRespons
         is_downloading: *downloading,
         is_client_available: *client_available,
     })
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct DailyCost {
+    date: NaiveDate,
+    cost_pence: f64,
+}
+
+#[tauri::command]
+async fn get_electricity_cost_history(
+    app_state: tauri::State<'_, AppState>,
+    start_date: String,
+    end_date: String,
+) -> Result<Vec<DailyCost>, ApiError> {
+    debug!("get_electricity_cost_history called");
+
+    let start = parse_iso_string_to_naive_date(&start_date)?;
+    let end = parse_iso_string_to_naive_date(&end_date)?;
+
+    let db_connection_clone = app_state.db.clone();
+
+    let mut consumption = async_runtime::spawn_blocking(move || {
+        let repository = SqliteElectricityConsumptionRepository::new(db_connection_clone);
+
+        repository.get_daily(start, end)
+    })
+    .await
+    .map_err(|e| ApiError::Custom(format!("Error: {}", e)))?
+    .map_err(ApiError::RepositoryError)?;
+
+    consumption.sort_by_key(|x| x.0);
+
+    let tariff_history = get_electricity_tariff_history(app_state.clone()).await?;
+
+    let mut standing_charges_map: BTreeMap<NaiveDateTime, f64> = BTreeMap::new();
+
+    for sc in tariff_history.standing_charges {
+        standing_charges_map.insert(sc.start_date, sc.standing_charge_pence);
+    }
+
+    let mut unit_prices_map: BTreeMap<NaiveDateTime, f64> = BTreeMap::new();
+
+    for up in tariff_history.unit_prices {
+        unit_prices_map.insert(up.price_effective_time, up.unit_price_pence);
+    }
+
+    let mut current_standing_charge = 0f64;
+    let mut current_unit_price = 0f64;
+
+    let mut daily_costs: Vec<DailyCost> = vec![];
+
+    for c in consumption {
+        if let Some(standing_charge) = standing_charges_map
+            .range(..=NaiveDateTime::from(c.0))
+            .next_back()
+            .map(|(_, v)| v)
+        {
+            current_standing_charge = *standing_charge;
+        } else {
+            info!("Could not find a standing charge!!!");
+            continue;
+        }
+
+        if let Some(unit_price) = unit_prices_map
+            .range(..=NaiveDateTime::from(c.0))
+            .next_back()
+            .map(|(_, v)| v)
+        {
+            current_unit_price = *unit_price;
+        } else {
+            info!("Could not find a unit price!!!");
+            continue;
+        }
+
+        daily_costs.push(DailyCost {
+            date: c.0,
+            cost_pence: current_standing_charge + (c.1 * current_unit_price),
+        });
+    }
+
+    Ok(daily_costs)
 }
 
 #[tauri::command]
@@ -1082,9 +1166,10 @@ fn main() {
             get_app_status,
             get_daily_electricity_consumption,
             get_daily_gas_consumption,
+            get_electricity_cost_history,
             get_electricity_tariff_history,
-            get_gas_tariff_history,
             get_energy_profiles,
+            get_gas_tariff_history,
             get_monthly_electricity_consumption,
             get_monthly_gas_consumption,
             get_raw_electricity_consumption,
