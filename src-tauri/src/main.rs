@@ -636,6 +636,81 @@ async fn get_electricity_cost_history(
 }
 
 #[tauri::command]
+async fn get_gas_cost_history(
+    app_state: tauri::State<'_, AppState>,
+    start_date: String,
+    end_date: String,
+) -> Result<Vec<DailyCost>, ApiError> {
+    debug!("get_gas_cost_history called");
+
+    let start = parse_iso_string_to_naive_date(&start_date)?;
+    let end = parse_iso_string_to_naive_date(&end_date)?;
+
+    let db_connection_clone = app_state.db.clone();
+
+    let mut consumption = async_runtime::spawn_blocking(move || {
+        let repository = SqliteGasConsumptionRepository::new(db_connection_clone);
+
+        repository.get_daily(start, end)
+    })
+    .await
+    .map_err(|e| ApiError::Custom(format!("Error: {}", e)))?
+    .map_err(ApiError::RepositoryError)?;
+
+    consumption.sort_by_key(|x| x.0);
+
+    let tariff_history = get_gas_tariff_history(app_state.clone()).await?;
+
+    let mut standing_charges_map: BTreeMap<NaiveDateTime, f64> = BTreeMap::new();
+
+    for sc in tariff_history.standing_charges {
+        standing_charges_map.insert(sc.start_date, sc.standing_charge_pence);
+    }
+
+    let mut unit_prices_map: BTreeMap<NaiveDateTime, f64> = BTreeMap::new();
+
+    for up in tariff_history.unit_prices {
+        unit_prices_map.insert(up.price_effective_time, up.unit_price_pence);
+    }
+
+    let mut current_standing_charge = 0f64;
+    let mut current_unit_price = 0f64;
+
+    let mut daily_costs: Vec<DailyCost> = vec![];
+
+    for c in consumption {
+        if let Some(standing_charge) = standing_charges_map
+            .range(..=NaiveDateTime::from(c.0))
+            .next_back()
+            .map(|(_, v)| v)
+        {
+            current_standing_charge = *standing_charge;
+        } else {
+            info!("Could not find a standing charge!!!");
+            continue;
+        }
+
+        if let Some(unit_price) = unit_prices_map
+            .range(..=NaiveDateTime::from(c.0))
+            .next_back()
+            .map(|(_, v)| v)
+        {
+            current_unit_price = *unit_price;
+        } else {
+            info!("Could not find a unit price!!!");
+            continue;
+        }
+
+        daily_costs.push(DailyCost {
+            date: c.0,
+            cost_pence: current_standing_charge + (c.1 * current_unit_price),
+        });
+    }
+
+    Ok(daily_costs)
+}
+
+#[tauri::command]
 fn store_api_key(
     app_handle: AppHandle,
     app_state: tauri::State<'_, AppState>,
@@ -1169,6 +1244,7 @@ fn main() {
             get_electricity_cost_history,
             get_electricity_tariff_history,
             get_energy_profiles,
+            get_gas_cost_history,
             get_gas_tariff_history,
             get_monthly_electricity_consumption,
             get_monthly_gas_consumption,

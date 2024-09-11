@@ -9,7 +9,9 @@
       <mat-menu #electricityMenu="matMenu">
         <button mat-menu-item routerLink="electricity">Consumption</button>
         <button mat-menu-item routerLink="electricity/tariff">Tariff</button>
-        <button mat-menu-item routerLink="electricity/costs">Cost History</button>
+        <button mat-menu-item routerLink="electricity/costs">
+          Cost History
+        </button>
       </mat-menu>
 
       <button mat-button [matMenuTriggerFor]="gasMenu">
@@ -18,6 +20,7 @@
       <mat-menu #gasMenu="matMenu">
         <button mat-menu-item routerLink="gas">Consumption</button>
         <button mat-menu-item routerLink="gas/tariff">Tariff</button>
+        <button mat-menu-item routerLink="gas/costs">Cost History</button>
       </mat-menu>
 
       <button mat-icon-button routerLink="settings">
