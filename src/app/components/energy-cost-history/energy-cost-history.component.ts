@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, ViewChild } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,7 +13,15 @@ import {
   startOfToday,
 } from 'date-fns';
 
-import { combineLatest, filter, from, map, startWith, switchMap } from 'rxjs';
+import {
+  combineLatest,
+  filter,
+  from,
+  map,
+  ReplaySubject,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { DateService } from '../../services/date/date.service';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
@@ -25,7 +33,7 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
   x.valueChanges.pipe(startWith(x.value), filter(nonNullOrUndefined));
 
 @Component({
-  selector: 'app-electricity-cost-history',
+  selector: 'app-energy-cost-history',
   standalone: true,
   imports: [
     CommonModule,
@@ -36,10 +44,15 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
     MatTableModule,
     MatSortModule,
   ],
-  templateUrl: './electricity-cost-history.component.html',
-  styleUrl: './electricity-cost-history.component.scss',
+  templateUrl: './energy-cost-history.component.html',
+  styleUrl: './energy-cost-history.component.scss',
 })
-export class ElectricityCostHistoryComponent implements AfterViewInit {
+export class EnergyCostHistoryComponent implements AfterViewInit {
+  @Input() public title?: string;
+  @Input() public set command(value: string) {
+    this.commandSubject.next(value);
+  }
+
   public readonly startDateControl = new FormControl<Date>(
     addDays(startOfToday(), -7),
   );
@@ -48,24 +61,28 @@ export class ElectricityCostHistoryComponent implements AfterViewInit {
   public readonly displayedColumns = ['date', 'costPence'];
   public readonly dataSource: any = new MatTableDataSource([]);
 
+  private readonly commandSubject = new ReplaySubject<string>(1);
+
   @ViewChild(MatSort) public sort?: MatSort;
 
   public constructor(private readonly dateService: DateService) {
     combineLatest([
+      this.commandSubject.asObservable(),
       getValueStream(this.startDateControl),
       getValueStream(this.endDateControl),
     ])
       .pipe(
-        map(([startDate, endDate]) => [
+        map(([command, startDate, endDate]) => [
+          command,
           this.dateService.formatISODate(startDate),
           this.dateService.formatISODate(this.dateService.addDays(endDate, 1)),
         ]),
-        switchMap(([startDate, endDate]) => {
+        switchMap(([command, startDate, endDate]) => {
           return from(
-            invoke<{ date: string; costPence: number }[]>(
-              'get_electricity_cost_history',
-              { startDate, endDate },
-            ),
+            invoke<{ date: string; costPence: number }[]>(command, {
+              startDate,
+              endDate,
+            }),
           );
         }),
         map((x) =>

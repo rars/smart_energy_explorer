@@ -3,7 +3,7 @@ import {
   ErrorHandler,
   provideZoneChangeDetection,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
 
 import { GlobalErrorHandler } from './services/error/global-error-handler';
 import { routes } from './app.routes';
@@ -20,7 +20,7 @@ import { enGB } from 'date-fns/locale';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes),
+    provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withInterceptorsFromDi()),
     { provide: BASE_PATH, useValue: 'http://localhost:4200/api' },
     provideAnimationsAsync(),
