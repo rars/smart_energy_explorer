@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { addDays, formatISO } from 'date-fns';
+import { addDays, formatISO, startOfToday } from 'date-fns';
 
 @Injectable({
   providedIn: 'root',
@@ -11,5 +11,9 @@ export class DateService {
 
   public addDays(date: Date, n: number): Date {
     return addDays(date, n);
+  }
+
+  public startOfToday(): Date {
+    return startOfToday();
   }
 }
