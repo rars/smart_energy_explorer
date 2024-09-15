@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, Input, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  Input,
+  OnDestroy,
+  ViewChild,
+} from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -21,11 +27,13 @@ import {
   ReplaySubject,
   startWith,
   switchMap,
+  take,
 } from 'rxjs';
 import { DateService } from '../../services/date/date.service';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControlService } from '../../services/form-control/form-control.service';
 
 const nonNullOrUndefined = <T>(x: T | null | undefined): x is T => !!x;
 
@@ -47,7 +55,7 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
   templateUrl: './energy-cost-history.component.html',
   styleUrl: './energy-cost-history.component.scss',
 })
-export class EnergyCostHistoryComponent implements AfterViewInit {
+export class EnergyCostHistoryComponent implements AfterViewInit, OnDestroy {
   @Input() public title?: string;
   @Input() public set command(value: string) {
     this.commandSubject.next(value);
@@ -65,7 +73,18 @@ export class EnergyCostHistoryComponent implements AfterViewInit {
 
   @ViewChild(MatSort) public sort?: MatSort;
 
-  public constructor(private readonly dateService: DateService) {
+  public constructor(
+    private formControlService: FormControlService,
+    private readonly dateService: DateService,
+  ) {
+    this.formControlService
+      .getDateRange()
+      .pipe(take(1))
+      .subscribe(([startDate, endDate]) => {
+        this.startDateControl.setValue(startDate);
+        this.endDateControl.setValue(endDate);
+      });
+
     combineLatest([
       this.commandSubject.asObservable(),
       getValueStream(this.startDateControl),
@@ -100,6 +119,15 @@ export class EnergyCostHistoryComponent implements AfterViewInit {
 
   public ngAfterViewInit(): void {
     this.dataSource.sort = this.sort;
+  }
+
+  public ngOnDestroy(): void {
+    if (this.startDateControl.value && this.endDateControl.value) {
+      this.formControlService.setDateRange(
+        this.startDateControl.value,
+        this.endDateControl.value,
+      );
+    }
   }
 
   public getTotalCost(): number {

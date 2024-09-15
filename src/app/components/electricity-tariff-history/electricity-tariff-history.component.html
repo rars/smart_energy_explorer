@@ -1,17 +1,15 @@
 <h2 class="mat-title-large">Electricity Tariff</h2>
 @if (standingChargesDataSource) {
   <div class="mb-4">
-    <table
-      mat-table
-      [dataSource]="standingChargesDataSource"
-      class="mat-elevation-z8"
-    >
+    <table mat-table [dataSource]="standingChargesDataSource">
       <!--- Note that these columns can be defined in any order.
           The actual rendered columns are set as a property on the row definition" -->
 
       <ng-container matColumnDef="startDate">
         <th mat-header-cell *matHeaderCellDef>Start Date</th>
-        <td mat-cell *matCellDef="let element">{{ element.startDate }}</td>
+        <td mat-cell *matCellDef="let element">
+          {{ element.startDate | date: 'yyyy-MM-dd' }}
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="standingChargePence">
@@ -32,18 +30,14 @@
 
 @if (unitPricesDataSource) {
   <div>
-    <table
-      mat-table
-      [dataSource]="unitPricesDataSource"
-      class="mat-elevation-z8"
-    >
+    <table mat-table [dataSource]="unitPricesDataSource">
       <!--- Note that these columns can be defined in any order.
             The actual rendered columns are set as a property on the row definition" -->
 
       <ng-container matColumnDef="priceEffectiveTime">
         <th mat-header-cell *matHeaderCellDef>Effective From</th>
         <td mat-cell *matCellDef="let element">
-          {{ element.priceEffectiveTime }}
+          {{ element.priceEffectiveTime | date: 'yyyy-MM-dd' }}
         </td>
       </ng-container>
 

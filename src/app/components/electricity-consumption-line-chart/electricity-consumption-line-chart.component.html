@@ -34,6 +34,16 @@
         <mat-option value="monthly">Monthly</mat-option>
       </mat-select>
     </mat-form-field>
+
+    <button mat-button type="button" (click)="showLastSevenDays()">
+      Last 7 days
+    </button>
+    <button mat-button type="button" (click)="showThisMonth()">
+      This month
+    </button>
+    <button mat-button type="button" (click)="showPreviousMonth()">
+      Previous month
+    </button>
   </div>
 
   @if (loading) {

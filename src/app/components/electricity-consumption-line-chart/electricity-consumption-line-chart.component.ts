@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { ChartComponent } from '../chart/chart.component';
@@ -14,6 +14,7 @@ import {
   of,
   startWith,
   switchMap,
+  take,
 } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -23,7 +24,13 @@ import {
   ElectricityService,
 } from '../../core/modules/n3rgyapi';
 import { MatSelectModule } from '@angular/material/select';
-import { addDays, startOfToday } from 'date-fns';
+import {
+  addDays,
+  addMonths,
+  endOfMonth,
+  startOfMonth,
+  startOfToday,
+} from 'date-fns';
 
 type Aggregation = 'raw' | 'daily' | 'monthly';
 
@@ -34,12 +41,15 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
 
 // When using the Tauri API npm package:
 import { invoke } from '@tauri-apps/api/core';
+import { MatButtonModule } from '@angular/material/button';
+import { FormControlService } from '../../services/form-control/form-control.service';
 
 @Component({
   selector: 'app-electricity-consumption-line-chart',
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    MatButtonModule,
     MatFormFieldModule,
     MatDatepickerModule,
     MatProgressBarModule,
@@ -49,7 +59,9 @@ import { invoke } from '@tauri-apps/api/core';
   templateUrl: './electricity-consumption-line-chart.component.html',
   styleUrl: './electricity-consumption-line-chart.component.scss',
 })
-export class ElectricityConsumptionLineChartComponent implements OnInit {
+export class ElectricityConsumptionLineChartComponent
+  implements OnInit, OnDestroy
+{
   public values?: any[];
   public chartConfiguration: any;
   public startDateControl = new FormControl<Date>(addDays(startOfToday(), -7));
@@ -60,7 +72,16 @@ export class ElectricityConsumptionLineChartComponent implements OnInit {
   public constructor(
     private readonly dateService: DateService,
     private readonly electricityService: ElectricityService,
+    private readonly formControlService: FormControlService,
   ) {
+    this.formControlService
+      .getDateRange()
+      .pipe(take(1))
+      .subscribe(([startDate, endDate]) => {
+        this.startDateControl.setValue(startDate);
+        this.endDateControl.setValue(endDate);
+      });
+
     combineLatest([
       getValueStream(this.startDateControl),
       getValueStream(this.endDateControl),
@@ -216,4 +237,41 @@ export class ElectricityConsumptionLineChartComponent implements OnInit {
   }
 
   public ngOnInit(): void {}
+
+  public ngOnDestroy(): void {
+    if (this.startDateControl.value && this.endDateControl.value) {
+      this.formControlService.setDateRange(
+        this.startDateControl.value,
+        this.endDateControl.value,
+      );
+    }
+  }
+
+  public showLastSevenDays(): void {
+    const today = this.dateService.startOfToday();
+
+    this.setDateRange(this.dateService.addDays(today, -6), today);
+  }
+
+  public showThisMonth(): void {
+    const startOfThisMonth = startOfMonth(this.dateService.startOfToday());
+    const endDate = this.dateService.startOfToday();
+
+    this.setDateRange(startOfThisMonth, endDate);
+  }
+
+  public showPreviousMonth(): void {
+    const startOfLastMonth = addMonths(
+      startOfMonth(this.dateService.startOfToday()),
+      -1,
+    );
+    const endDate = endOfMonth(startOfLastMonth);
+
+    this.setDateRange(startOfLastMonth, endDate);
+  }
+
+  private setDateRange(startDate: Date, endDate: Date): void {
+    this.startDateControl.setValue(startDate);
+    this.endDateControl.setValue(endDate);
+  }
 }

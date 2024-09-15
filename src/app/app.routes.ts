@@ -6,8 +6,10 @@ import { unsavedChangesGuard } from './unsaved-changes.guard';
 import { ElectricityTariffHistoryComponent } from './components/electricity-tariff-history/electricity-tariff-history.component';
 import { GasTariffHistoryComponent } from './components/gas-tariff-history/gas-tariff-history.component';
 import { EnergyCostHistoryComponent } from './components/energy-cost-history/energy-cost-history.component';
+import { WelcomeComponent } from './components/welcome/welcome.component';
 
 export const routes: Routes = [
+  { path: 'welcome', component: WelcomeComponent },
   { path: 'electricity', component: ElectricityConsumptionLineChartComponent },
   { path: 'gas', component: GasConsumptionLineChartComponent },
   { path: 'electricity/tariff', component: ElectricityTariffHistoryComponent },

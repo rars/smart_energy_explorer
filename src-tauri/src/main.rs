@@ -701,6 +701,11 @@ async fn get_gas_cost_history(
             continue;
         }
 
+        debug!(
+            "Daily cost: {} + {}",
+            current_standing_charge, current_unit_price
+        );
+
         daily_costs.push(DailyCost {
             date: c.0,
             cost_pence: current_standing_charge + (c.1 * current_unit_price),
@@ -1189,6 +1194,7 @@ struct DownloadUpdateEvent {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let app_data_dir = app

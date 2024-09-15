@@ -25,6 +25,7 @@
     "@tauri-apps/api": "^2.0.0-rc.0",
     "@tauri-apps/plugin-dialog": "^2.0.0-rc.1",
     "@tauri-apps/plugin-sql": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-store": "^2.0.0-rc.1",
     "chart.js": "^4.4.3",
     "chartjs-adapter-date-fns": "^3.0.0",
     "date-fns": "^3.6.0",

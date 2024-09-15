@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { invoke } from '@tauri-apps/api/core';
@@ -16,7 +17,7 @@ export interface UnitPrice {
 @Component({
   selector: 'app-gas-tariff-history',
   standalone: true,
-  imports: [MatTableModule],
+  imports: [CommonModule, MatTableModule],
   templateUrl: './gas-tariff-history.component.html',
   styleUrl: './gas-tariff-history.component.scss',
 })

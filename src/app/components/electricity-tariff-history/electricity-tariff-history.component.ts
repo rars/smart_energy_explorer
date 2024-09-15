@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { invoke } from '@tauri-apps/api/core';
@@ -16,7 +17,7 @@ export interface UnitPrice {
 @Component({
   selector: 'app-electricity-tariff-history',
   standalone: true,
-  imports: [MatTableModule],
+  imports: [CommonModule, MatTableModule],
   templateUrl: './electricity-tariff-history.component.html',
   styleUrl: './electricity-tariff-history.component.scss',
 })
@@ -40,7 +41,6 @@ export class ElectricityTariffHistoryComponent implements OnInit {
         unitPrices: { priceEffectiveTime: string; unitPricePence: number }[];
       }>('get_electricity_tariff_history', {}),
     ).subscribe((data) => {
-      console.log(data);
       this.standingChargesDataSource = data?.standingCharges?.map((x) => {
         return {
           startDate: new Date(x.startDate),

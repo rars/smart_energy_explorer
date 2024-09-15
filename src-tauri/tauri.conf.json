@@ -47,11 +47,17 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "fullscreen": false,
         "height": 600,
         "resizable": true,
         "title": "n3rgy-explorer",
-        "width": 800
+        "width": 800,
+        "visible": false
+      },
+      {
+        "label": "splashscreen",
+        "url": "/welcome"
       }
     ],
     "security": {
