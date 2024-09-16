@@ -1,16 +1,22 @@
 <form [formGroup]="apiKeyForm" (ngSubmit)="onSubmit()">
-  <mat-form-field>
-    <mat-label>n3rgy API Key</mat-label>
+  <mat-form-field subscriptSizing="dynamic" class="w-1/2">
+    <mat-label>In Home Device (IHD) MAC Address</mat-label>
     <input
       matInput
       type="password"
       formControlName="apiKey"
-      placeholder="Enter n3rgy API Key"
+      placeholder="Enter IHD MAC Address"
     />
+    @if (apiKeyForm.get('apiKey')?.errors?.['noHyphen']) {
+      <mat-error>Hyphens should be omitted from this field.</mat-error>
+    }
+    @if (apiKeyForm.get('apiKey')?.errors?.['exactLength']) {
+      <mat-error>This field must be exactly 16 characters long.</mat-error>
+    }
   </mat-form-field>
-  <div>
+  <div class="mt-4">
     <button mat-raised-button type="submit" [disabled]="apiKeyForm.invalid">
-      Save API Key
+      Save
     </button>
   </div>
 </form>

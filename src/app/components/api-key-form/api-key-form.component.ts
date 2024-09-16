@@ -8,8 +8,11 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { invoke } from '@tauri-apps/api/core';
-import { ErrorService } from '../../services/error/error.service';
+import { ApiKeyService } from '../../services/api-key/api-key.service';
+import {
+  exactLengthValidator,
+  noHyphenValidator,
+} from '../../common/validators';
 
 @Component({
   selector: 'app-api-key-form',
@@ -28,22 +31,20 @@ export class ApiKeyFormComponent {
 
   public constructor(
     private readonly fb: FormBuilder,
-    private readonly errorService: ErrorService,
+    private readonly apiKeyService: ApiKeyService,
   ) {
     this.apiKeyForm = this.fb.group({
-      apiKey: ['', Validators.required],
+      apiKey: [
+        '',
+        [Validators.required, noHyphenValidator(), exactLengthValidator(16)],
+      ],
     });
   }
 
   public async onSubmit(): Promise<void> {
     if (this.apiKeyForm.valid) {
       const apiKey = this.apiKeyForm.get('apiKey')?.value;
-      try {
-        await invoke('store_api_key', { apiKey });
-      } catch (error) {
-        this.errorService.showError(`${error}`, 'Error storing API key');
-        console.error(error);
-      }
+      await this.apiKeyService.saveApiKey(apiKey);
     }
   }
 }

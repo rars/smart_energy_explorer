@@ -1,4 +1,4 @@
-<h2 class="mat-title-large">Settings</h2>
+<h2 class="mat-title-medium">Settings</h2>
 
 <form [formGroup]="form" (ngSubmit)="update()">
   <div formArrayName="profiles" class="flex flex-row space-x-2">
@@ -7,7 +7,9 @@
       [formGroupName]="i"
     >
       <mat-card-header>
-        <mat-card-title>{{ data[i].name | titlecase }}</mat-card-title>
+        <mat-card-title class="text-base">{{
+          data[i].name | titlecase
+        }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="flex flex-col space-y-4 p-2">

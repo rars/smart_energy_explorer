@@ -7,8 +7,10 @@ import { ElectricityTariffHistoryComponent } from './components/electricity-tari
 import { GasTariffHistoryComponent } from './components/gas-tariff-history/gas-tariff-history.component';
 import { EnergyCostHistoryComponent } from './components/energy-cost-history/energy-cost-history.component';
 import { WelcomeComponent } from './components/welcome/welcome.component';
+import { AboutComponent } from './components/about/about.component';
 
 export const routes: Routes = [
+  { path: 'about', component: AboutComponent },
   { path: 'welcome', component: WelcomeComponent },
   { path: 'electricity', component: ElectricityConsumptionLineChartComponent },
   { path: 'gas', component: GasConsumptionLineChartComponent },

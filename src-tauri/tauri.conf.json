@@ -41,7 +41,7 @@
     "createUpdaterArtifacts": false
   },
   "productName": "n3rgy-explorer",
-  "version": "0.1.0",
+  "version": "../package.json",
   "identifier": "io.github.rars.n3rgy",
   "plugins": {},
   "app": {
@@ -49,15 +49,18 @@
       {
         "label": "main",
         "fullscreen": false,
-        "height": 600,
+        "height": 768,
         "resizable": true,
-        "title": "n3rgy-explorer",
-        "width": 800,
+        "title": "Smart Energy Explorer",
+        "width": 1024,
         "visible": false
       },
       {
         "label": "splashscreen",
-        "url": "/welcome"
+        "url": "/welcome",
+        "title": "Smart Energy Explorer",
+        "width": 1024,
+        "height": 768
       }
     ],
     "security": {

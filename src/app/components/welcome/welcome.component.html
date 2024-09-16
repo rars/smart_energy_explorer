@@ -1,4 +1,96 @@
-<h1 class="mat-header-large">Smart Energy Monitor</h1>
-Welcome to smart energy monitor.
+<h1 class="mat-headline-small">Smart Energy Explorer</h1>
+Welcome to smart energy explorer, a tool to see your energy usage.
 
-<app-api-key-form></app-api-key-form>
+<mat-stepper orientation="vertical" [linear]="true" #stepper>
+  <mat-step [stepControl]="firstFormGroup">
+    <form [formGroup]="firstFormGroup">
+      <ng-template matStepLabel>Review terms and conditions</ng-template>
+      <p>
+        Please acknowledge that you have read and agreed to the terms and
+        conditions of use of this app.
+      </p>
+      <mat-checkbox formControlName="agreement"
+        >I have read and agree to the terms and conditions of this
+        app.</mat-checkbox
+      >
+      <div>
+        <button mat-button matStepperNext [disabled]="firstFormGroup.invalid">
+          Next
+        </button>
+      </div>
+    </form>
+  </mat-step>
+  <mat-step [stepControl]="secondFormGroup">
+    <form [formGroup]="secondFormGroup">
+      <ng-template matStepLabel>Grant access to your data</ng-template>
+      <p>
+        This app uses
+        <a href="https://www.n3rgy.com/" target="_blank">n3rgy</a>, a
+        third-party service, to retrieve your smart meter data. To proceed, you
+        need to:
+      </p>
+      <ol>
+        <li>
+          <a href="https://data.n3rgy.com/consumer-sign-up" target="_blank">
+            Enroll with n3rgy as a consumer
+            <mat-icon class="text-xs">open_in_new</mat-icon>
+          </a>
+          (if you haven't already),
+        </li>
+        <li>Provide your In-Home Display (IHD) MAC address below:</li>
+      </ol>
+
+      <mat-form-field class="w-1/2" subscriptSizing="dynamic">
+        <mat-label>IHD MAC Address</mat-label>
+        <input
+          matInput
+          type="password"
+          formControlName="apiKeyCtrl"
+          placeholder="Enter IHD MAC address"
+          required
+        />
+        @if (secondFormGroup.get('apiKeyCtrl')?.errors?.['noHyphen']) {
+          <mat-error>Hyphens should be omitted from this field.</mat-error>
+        }
+        @if (secondFormGroup.get('apiKeyCtrl')?.errors?.['exactLength']) {
+          <mat-error>This field must be exactly 16 characters long.</mat-error>
+        }
+      </mat-form-field>
+      <div>
+        <p>
+          Once provided, your smart meter data will be downloaded and stored
+          locally on this device.
+        </p>
+      </div>
+
+      <p class="text-xs">
+        Note: This app is not affiliated with or endorsed by n3rgy.
+      </p>
+      <div>
+        <button mat-button matStepperPrevious>Back</button>
+        <button
+          mat-button
+          matStepperNext
+          [disabled]="secondFormGroup.invalid"
+          (click)="saveApiKey()"
+        >
+          Next
+        </button>
+      </div>
+    </form>
+  </mat-step>
+  <mat-step>
+    <ng-template matStepLabel>Done</ng-template>
+    @if (active$ | async) {
+      <p>Authorisation key is now configured to retrieve data.</p>
+      <button mat-button (click)="complete()">Start</button>
+    } @else {
+      <p>Authorisation not configured, please review your IHD MAC address.</p>
+    }
+    <p>You are now done. <button mat-button>Start</button></p>
+    <div>
+      <button mat-button matStepperPrevious>Back</button>
+      <button mat-button (click)="stepper.reset()">Reset</button>
+    </div>
+  </mat-step>
+</mat-stepper>

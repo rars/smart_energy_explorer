@@ -9,10 +9,13 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use chrono::Datelike;
+use chrono::Days;
 use chrono::Duration;
 use chrono::Local;
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
+
+use git_version::git_version;
 
 use data::consumption::ConsumptionRepository;
 use data::consumption::SqliteElectricityConsumptionRepository;
@@ -33,7 +36,6 @@ use n3rgy::ElectricityTariff;
 use n3rgy::GasTariff;
 use n3rgy::StaticAuthorizationProvider;
 use n3rgy::{Client, ElectricityConsumption, GasConsumption, GetRecordsError};
-use schema::electricity_unit_price::price_effective_time;
 use serde::Deserialize;
 use serde::Serialize;
 use tauri::async_runtime;
@@ -50,6 +52,8 @@ use std::env;
 mod data;
 mod db;
 mod schema;
+
+const GIT_VERSION: &str = git_version!();
 
 #[derive(Clone)]
 struct AppState {
@@ -734,7 +738,57 @@ fn store_api_key(
     Ok(())
 }
 
-fn get_api_key() -> Result<Option<String>, AppError> {
+#[tauri::command]
+fn get_api_key() -> Result<String, ApiError> {
+    if let Some(api_key) =
+        get_api_key_opt().map_err(|e| ApiError::Custom(format!("Could not get API key: {}", e)))?
+    {
+        return Ok(api_key);
+    }
+
+    Ok("".into())
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConnectionTestResponse {
+    active: bool,
+}
+
+#[tauri::command]
+async fn test_connection() -> Result<ConnectionTestResponse, ApiError> {
+    if let Some(api_key) =
+        get_api_key_opt().map_err(|e| ApiError::Custom(format!("No API key: {}", e)))?
+    {
+        let ap = StaticAuthorizationProvider::new(api_key);
+        let client = Client::new(ap, None);
+
+        let today = Local::now().date_naive();
+        let tomorrow = today.checked_add_days(Days::new(1)).unwrap();
+
+        if let Ok(_) = client.get_electricity_tariff(today, tomorrow).await {
+            return Ok(ConnectionTestResponse { active: true });
+        }
+
+        if let Ok(_) = client.get_gas_tariff(today, tomorrow).await {
+            return Ok(ConnectionTestResponse { active: true });
+        }
+    }
+
+    Ok(ConnectionTestResponse { active: false })
+}
+
+#[tauri::command]
+async fn close_welcome_screen(app_handle: AppHandle) -> Result<(), ApiError> {
+    let splash_window = app_handle.get_webview_window("splashscreen").unwrap();
+    let main_window = app_handle.get_webview_window("main").unwrap();
+    splash_window.close().unwrap();
+    main_window.show().unwrap();
+
+    Ok(())
+}
+
+fn get_api_key_opt() -> Result<Option<String>, AppError> {
     let entry = Entry::new("n3rgy.rars.github.io", "api_key")
         .map_err(|e| AppError::CustomError(e.to_string()))?;
 
@@ -753,7 +807,7 @@ fn auto_dispatch_download_tasks(
     app_handle: AppHandle,
     app_state: AppState,
 ) -> Result<(), AppError> {
-    let api_key_option = get_api_key()?;
+    let api_key_option = get_api_key_opt()?;
 
     if let Some(api_key) = api_key_option {
         info!("Dispatching data download task");
@@ -876,6 +930,11 @@ where
 
         Ok(())
     }
+}
+
+#[tauri::command]
+fn get_app_version() -> String {
+    String::from(GIT_VERSION)
 }
 
 #[derive(Clone)]
@@ -1212,10 +1271,17 @@ fn main() {
 
             let username = whoami::username();
 
-            let client_available = match get_api_key() {
+            let client_available = match get_api_key_opt() {
                 Ok(Some(_)) => true,
                 _ => false,
             };
+
+            // if client_available {
+            //     let splash_window = app.handle().get_webview_window("splashscreen").unwrap();
+            //     let main_window = app.handle().get_webview_window("main").unwrap();
+            //     splash_window.close().unwrap();
+            //     main_window.show().unwrap();
+            // }
 
             let app_state = AppState {
                 db: Arc::new(Mutex::new(connection)),
@@ -1244,6 +1310,9 @@ fn main() {
                 .build(),
         )
         .invoke_handler(tauri::generate_handler![
+            close_welcome_screen,
+            get_app_version,
+            get_api_key,
             get_app_status,
             get_daily_electricity_consumption,
             get_daily_gas_consumption,
@@ -1257,7 +1326,8 @@ fn main() {
             get_raw_electricity_consumption,
             get_raw_gas_consumption,
             store_api_key,
-            update_energy_profile_settings,
+            test_connection,
+            update_energy_profile_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
