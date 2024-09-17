@@ -8,4 +8,6 @@ pub enum RepositoryError {
     ConnectionError(String),
     #[error("Database error: {0}")]
     DieselError(#[from] diesel::result::Error),
+    #[error("Mutex guarding SQLite connection is poisoned")]
+    SqliteConnectionMutexPoisonedError(),
 }

@@ -7,6 +7,8 @@ use std::error::Error;
 use std::future::Future;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::MutexGuard;
+use std::sync::PoisonError;
 
 use chrono::Datelike;
 use chrono::Days;
@@ -139,6 +141,10 @@ pub enum ApiError {
     ChronoParseError(#[from] chrono::ParseError),
     #[error("Repository error: {0}")]
     RepositoryError(#[from] RepositoryError),
+    #[error("Failed request to n3rgy API: {0}")]
+    N3rgyClientError(#[from] N3rgyClientError),
+    #[error("Mutex '{name}' is poisoned")]
+    MutexPoisonedError { name: String },
 }
 
 impl serde::Serialize for ApiError {
@@ -152,8 +158,8 @@ impl serde::Serialize for ApiError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
-    #[error("n3rgy client error: {0}")]
-    ClientError(#[from] N3rgyClientError),
+    #[error("Failed request to n3rgy API: {0}")]
+    N3rgyClientError(#[from] N3rgyClientError),
     #[error("Error: {0}")]
     CustomError(String),
 }
@@ -171,31 +177,22 @@ async fn get_daily_electricity_consumption(
 
     let db_connection_clone = app_state.db.clone();
 
-    let result = async_runtime::spawn_blocking(move || {
+    let daily_consumption = async_runtime::spawn_blocking(move || {
         let repository = SqliteElectricityConsumptionRepository::new(db_connection_clone);
 
         repository.get_daily(start, end)
     })
-    .await;
+    .await
+    .map_err(|e| ApiError::Custom(format!("Database query failed: {}", e)))?
+    .map_err(ApiError::from)?;
 
-    if let Ok(ans) = result {
-        match ans {
-            Ok(ans) => {
-                return Ok(ans
-                    .iter()
-                    .map(|x| DailyElectricityConsumption {
-                        timestamp: x.0,
-                        value: x.1,
-                    })
-                    .collect());
-            }
-            Err(err) => {
-                return Err(ApiError::Custom(format!("Database query failed: {}", err)));
-            }
-        }
-    } else {
-        return Err(ApiError::Custom("Database query failed 2".into()));
-    }
+    Ok(daily_consumption
+        .iter()
+        .map(|x| DailyElectricityConsumption {
+            timestamp: x.0,
+            value: x.1,
+        })
+        .collect())
 }
 
 #[tauri::command]
@@ -211,31 +208,22 @@ async fn get_monthly_electricity_consumption(
 
     let db_connection_clone = app_state.db.clone();
 
-    let result = async_runtime::spawn_blocking(move || {
+    let monthly_consumption = async_runtime::spawn_blocking(move || {
         let repository = SqliteElectricityConsumptionRepository::new(db_connection_clone);
 
         repository.get_monthly(start, end)
     })
-    .await;
+    .await
+    .map_err(|e| ApiError::Custom(format!("Database query failed: {}", e)))?
+    .map_err(ApiError::from)?;
 
-    if let Ok(ans) = result {
-        match ans {
-            Ok(ans) => {
-                return Ok(ans
-                    .iter()
-                    .map(|x| MonthlyElectricityConsumption {
-                        timestamp: x.0,
-                        value: x.1,
-                    })
-                    .collect());
-            }
-            Err(err) => {
-                return Err(ApiError::Custom(format!("Database query failed: {}", err)));
-            }
-        }
-    } else {
-        return Err(ApiError::Custom("Database query failed 2".into()));
-    }
+    Ok(monthly_consumption
+        .iter()
+        .map(|x| MonthlyElectricityConsumption {
+            timestamp: x.0,
+            value: x.1,
+        })
+        .collect())
 }
 
 #[tauri::command]
@@ -251,31 +239,22 @@ async fn get_raw_gas_consumption(
 
     let db_connection_clone = app_state.db.clone();
 
-    let result = async_runtime::spawn_blocking(move || {
+    let raw_consumption = async_runtime::spawn_blocking(move || {
         let repository = SqliteGasConsumptionRepository::new(db_connection_clone);
 
         repository.get_raw(start, end)
     })
-    .await;
+    .await
+    .map_err(|e| ApiError::Custom(format!("Database query failed: {}", e)))?
+    .map_err(ApiError::from)?;
 
-    if let Ok(ans) = result {
-        match ans {
-            Ok(ans) => {
-                return Ok(ans
-                    .iter()
-                    .map(|x| GasConsumption {
-                        timestamp: x.timestamp,
-                        value: x.energy_consumption_m3,
-                    })
-                    .collect());
-            }
-            Err(_) => {
-                return Err(ApiError::Custom("Database query failed".into()));
-            }
-        }
-    } else {
-        return Err(ApiError::Custom("Database query failed".into()));
-    }
+    Ok(raw_consumption
+        .iter()
+        .map(|x| GasConsumption {
+            timestamp: x.timestamp,
+            value: x.energy_consumption_m3,
+        })
+        .collect())
 }
 
 #[tauri::command]
@@ -291,31 +270,22 @@ async fn get_daily_gas_consumption(
 
     let db_connection_clone = app_state.db.clone();
 
-    let result = async_runtime::spawn_blocking(move || {
+    let daily_consumption = async_runtime::spawn_blocking(move || {
         let repository = SqliteGasConsumptionRepository::new(db_connection_clone);
 
         repository.get_daily(start, end)
     })
-    .await;
+    .await
+    .map_err(|e| ApiError::Custom(format!("Database query failed: {}", e)))?
+    .map_err(ApiError::from)?;
 
-    if let Ok(ans) = result {
-        match ans {
-            Ok(ans) => {
-                return Ok(ans
-                    .iter()
-                    .map(|x| DailyGasConsumption {
-                        timestamp: x.0,
-                        value: x.1,
-                    })
-                    .collect());
-            }
-            Err(err) => {
-                return Err(ApiError::Custom(format!("Database query failed: {}", err)));
-            }
-        }
-    } else {
-        return Err(ApiError::Custom("Database query failed 2".into()));
-    }
+    Ok(daily_consumption
+        .iter()
+        .map(|x| DailyGasConsumption {
+            timestamp: x.0,
+            value: x.1,
+        })
+        .collect())
 }
 
 #[tauri::command]
@@ -331,31 +301,22 @@ async fn get_monthly_gas_consumption(
 
     let db_connection_clone = app_state.db.clone();
 
-    let result = async_runtime::spawn_blocking(move || {
+    let monthly_consumption = async_runtime::spawn_blocking(move || {
         let repository = SqliteGasConsumptionRepository::new(db_connection_clone);
 
         repository.get_monthly(start, end)
     })
-    .await;
+    .await
+    .map_err(|e| ApiError::Custom(format!("Database query failed: {}", e)))?
+    .map_err(ApiError::from)?;
 
-    if let Ok(ans) = result {
-        match ans {
-            Ok(ans) => {
-                return Ok(ans
-                    .iter()
-                    .map(|x| MonthlyGasConsumption {
-                        timestamp: x.0,
-                        value: x.1,
-                    })
-                    .collect());
-            }
-            Err(err) => {
-                return Err(ApiError::Custom(format!("Database query failed: {}", err)));
-            }
-        }
-    } else {
-        return Err(ApiError::Custom("Database query failed 2".into()));
-    }
+    Ok(monthly_consumption
+        .iter()
+        .map(|x| MonthlyGasConsumption {
+            timestamp: x.0,
+            value: x.1,
+        })
+        .collect())
 }
 
 #[derive(Serialize, Debug)]
@@ -543,12 +504,17 @@ fn get_app_status(app_state: tauri::State<'_, AppState>) -> Result<StatusRespons
     let downloading = app_state
         .downloading
         .lock()
-        .map_err(|e| ApiError::Custom(format!("Could not lock downloading status: {}", e)))?;
+        .map_err(|_| ApiError::MutexPoisonedError {
+            name: "downloading".into(),
+        })?;
 
-    let client_available = app_state
-        .client_available
-        .lock()
-        .map_err(|e| ApiError::Custom(format!("Could not lock client available status: {}", e)))?;
+    let client_available =
+        app_state
+            .client_available
+            .lock()
+            .map_err(|_| ApiError::MutexPoisonedError {
+                name: "client_available".into(),
+            })?;
 
     Ok(StatusResponse {
         is_downloading: *downloading,
@@ -756,9 +722,15 @@ pub struct ConnectionTestResponse {
 
 #[tauri::command]
 async fn test_connection() -> Result<ConnectionTestResponse, ApiError> {
-    if let Some(api_key) =
-        get_api_key_opt().map_err(|e| ApiError::Custom(format!("No API key: {}", e)))?
-    {
+    Ok(ConnectionTestResponse {
+        active: can_client_connect()
+            .await
+            .map_err(|e| ApiError::Custom(format!("{}", e)))?,
+    })
+}
+
+async fn can_client_connect() -> Result<bool, AppError> {
+    if let Some(api_key) = get_api_key_opt()? {
         let ap = StaticAuthorizationProvider::new(api_key);
         let client = ConsumerApiClient::new(ap, None);
 
@@ -766,15 +738,15 @@ async fn test_connection() -> Result<ConnectionTestResponse, ApiError> {
         let tomorrow = today.checked_add_days(Days::new(1)).unwrap();
 
         if let Ok(_) = client.get_electricity_tariff(today, tomorrow).await {
-            return Ok(ConnectionTestResponse { active: true });
+            return Ok(true);
         }
 
         if let Ok(_) = client.get_gas_tariff(today, tomorrow).await {
-            return Ok(ConnectionTestResponse { active: true });
+            return Ok(true);
         }
     }
 
-    Ok(ConnectionTestResponse { active: false })
+    Ok(false)
 }
 
 #[tauri::command]
@@ -1267,8 +1239,6 @@ fn main() {
             let mut connection =
                 db::establish_connection(db_path.to_str().expect("db path needed"));
             db::run_migrations(&mut connection);
-
-            let username = whoami::username();
 
             let client_available = match get_api_key_opt() {
                 Ok(Some(_)) => true,

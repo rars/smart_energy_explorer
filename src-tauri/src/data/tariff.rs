@@ -91,7 +91,7 @@ impl SqliteElectricityTariffRepository {
     fn get_connection(&self) -> RepositoryResult<MutexGuard<'_, SqliteConnection>> {
         self.conn
             .lock()
-            .map_err(|e| RepositoryError::ConnectionError(format!("Could not lock db: {}", e)))
+            .map_err(|_| RepositoryError::SqliteConnectionMutexPoisonedError())
     }
 }
 
@@ -210,7 +210,7 @@ impl SqliteGasTariffRepository {
     fn get_connection(&self) -> RepositoryResult<MutexGuard<'_, SqliteConnection>> {
         self.conn
             .lock()
-            .map_err(|e| RepositoryError::ConnectionError(format!("Could not lock db: {}", e)))
+            .map_err(|_| RepositoryError::SqliteConnectionMutexPoisonedError())
     }
 }
 
