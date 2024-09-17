@@ -2,7 +2,7 @@
   "build": {
     "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run start",
-    "frontendDist": "..\\dist\\n3rgy-angular\\browser",
+    "frontendDist": "../dist/n3rgy-angular/browser",
     "devUrl": "http://localhost:4200"
   },
   "bundle": {
