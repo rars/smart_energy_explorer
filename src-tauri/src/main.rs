@@ -15,9 +15,10 @@ use chrono::Local;
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 
+use data::consumption::ConsumptionRepository;
+use data::tariff::TariffRepository;
 use git_version::git_version;
 
-use data::consumption::ConsumptionRepository;
 use data::consumption::SqliteElectricityConsumptionRepository;
 use data::consumption::SqliteGasConsumptionRepository;
 use data::energy_profile::EnergyProfile;
@@ -25,17 +26,15 @@ use data::energy_profile::EnergyProfileRepository;
 use data::energy_profile::SqliteEnergyProfileRepository;
 use data::tariff::SqliteElectricityTariffRepository;
 use data::tariff::SqliteGasTariffRepository;
-use data::tariff::TariffRepository;
 use data::RepositoryError;
 
 // use diesel::serialize::Result;
 use diesel::SqliteConnection;
 use keyring::Entry;
-use n3rgy::AuthorizationProvider;
-use n3rgy::ElectricityTariff;
-use n3rgy::GasTariff;
-use n3rgy::StaticAuthorizationProvider;
-use n3rgy::{Client, ElectricityConsumption, GasConsumption, GetRecordsError};
+use n3rgy_consumer_api_client::{
+    AuthorizationProvider, ConsumerApiClient, ElectricityConsumption, ElectricityTariff,
+    GasConsumption, GasTariff, N3rgyClientError, StaticAuthorizationProvider,
+};
 use serde::Deserialize;
 use serde::Serialize;
 use tauri::async_runtime;
@@ -154,7 +153,7 @@ impl serde::Serialize for ApiError {
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
     #[error("n3rgy client error: {0}")]
-    ClientError(#[from] GetRecordsError),
+    ClientError(#[from] N3rgyClientError),
     #[error("Error: {0}")]
     CustomError(String),
 }
@@ -761,7 +760,7 @@ async fn test_connection() -> Result<ConnectionTestResponse, ApiError> {
         get_api_key_opt().map_err(|e| ApiError::Custom(format!("No API key: {}", e)))?
     {
         let ap = StaticAuthorizationProvider::new(api_key);
-        let client = Client::new(ap, None);
+        let client = ConsumerApiClient::new(ap, None);
 
         let today = Local::now().date_naive();
         let tomorrow = today.checked_add_days(Days::new(1)).unwrap();
@@ -813,7 +812,7 @@ fn auto_dispatch_download_tasks(
         info!("Dispatching data download task");
         let authorization_provider = StaticAuthorizationProvider::new(api_key);
 
-        let client = Arc::new(Client::new(authorization_provider, None));
+        let client = Arc::new(ConsumerApiClient::new(authorization_provider, None));
 
         async_runtime::spawn(async move {
             match check_and_download_consumption_data(app_handle, app_state, client).await {
@@ -844,7 +843,7 @@ struct ElectricityConsumptionDataLoader<T>
 where
     T: AuthorizationProvider,
 {
-    client: Arc<Client<T>>,
+    client: Arc<ConsumerApiClient<T>>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
@@ -852,7 +851,7 @@ impl<T> DataLoader<ElectricityConsumption> for ElectricityConsumptionDataLoader<
 where
     T: AuthorizationProvider,
 {
-    type LoadError = GetRecordsError;
+    type LoadError = N3rgyClientError;
     type InsertError = RepositoryError;
 
     async fn load(
@@ -875,7 +874,7 @@ struct ElectricityTariffDataLoader<T>
 where
     T: AuthorizationProvider,
 {
-    client: Arc<Client<T>>,
+    client: Arc<ConsumerApiClient<T>>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
@@ -883,7 +882,7 @@ impl<T> DataLoader<ElectricityTariff> for ElectricityTariffDataLoader<T>
 where
     T: AuthorizationProvider,
 {
-    type LoadError = GetRecordsError;
+    type LoadError = N3rgyClientError;
     type InsertError = RepositoryError;
 
     async fn load(
@@ -906,7 +905,7 @@ struct GasConsumptionDataLoader<T>
 where
     T: AuthorizationProvider,
 {
-    client: Arc<Client<T>>,
+    client: Arc<ConsumerApiClient<T>>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
@@ -914,7 +913,7 @@ impl<T> DataLoader<GasConsumption> for GasConsumptionDataLoader<T>
 where
     T: AuthorizationProvider,
 {
-    type LoadError = GetRecordsError;
+    type LoadError = N3rgyClientError;
     type InsertError = RepositoryError;
 
     async fn load(
@@ -942,7 +941,7 @@ struct GasTariffDataLoader<T>
 where
     T: AuthorizationProvider,
 {
-    client: Arc<Client<T>>,
+    client: Arc<ConsumerApiClient<T>>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
@@ -950,7 +949,7 @@ impl<T> DataLoader<GasTariff> for GasTariffDataLoader<T>
 where
     T: AuthorizationProvider,
 {
-    type LoadError = GetRecordsError;
+    type LoadError = N3rgyClientError;
     type InsertError = RepositoryError;
 
     async fn load(
@@ -1132,7 +1131,7 @@ pub struct AppStatusUpdateEvent {
 async fn check_and_download_consumption_data<T>(
     app_handle: AppHandle,
     app_state: AppState,
-    client: Arc<Client<T>>,
+    client: Arc<ConsumerApiClient<T>>,
 ) -> Result<(), AppError>
 where
     T: AuthorizationProvider,

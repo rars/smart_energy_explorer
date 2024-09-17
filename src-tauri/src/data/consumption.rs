@@ -7,7 +7,7 @@ use diesel::sql_types::{Date, Double};
 use diesel::SqliteConnection;
 use diesel::{prelude::*, upsert::excluded};
 use log::error;
-use n3rgy::{ElectricityConsumption, GasConsumption};
+use n3rgy_consumer_api_client::{ElectricityConsumption, GasConsumption};
 
 use crate::schema::{electricity_consumption, gas_consumption};
 
