@@ -1,10 +1,10 @@
 use std::sync::{Arc, Mutex, MutexGuard};
 
-use chrono::{NaiveDate, NaiveDateTime};
-use diesel::sql_types::{Date, Double, Timestamp};
+use chrono::NaiveDateTime;
+use diesel::sql_types::{Double, Timestamp};
 use diesel::{insert_into, sql_query, Queryable, SqliteConnection};
 use diesel::{prelude::*, upsert::excluded};
-use n3rgy::{ElectricityTariff, GasTariff};
+use n3rgy_consumer_api_client::{ElectricityTariff, GasTariff};
 
 use super::RepositoryError;
 use crate::schema::{

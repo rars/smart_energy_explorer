@@ -124,7 +124,7 @@ dependencies = [
  "git-version",
  "keyring",
  "log",
- "n3rgy",
+ "n3rgy_consumer_api_client",
  "serde",
  "serde_json",
  "tauri",
@@ -2622,15 +2622,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "n3rgy"
+name = "n3rgy_consumer_api_client"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19e7014b46d7306b428ac00fc66c6c859c13da3d96ec4d6d0393ea4f7e3cabd1"
 dependencies = [
  "chrono",
  "reqwest",
  "serde",
  "serde_json",
  "thiserror",
- "tokio",
  "url",
 ]
 
