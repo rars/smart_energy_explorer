@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { ApiKeyFormComponent } from '../api-key-form/api-key-form.component';
 import { MatStepperModule } from '@angular/material/stepper';
 import {
@@ -14,14 +15,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiKeyService } from '../../services/api-key/api-key.service';
-import {
-  BehaviorSubject,
-  EMPTY,
-  finalize,
-  map,
-  Observable,
-  ReplaySubject,
-} from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import {
@@ -48,8 +42,17 @@ import {
   ],
   templateUrl: './welcome.component.html',
   styleUrl: './welcome.component.scss',
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('500ms ease-in', style({ opacity: 1 })),
+      ]),
+    ]),
+  ],
 })
 export class WelcomeComponent {
+  protected showElement = false;
   protected active$: Observable<boolean>;
   protected isTestingConnection$: Observable<boolean>;
 
@@ -77,6 +80,8 @@ export class WelcomeComponent {
       .subscribe((apiKey) => {
         this.secondFormGroup.get('apiKeyCtrl')?.setValue(apiKey);
       });
+
+    setTimeout(() => (this.showElement = true), 2000);
   }
 
   public async saveApiKey(): Promise<void> {

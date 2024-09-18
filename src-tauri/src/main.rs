@@ -984,6 +984,7 @@ async fn download_history<T, U>(
     app_handle: AppHandle,
     data_loader: T,
     until_date_time: NaiveDateTime,
+    download_name: &str,
 ) -> Result<NaiveDate, AppError>
 where
     T: DataLoader<U>,
@@ -1045,7 +1046,7 @@ where
             "downloadUpdate",
             DownloadUpdateEvent {
                 percentage: percentage.round() as u32,
-                message: format!("Downloading {}...", percentage),
+                name: download_name.into(),
             },
         )?;
     }
@@ -1055,7 +1056,7 @@ where
         "downloadUpdate",
         DownloadUpdateEvent {
             percentage: 100,
-            message: "Download complete".into(),
+            name: download_name.into(),
         },
     )?;
 
@@ -1190,6 +1191,7 @@ where
                 app_handle_clone.clone(),
                 electricity_consumption_data_loader,
                 until_date_time,
+                "electricity consumption",
             )
             .await?;
 
@@ -1197,6 +1199,7 @@ where
                 app_handle_clone,
                 electricity_tariff_data_loader,
                 until_date_time,
+                "electricity tariff",
             )
             .await?;
 
@@ -1225,11 +1228,17 @@ where
                 app_handle_clone.clone(),
                 gas_consumption_data_loader,
                 until_date_time,
+                "gas consumption",
             )
             .await?;
 
-            let date_two =
-                download_history(app_handle_clone, gas_tariff_data_loader, until_date_time).await?;
+            let date_two = download_history(
+                app_handle_clone,
+                gas_tariff_data_loader,
+                until_date_time,
+                "gas tariff",
+            )
+            .await?;
 
             Ok(cmp::max(date_one, date_two))
         },
@@ -1259,7 +1268,7 @@ where
 #[derive(Clone, serde::Serialize)]
 struct DownloadUpdateEvent {
     percentage: u32,
-    message: String,
+    name: String,
 }
 
 fn main() {

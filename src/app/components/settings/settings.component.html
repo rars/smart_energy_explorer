@@ -1,64 +1,73 @@
-<h2 class="mat-title-medium">Settings</h2>
-<p>
-  Data is fetched up to the start date for the relevant profile. You can alter
-  how far back you want to look by changing the start date below. If you do not
-  have both an electricity and gas smart meter, you can disable data download
-  below for either individually by turning off the active property below.
-</p>
-<form [formGroup]="form" (ngSubmit)="update()">
-  <h3 class="mat-title-small">Profile Settings</h3>
-  <div formArrayName="profiles" class="flex flex-row space-x-2">
-    <mat-card
-      *ngFor="let profile of profiles.controls; let i = index"
-      [formGroupName]="i"
-    >
-      <mat-card-header>
-        <mat-card-title class="mat-body-medium">{{
-          data[i].name | titlecase
-        }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="flex flex-col space-y-4 p-2">
-          <mat-form-field>
-            <mat-label>Start date</mat-label>
-            <input
-              matInput
-              [matDatepicker]="picker"
-              formControlName="startDate"
-            />
-            <mat-hint>DD/MM/YYYY</mat-hint>
-            <mat-datepicker-toggle
-              matIconSuffix
-              [for]="picker"
-            ></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-          </mat-form-field>
-          <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
-  <div class="mt-4">
-    <button mat-raised-button type="submit" [disabled]="!form.dirty">
-      Save Profile Changes
-    </button>
-  </div>
-</form>
-<div class="mt-4">
-  <h3 class="mat-title-small">IHD MAC Address</h3>
-  You can update or change your IHD MAC address below:
-  <app-api-key-form></app-api-key-form>
-</div>
-<div class="mt-4">
-  <h3 class="mat-title-small">Data Management</h3>
-  <div>
-    <p>You can clear all local data downloaded from n3rgy:</p>
-    <button mat-button type="button" (click)="clearAllData()">
-      Clear All Data
-    </button>
-  </div>
-  <div>
-    <p>Trigger a fetch of missing data:</p>
-    <button mat-button type="button" (click)="fetchData()">Fetch Data</button>
+<div class="flex flex-col w-full h-full">
+  <h2 class="mat-title-medium">Settings</h2>
+  <div class="flex-1 overflow-auto">
+    <p>
+      Data is fetched up to the start date for the relevant profile. You can
+      alter how far back you want to look by changing the start date below. If
+      you do not have both an electricity and gas smart meter, you can disable
+      data download below for either individually by turning off the active
+      property below.
+    </p>
+    <form [formGroup]="form" (ngSubmit)="update()">
+      <h3 class="mat-title-small">Profile Settings</h3>
+      <div formArrayName="profiles" class="flex flex-row space-x-2">
+        <mat-card
+          *ngFor="let profile of profiles.controls; let i = index"
+          [formGroupName]="i"
+        >
+          <mat-card-header>
+            <mat-card-title class="mat-body-medium">{{
+              data[i].name | titlecase
+            }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="flex flex-col space-y-4 p-2">
+              <mat-form-field>
+                <mat-label>Start date</mat-label>
+                <input
+                  matInput
+                  [matDatepicker]="picker"
+                  formControlName="startDate"
+                />
+                <mat-hint>DD/MM/YYYY</mat-hint>
+                <mat-datepicker-toggle
+                  matIconSuffix
+                  [for]="picker"
+                ></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field>
+              <mat-slide-toggle formControlName="isActive"
+                >Active</mat-slide-toggle
+              >
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div class="mt-4">
+        <button mat-raised-button type="submit" [disabled]="!form.dirty">
+          Save Profile Changes
+        </button>
+      </div>
+    </form>
+    <div class="mt-4">
+      <h3 class="mat-title-small">IHD MAC Address</h3>
+      You can update or change your IHD MAC address below:
+      <app-api-key-form></app-api-key-form>
+    </div>
+    <div class="mt-4 pb-8">
+      <h3 class="mat-title-small">Data Management</h3>
+      <div>
+        <p>You can clear all local data downloaded from n3rgy:</p>
+        <button mat-button type="button" (click)="clearAllData()">
+          Clear All Data
+        </button>
+      </div>
+      <div>
+        <p>Trigger a fetch of missing data:</p>
+        <button mat-button type="button" (click)="fetchData()">
+          Fetch Data
+        </button>
+      </div>
+    </div>
   </div>
 </div>

@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { BehaviorSubject } from 'rxjs';
 
@@ -13,22 +12,16 @@ import { BehaviorSubject } from 'rxjs';
   styleUrl: './data-downloading.component.scss',
 })
 export class DataDownloadingComponent implements OnInit, OnDestroy {
+  protected percentage$ = new BehaviorSubject<number>(0);
+  protected name$ = new BehaviorSubject<string>('');
+
   private unlistenFn?: UnlistenFn;
-  public percentage$ = new BehaviorSubject<number>(0);
-  public message$ = new BehaviorSubject<string>('');
 
   public ngOnInit() {
-    console.log('listening...');
-    listen<{ percentage: number; message: string }>(
-      'downloadUpdate',
-      (event) => {
-        // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
-        // event.payload is the payload object
-        this.percentage$.next(event.payload.percentage);
-        this.message$.next(event.payload.message);
-        console.log(event);
-      },
-    ).then((unlisten) => {
+    listen<{ percentage: number; name: string }>('downloadUpdate', (event) => {
+      this.percentage$.next(event.payload.percentage);
+      this.name$.next(event.payload.name);
+    }).then((unlisten) => {
       this.unlistenFn = unlisten;
     });
   }
