@@ -3,12 +3,12 @@ import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { BehaviorSubject, from } from 'rxjs';
 import { DataDownloadingComponent } from '../components/data-downloading/data-downloading.component';
-import { AsyncPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-status-bar',
   standalone: true,
-  imports: [AsyncPipe, DataDownloadingComponent, DataDownloadingComponent],
+  imports: [CommonModule, DataDownloadingComponent, DataDownloadingComponent],
   templateUrl: './status-bar.component.html',
   styleUrl: './status-bar.component.scss',
 })
@@ -18,6 +18,7 @@ export class StatusBarComponent implements OnInit, OnDestroy {
   private unlistenFn?: UnlistenFn;
 
   public ngOnInit(): void {
+    console.log('listening...');
     listen<{ isDownloading: boolean }>('appStatusUpdate', (event) => {
       // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
       // event.payload is the payload object

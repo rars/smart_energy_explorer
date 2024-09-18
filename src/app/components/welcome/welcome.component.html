@@ -14,7 +14,11 @@ Welcome to smart energy explorer, a tool to see your energy usage.
         app.</mat-checkbox
       >
       <div>
-        <button mat-button matStepperNext [disabled]="firstFormGroup.invalid">
+        <button
+          mat-flat-button
+          matStepperNext
+          [disabled]="firstFormGroup.invalid"
+        >
           Next
         </button>
       </div>
@@ -69,7 +73,7 @@ Welcome to smart energy explorer, a tool to see your energy usage.
       <div>
         <button mat-button matStepperPrevious>Back</button>
         <button
-          mat-button
+          mat-flat-button
           matStepperNext
           [disabled]="secondFormGroup.invalid"
           (click)="saveApiKey()"
@@ -81,16 +85,32 @@ Welcome to smart energy explorer, a tool to see your energy usage.
   </mat-step>
   <mat-step>
     <ng-template matStepLabel>Done</ng-template>
-    @if (active$ | async) {
-      <p>Authorisation key is now configured to retrieve data.</p>
-      <button mat-button (click)="complete()">Start</button>
+    @if (isTestingConnection$ | async) {
+      <div class="flex flex-row items-center">
+        <div>
+          <mat-progress-spinner
+            [diameter]="15"
+            mode="indeterminate"
+          ></mat-progress-spinner>
+        </div>
+        <div class="ml-4">Testing connection...</div>
+      </div>
     } @else {
-      <p>Authorisation not configured, please review your IHD MAC address.</p>
+      @if (active$ | async) {
+        <p>You're all set.</p>
+        <button mat-flat-button (click)="complete()">Start</button>
+        <button mat-button matStepperPrevious>Back</button>
+        <button mat-button (click)="stepper.reset()">Reset</button>
+      } @else {
+        <p>
+          Authorisation not correctly configured, please review your IHD MAC
+          address.
+        </p>
+        <div>
+          <button mat-flat-button matStepperPrevious>Back</button>
+          <button mat-button (click)="stepper.reset()">Reset</button>
+        </div>
+      }
     }
-    <p>You are now done. <button mat-button>Start</button></p>
-    <div>
-      <button mat-button matStepperPrevious>Back</button>
-      <button mat-button (click)="stepper.reset()">Reset</button>
-    </div>
   </mat-step>
 </mat-stepper>

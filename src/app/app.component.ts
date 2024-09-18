@@ -6,7 +6,7 @@ import { NavigationBarComponent } from './components/navigation-bar/navigation-b
 import { MatIconRegistry } from '@angular/material/icon';
 
 import { StatusBarComponent } from './status-bar/status-bar.component';
-import { filter, map, Observable } from 'rxjs';
+import { filter, map, Observable, startWith } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -33,6 +33,7 @@ export class AppComponent implements OnInit {
     this.isWelcomeActive$ = this.router.events.pipe(
       filter((event) => event instanceof NavigationEnd),
       map((event: NavigationEnd) => event.urlAfterRedirects === '/welcome'),
+      startWith(true),
     );
   }
 

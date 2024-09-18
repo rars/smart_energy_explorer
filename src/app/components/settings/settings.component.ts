@@ -1,4 +1,4 @@
-import { CommonModule, JsonPipe, TitleCasePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,17 +19,15 @@ import { ApiKeyFormComponent } from '../api-key-form/api-key-form.component';
   selector: 'app-settings',
   standalone: true,
   imports: [
-    JsonPipe,
-    TitleCasePipe,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatDatepickerModule,
-    MatSlideToggleModule,
+    ApiKeyFormComponent,
+    CommonModule,
     MatButtonModule,
     MatCardModule,
-    CommonModule,
-    ApiKeyFormComponent,
+    MatDatepickerModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSlideToggleModule,
+    ReactiveFormsModule,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',

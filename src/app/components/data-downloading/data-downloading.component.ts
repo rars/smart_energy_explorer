@@ -1,4 +1,4 @@
-import { AsyncPipe, JsonPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
@@ -8,7 +8,7 @@ import { BehaviorSubject } from 'rxjs';
 @Component({
   selector: 'app-data-downloading',
   standalone: true,
-  imports: [MatProgressBarModule, AsyncPipe, JsonPipe],
+  imports: [MatProgressBarModule, CommonModule],
   templateUrl: './data-downloading.component.html',
   styleUrl: './data-downloading.component.scss',
 })
@@ -18,6 +18,7 @@ export class DataDownloadingComponent implements OnInit, OnDestroy {
   public message$ = new BehaviorSubject<string>('');
 
   public ngOnInit() {
+    console.log('listening...');
     listen<{ percentage: number; message: string }>(
       'downloadUpdate',
       (event) => {
