@@ -7,8 +7,6 @@ use std::error::Error;
 use std::future::Future;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::sync::MutexGuard;
-use std::sync::PoisonError;
 
 use chrono::Datelike;
 use chrono::Days;
@@ -456,7 +454,7 @@ pub struct EnergyProfileUpdateParam {
 }
 
 #[tauri::command]
-fn update_energy_profile_settings(
+async fn update_energy_profile_settings(
     app_handle: AppHandle,
     app_state: tauri::State<'_, AppState>,
     energy_profile_updates: Vec<EnergyProfileUpdateParam>,
@@ -486,8 +484,13 @@ fn update_energy_profile_settings(
 
     let app_state_clone = (*app_state).clone();
 
-    auto_dispatch_download_tasks(app_handle, app_state_clone)
-        .map_err(|e| ApiError::Custom(e.to_string()))?;
+    if let Some(client) = get_consumer_api_client()
+        .await
+        .map_err(|e| ApiError::Custom(format!("{}", e)))?
+    {
+        spawn_download_tasks(app_handle, app_state_clone, client)
+            .map_err(|e| ApiError::Custom(e.to_string()))?;
+    }
 
     Ok(())
 }
@@ -685,7 +688,7 @@ async fn get_gas_cost_history(
 }
 
 #[tauri::command]
-fn store_api_key(
+async fn store_api_key(
     app_handle: AppHandle,
     app_state: tauri::State<'_, AppState>,
     api_key: String,
@@ -697,8 +700,13 @@ fn store_api_key(
         .set_password(&api_key)
         .map_err(|e| ApiError::Custom(e.to_string()))?;
 
-    auto_dispatch_download_tasks(app_handle, (*app_state).clone())
-        .map_err(|e| ApiError::Custom(e.to_string()))?;
+    if let Some(client) = get_consumer_api_client()
+        .await
+        .map_err(|e| ApiError::Custom(format!("{}", e)))?
+    {
+        spawn_download_tasks(app_handle, (*app_state).clone(), client)
+            .map_err(|e| ApiError::Custom(e.to_string()))?;
+    }
 
     Ok(())
 }
@@ -722,14 +730,18 @@ pub struct ConnectionTestResponse {
 
 #[tauri::command]
 async fn test_connection() -> Result<ConnectionTestResponse, ApiError> {
-    Ok(ConnectionTestResponse {
-        active: can_client_connect()
-            .await
-            .map_err(|e| ApiError::Custom(format!("{}", e)))?,
-    })
+    if let Some(_) = get_consumer_api_client()
+        .await
+        .map_err(|e| ApiError::Custom(format!("{}", e)))?
+    {
+        return Ok(ConnectionTestResponse { active: true });
+    }
+
+    Ok(ConnectionTestResponse { active: false })
 }
 
-async fn can_client_connect() -> Result<bool, AppError> {
+async fn get_consumer_api_client(
+) -> Result<Option<ConsumerApiClient<StaticAuthorizationProvider>>, AppError> {
     if let Some(api_key) = get_api_key_opt()? {
         let ap = StaticAuthorizationProvider::new(api_key);
         let client = ConsumerApiClient::new(ap, None);
@@ -738,15 +750,15 @@ async fn can_client_connect() -> Result<bool, AppError> {
         let tomorrow = today.checked_add_days(Days::new(1)).unwrap();
 
         if let Ok(_) = client.get_electricity_tariff(today, tomorrow).await {
-            return Ok(true);
+            return Ok(Some(client));
         }
 
         if let Ok(_) = client.get_gas_tariff(today, tomorrow).await {
-            return Ok(true);
+            return Ok(Some(client));
         }
     }
 
-    Ok(false)
+    Ok(None)
 }
 
 #[tauri::command]
@@ -774,30 +786,23 @@ fn get_api_key_opt() -> Result<Option<String>, AppError> {
     }
 }
 
-fn auto_dispatch_download_tasks(
+fn spawn_download_tasks(
     app_handle: AppHandle,
     app_state: AppState,
+    client: ConsumerApiClient<StaticAuthorizationProvider>,
 ) -> Result<(), AppError> {
-    let api_key_option = get_api_key_opt()?;
+    info!("Spawning download tasks");
+    let client = Arc::new(client);
 
-    if let Some(api_key) = api_key_option {
-        info!("Dispatching data download task");
-        let authorization_provider = StaticAuthorizationProvider::new(api_key);
-
-        let client = Arc::new(ConsumerApiClient::new(authorization_provider, None));
-
-        async_runtime::spawn(async move {
-            match check_and_download_consumption_data(app_handle, app_state, client).await {
-                Ok(_) => debug!("Consumption data download task completed successfully"),
-                Err(e) => {
-                    error!("Consumption data download task panicked: {:?}", e);
-                    // Handle the panic (e.g., restart the task, log the error, etc.)
-                }
+    async_runtime::spawn(async move {
+        match check_and_download_new_data(app_handle, app_state, client).await {
+            Ok(_) => debug!("Data download tasks completed successfully"),
+            Err(e) => {
+                error!("Data download tasks panicked: {:?}", e);
+                // Handle the panic (e.g., restart the task, log the error, etc.)
             }
-        });
-    } else {
-        info!("No API key found, skipping data download task");
-    }
+        }
+    });
 
     Ok(())
 }
@@ -1100,7 +1105,7 @@ pub struct AppStatusUpdateEvent {
     pub is_downloading: bool,
 }
 
-async fn check_and_download_consumption_data<T>(
+async fn check_and_download_new_data<T>(
     app_handle: AppHandle,
     app_state: AppState,
     client: Arc<ConsumerApiClient<T>>,
@@ -1210,9 +1215,6 @@ where
         },
     )?;
 
-    // Sleep for a specified duration
-    // tokio::time::sleep(std::time::Duration::from_secs(60 * 60)).await; // Run every 1 hour
-
     Ok(())
 }
 
@@ -1240,31 +1242,36 @@ fn main() {
                 db::establish_connection(db_path.to_str().expect("db path needed"));
             db::run_migrations(&mut connection);
 
-            let client_available = match get_api_key_opt() {
-                Ok(Some(_)) => true,
-                _ => false,
-            };
-
-            // if client_available {
-            //     let splash_window = app.handle().get_webview_window("splashscreen").unwrap();
-            //     let main_window = app.handle().get_webview_window("main").unwrap();
-            //     splash_window.close().unwrap();
-            //     main_window.show().unwrap();
-            // }
-
             let app_state = AppState {
                 db: Arc::new(Mutex::new(connection)),
                 downloading: Arc::new(Mutex::new(false)),
-                client_available: Arc::new(Mutex::new(client_available)),
+                client_available: Arc::new(Mutex::new(false)),
             };
 
+            let app_handle_clone = app.handle().clone();
             let app_state_clone = app_state.clone();
 
             app.manage(app_state);
 
-            let app_handle = app.handle().clone();
+            async_runtime::spawn(async move {
+                if let Ok(Some(client)) = get_consumer_api_client().await {
+                    let splash_window =
+                        app_handle_clone.get_webview_window("splashscreen").unwrap();
+                    let main_window = app_handle_clone.get_webview_window("main").unwrap();
+                    splash_window.close().unwrap();
+                    main_window.show().unwrap();
 
-            auto_dispatch_download_tasks(app_handle, app_state_clone)?;
+                    {
+                        let mut client_available = app_state_clone.client_available.lock().unwrap();
+                        *client_available = true;
+                    }
+
+                    if let Err(e) = spawn_download_tasks(app_handle_clone, app_state_clone, client)
+                    {
+                        error!("Failed to spawn download tasks: {}", e);
+                    }
+                }
+            });
 
             Ok(())
         })
@@ -1280,9 +1287,9 @@ fn main() {
         )
         .invoke_handler(tauri::generate_handler![
             close_welcome_screen,
-            get_app_version,
             get_api_key,
             get_app_status,
+            get_app_version,
             get_daily_electricity_consumption,
             get_daily_gas_consumption,
             get_electricity_cost_history,
