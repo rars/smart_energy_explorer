@@ -13,6 +13,7 @@ import {
   exactLengthValidator,
   noHyphenValidator,
 } from '../../common/validators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-api-key-form',
@@ -39,6 +40,13 @@ export class ApiKeyFormComponent {
         [Validators.required, noHyphenValidator(), exactLengthValidator(16)],
       ],
     });
+
+    this.apiKeyService
+      .getApiKey()
+      .pipe(takeUntilDestroyed())
+      .subscribe((apiKey) => {
+        this.apiKeyForm.get('apiKey')?.setValue(apiKey);
+      });
   }
 
   public async onSubmit(): Promise<void> {

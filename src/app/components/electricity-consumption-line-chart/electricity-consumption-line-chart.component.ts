@@ -19,18 +19,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { DateService } from '../../services/date/date.service';
-import {
-  ElectricityConsumptionDto,
-  ElectricityService,
-} from '../../core/modules/n3rgyapi';
 import { MatSelectModule } from '@angular/material/select';
-import {
-  addDays,
-  addMonths,
-  endOfMonth,
-  startOfMonth,
-  startOfToday,
-} from 'date-fns';
 
 type Aggregation = 'raw' | 'daily' | 'monthly';
 
@@ -62,18 +51,25 @@ import { FormControlService } from '../../services/form-control/form-control.ser
 export class ElectricityConsumptionLineChartComponent
   implements OnInit, OnDestroy
 {
+  public readonly startDateControl: FormControl<Date | null>;
+  public readonly endDateControl: FormControl<Date | null>;
+  public readonly aggregationControl = new FormControl<Aggregation>('raw');
+
   public values?: any[];
   public chartConfiguration: any;
-  public startDateControl = new FormControl<Date>(addDays(startOfToday(), -7));
-  public endDateControl = new FormControl<Date>(startOfToday());
-  public aggregationControl = new FormControl<Aggregation>('raw');
   public loading = false;
 
   public constructor(
     private readonly dateService: DateService,
-    private readonly electricityService: ElectricityService,
     private readonly formControlService: FormControlService,
   ) {
+    this.startDateControl = new FormControl<Date>(
+      this.dateService.addDays(this.dateService.startOfToday(), -7),
+    );
+    this.endDateControl = new FormControl<Date>(
+      this.dateService.startOfToday(),
+    );
+
     this.formControlService
       .getDateRange()
       .pipe(take(1))
@@ -96,15 +92,12 @@ export class ElectricityConsumptionLineChartComponent
         switchMap(([startDate, endDate, aggregation]) => {
           this.loading = true;
 
-          let data: Observable<ElectricityConsumptionDto[]> = of([]);
+          let data: Observable<
+            { timestamp: string; energyConsumptionKwh: number }[]
+          > = of([]);
 
           switch (aggregation) {
             case 'daily': {
-              /* data = this.electricityService.apiElectricityConsumptionDailyGet(
-                startDate,
-                endDate
-              );*/
-
               data = from(
                 invoke<{ timestamp: string; value: number }[]>(
                   'get_daily_electricity_consumption',
@@ -135,13 +128,6 @@ export class ElectricityConsumptionLineChartComponent
                   })),
                 ),
               );
-
-              /*
-              data =
-                this.electricityService.apiElectricityConsumptionMonthlyGet(
-                  startDate,
-                  endDate
-                );*/
               break;
             }
             case 'raw':
@@ -159,11 +145,6 @@ export class ElectricityConsumptionLineChartComponent
                   })),
                 ),
               );
-
-              /* data = this.electricityService.apiElectricityConsumptionRawGet(
-                startDate,
-                endDate
-              );*/
             }
           }
 
@@ -254,18 +235,20 @@ export class ElectricityConsumptionLineChartComponent
   }
 
   public showThisMonth(): void {
-    const startOfThisMonth = startOfMonth(this.dateService.startOfToday());
+    const startOfThisMonth = this.dateService.startOfMonth(
+      this.dateService.startOfToday(),
+    );
     const endDate = this.dateService.startOfToday();
 
     this.setDateRange(startOfThisMonth, endDate);
   }
 
   public showPreviousMonth(): void {
-    const startOfLastMonth = addMonths(
-      startOfMonth(this.dateService.startOfToday()),
+    const startOfLastMonth = this.dateService.addMonths(
+      this.dateService.startOfMonth(this.dateService.startOfToday()),
       -1,
     );
-    const endDate = endOfMonth(startOfLastMonth);
+    const endDate = this.dateService.endOfMonth(startOfLastMonth);
 
     this.setDateRange(startOfLastMonth, endDate);
   }

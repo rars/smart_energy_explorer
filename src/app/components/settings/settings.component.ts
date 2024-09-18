@@ -99,4 +99,19 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
     }
     return true;
   }
+
+  public async clearAllData(): Promise<void> {
+    const confirmation = await confirm(
+      'This will delete all local data. Are you sure you want to perform this action?',
+      { title: 'Clear local data?', kind: 'warning' },
+    );
+
+    if (confirmation) {
+      await invoke<void>('clear_all_data', {});
+    }
+  }
+
+  public async fetchData(): Promise<void> {
+    return invoke<void>('fetch_data', {});
+  }
 }

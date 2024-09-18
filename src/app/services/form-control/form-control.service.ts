@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { addDays, startOfToday } from 'date-fns';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { DateService } from '../date/date.service';
 
 @Injectable({
   providedIn: 'root',
@@ -8,10 +8,10 @@ import { BehaviorSubject, Observable } from 'rxjs';
 export class FormControlService {
   private readonly dateRange: BehaviorSubject<[Date, Date]>;
 
-  public constructor() {
+  public constructor(private readonly dateService: DateService) {
     this.dateRange = new BehaviorSubject<[Date, Date]>([
-      addDays(startOfToday(), -7),
-      startOfToday(),
+      this.dateService.addDays(this.dateService.startOfToday(), -7),
+      this.dateService.startOfToday(),
     ]);
   }
 

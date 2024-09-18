@@ -8,6 +8,11 @@ pub fn run_migrations(conn: &mut SqliteConnection) {
         .expect("Error running migrations");
 }
 
+pub fn revert_all_migrations(conn: &mut SqliteConnection) {
+    conn.revert_all_migrations(MIGRATIONS)
+        .expect("Error reverting migrations");
+}
+
 pub fn establish_connection(database_url: &str) -> SqliteConnection {
     // dotenvy::dotenv().ok();
     // let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");

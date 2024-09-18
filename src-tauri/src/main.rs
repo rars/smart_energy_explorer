@@ -17,6 +17,7 @@ use chrono::NaiveDateTime;
 
 use data::consumption::ConsumptionRepository;
 use data::tariff::TariffRepository;
+use db::revert_all_migrations;
 use git_version::git_version;
 
 use data::consumption::SqliteElectricityConsumptionRepository;
@@ -673,11 +674,6 @@ async fn get_gas_cost_history(
             continue;
         }
 
-        debug!(
-            "Daily cost: {} + {}",
-            current_standing_charge, current_unit_price
-        );
-
         daily_costs.push(DailyCost {
             date: c.0,
             cost_pence: current_standing_charge + (c.1 * current_unit_price),
@@ -913,6 +909,46 @@ fn get_app_version() -> String {
     String::from(GIT_VERSION)
 }
 
+#[tauri::command]
+fn clear_all_data(app_state: tauri::State<'_, AppState>) -> Result<(), ApiError> {
+    {
+        let mut conn = app_state
+            .db
+            .lock()
+            .map_err(|_| ApiError::MutexPoisonedError { name: "db".into() })?;
+
+        revert_all_migrations(&mut conn);
+        db::run_migrations(&mut conn);
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn fetch_data(
+    app_handle: AppHandle,
+    app_state: tauri::State<'_, AppState>,
+) -> Result<(), ApiError> {
+    if let Some(client) = get_consumer_api_client()
+        .await
+        .map_err(|e| ApiError::Custom(format!("{}", e)))?
+    {
+        let app_state_clone = (*app_state).clone();
+
+        async_runtime::spawn(async move {
+            match check_and_download_new_data(app_handle, app_state_clone, Arc::new(client)).await {
+                Ok(_) => debug!("Data download tasks completed successfully"),
+                Err(e) => {
+                    error!("Data download tasks panicked: {:?}", e);
+                    // Handle the panic (e.g., restart the task, log the error, etc.)
+                }
+            }
+        });
+    }
+
+    Ok(())
+}
+
 #[derive(Clone)]
 struct GasTariffDataLoader<T>
 where
@@ -1113,13 +1149,15 @@ async fn check_and_download_new_data<T>(
 where
     T: AuthorizationProvider,
 {
-    debug!("Background task running");
-
     {
         let mut downloading = app_state
             .downloading
             .lock()
             .map_err(|e| AppError::CustomError(format!("Failed to acquire lock, error: {}", e)))?;
+
+        if *downloading {
+            return Ok(());
+        }
 
         *downloading = true;
     }
@@ -1286,7 +1324,9 @@ fn main() {
                 .build(),
         )
         .invoke_handler(tauri::generate_handler![
+            clear_all_data,
             close_welcome_screen,
+            fetch_data,
             get_api_key,
             get_app_status,
             get_app_version,

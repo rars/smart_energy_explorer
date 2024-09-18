@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { ApiModule } from './core/modules/n3rgyapi';
 import { CommonModule } from '@angular/common';
 import { NavigationBarComponent } from './components/navigation-bar/navigation-bar.component';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -13,7 +12,6 @@ import { filter, map, Observable, startWith } from 'rxjs';
   standalone: true,
   imports: [
     RouterOutlet,
-    ApiModule,
     CommonModule,
     NavigationBarComponent,
     StatusBarComponent,

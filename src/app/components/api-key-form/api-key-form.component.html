@@ -15,7 +15,11 @@
     }
   </mat-form-field>
   <div class="mt-4">
-    <button mat-raised-button type="submit" [disabled]="apiKeyForm.invalid">
+    <button
+      mat-raised-button
+      type="submit"
+      [disabled]="apiKeyForm.invalid || !apiKeyForm.dirty"
+    >
       Save
     </button>
   </div>

@@ -11,13 +11,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { invoke } from '@tauri-apps/api/core';
-import {
-  addDays,
-  addMonths,
-  endOfMonth,
-  startOfMonth,
-  startOfToday,
-} from 'date-fns';
 
 import {
   combineLatest,
@@ -61,10 +54,8 @@ export class EnergyCostHistoryComponent implements AfterViewInit, OnDestroy {
     this.commandSubject.next(value);
   }
 
-  public readonly startDateControl = new FormControl<Date>(
-    addDays(startOfToday(), -7),
-  );
-  public readonly endDateControl = new FormControl<Date>(startOfToday());
+  public readonly startDateControl: FormControl<Date | null>;
+  public readonly endDateControl: FormControl<Date | null>;
 
   public readonly displayedColumns = ['date', 'costPence'];
   public readonly dataSource: any = new MatTableDataSource([]);
@@ -74,9 +65,16 @@ export class EnergyCostHistoryComponent implements AfterViewInit, OnDestroy {
   @ViewChild(MatSort) public sort?: MatSort;
 
   public constructor(
-    private formControlService: FormControlService,
+    private readonly formControlService: FormControlService,
     private readonly dateService: DateService,
   ) {
+    this.startDateControl = new FormControl<Date>(
+      this.dateService.addDays(this.dateService.startOfToday(), -7),
+    );
+    this.endDateControl = new FormControl<Date>(
+      this.dateService.startOfToday(),
+    );
+
     this.formControlService
       .getDateRange()
       .pipe(take(1))
@@ -143,18 +141,20 @@ export class EnergyCostHistoryComponent implements AfterViewInit, OnDestroy {
   }
 
   public showThisMonth(): void {
-    const startOfThisMonth = startOfMonth(this.dateService.startOfToday());
+    const startOfThisMonth = this.dateService.startOfMonth(
+      this.dateService.startOfToday(),
+    );
     const endDate = this.dateService.startOfToday();
 
     this.setDateRange(startOfThisMonth, endDate);
   }
 
   public showPreviousMonth(): void {
-    const startOfLastMonth = addMonths(
-      startOfMonth(this.dateService.startOfToday()),
+    const startOfLastMonth = this.dateService.addMonths(
+      this.dateService.startOfMonth(this.dateService.startOfToday()),
       -1,
     );
-    const endDate = endOfMonth(startOfLastMonth);
+    const endDate = this.dateService.endOfMonth(startOfLastMonth);
 
     this.setDateRange(startOfLastMonth, endDate);
   }

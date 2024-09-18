@@ -37,4 +37,5 @@ export const routes: Routes = [
     component: SettingsComponent,
     canDeactivate: [unsavedChangesGuard],
   },
+  { path: '', redirectTo: '/electricity', pathMatch: 'full' },
 ];
