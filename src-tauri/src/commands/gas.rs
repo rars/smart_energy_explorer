@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use chrono::{NaiveDate, NaiveDateTime};
-use log::{debug, info};
+use log::{debug, warn};
 use n3rgy_consumer_api_client::GasConsumption;
 use serde::Serialize;
 use tauri::{async_runtime, State};
@@ -208,38 +208,30 @@ pub async fn get_gas_cost_history(
         unit_prices_map.insert(up.price_effective_time, up.unit_price_pence);
     }
 
-    let mut current_standing_charge = 0f64;
-    let mut current_unit_price = 0f64;
-
     let mut daily_costs: Vec<DailyCost> = vec![];
 
     for c in consumption {
-        if let Some(standing_charge) = standing_charges_map
+        let standing_charge = standing_charges_map
             .range(..=NaiveDateTime::from(c.0))
             .next_back()
-            .map(|(_, v)| v)
-        {
-            current_standing_charge = *standing_charge;
-        } else {
-            info!("Could not find a standing charge!!!");
-            continue;
-        }
+            .map(|(_, v)| *v);
 
-        if let Some(unit_price) = unit_prices_map
+        let unit_price = unit_prices_map
             .range(..=NaiveDateTime::from(c.0))
             .next_back()
-            .map(|(_, v)| v)
-        {
-            current_unit_price = *unit_price;
-        } else {
-            info!("Could not find a unit price!!!");
-            continue;
-        }
+            .map(|(_, v)| *v);
 
-        daily_costs.push(DailyCost {
-            date: c.0,
-            cost_pence: current_standing_charge + (c.1 * current_unit_price),
-        });
+        if let (Some(sc), Some(up)) = (standing_charge, unit_price) {
+            daily_costs.push(DailyCost {
+                date: c.0,
+                cost_pence: sc + (c.1 * up),
+            });
+        } else {
+            warn!(
+                "Missing a value: standing charge = {:?}, unit price = {:?}",
+                standing_charge, unit_price
+            );
+        }
     }
 
     Ok(daily_costs)

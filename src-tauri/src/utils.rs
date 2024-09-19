@@ -5,7 +5,7 @@ use diesel::SqliteConnection;
 use keyring::Entry;
 use n3rgy_consumer_api_client::{ConsumerApiClient, StaticAuthorizationProvider};
 use serde::Serialize;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::{
     commands::ApiError,
@@ -80,4 +80,11 @@ pub fn get_api_key_opt() -> Result<Option<String>, AppError> {
             }
         }
     }
+}
+
+pub fn switch_splashscreen_to_main(app_handle: &AppHandle) {
+    let splash_window = app_handle.get_webview_window("splashscreen").unwrap();
+    let main_window = app_handle.get_webview_window("main").unwrap();
+    splash_window.close().unwrap();
+    main_window.show().unwrap();
 }

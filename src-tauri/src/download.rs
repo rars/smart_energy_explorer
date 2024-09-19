@@ -41,7 +41,7 @@ pub struct AppStatusUpdateEvent {
     pub is_downloading: bool,
 }
 
-trait DataLoader<T> {
+pub trait DataLoader<T> {
     type LoadError: Error + Send + Sync + 'static;
     type InsertError: Error + Send + Sync + 'static;
 

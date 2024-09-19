@@ -8,7 +8,7 @@ use std::env;
 use std::sync::{Arc, Mutex};
 use tauri::{async_runtime, Manager};
 use tauri_plugin_log::{Target, TargetKind};
-use utils::get_consumer_api_client;
+use utils::{get_consumer_api_client, switch_splashscreen_to_main};
 
 use commands::app::*;
 use commands::electricity::*;
@@ -69,11 +69,7 @@ fn main() {
 
             async_runtime::spawn(async move {
                 if let Ok(Some(client)) = get_consumer_api_client().await {
-                    let splash_window =
-                        app_handle_clone.get_webview_window("splashscreen").unwrap();
-                    let main_window = app_handle_clone.get_webview_window("main").unwrap();
-                    splash_window.close().unwrap();
-                    main_window.show().unwrap();
+                    switch_splashscreen_to_main(&app_handle_clone);
 
                     {
                         let mut client_available = app_state_clone.client_available.lock().unwrap();

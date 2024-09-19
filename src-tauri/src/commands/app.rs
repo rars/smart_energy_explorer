@@ -3,12 +3,14 @@ use std::sync::Arc;
 use git_version::git_version;
 use log::{debug, error};
 use serde::Serialize;
-use tauri::{async_runtime, AppHandle, Manager, State};
+use tauri::{async_runtime, AppHandle, State};
 
 use crate::{
     db::{self, revert_all_migrations},
     download::check_and_download_new_data,
-    get_consumer_api_client, AppState,
+    get_consumer_api_client,
+    utils::switch_splashscreen_to_main,
+    AppState,
 };
 
 use super::ApiError;
@@ -29,11 +31,7 @@ pub fn get_app_version() -> String {
 
 #[tauri::command]
 pub async fn close_welcome_screen(app_handle: AppHandle) -> Result<(), ApiError> {
-    let splash_window = app_handle.get_webview_window("splashscreen").unwrap();
-    let main_window = app_handle.get_webview_window("main").unwrap();
-    splash_window.close().unwrap();
-    main_window.show().unwrap();
-
+    switch_splashscreen_to_main(&app_handle);
     Ok(())
 }
 
