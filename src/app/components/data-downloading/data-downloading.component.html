@@ -1,5 +1,5 @@
 <div>
-  <small>Downloading... ({{ percentage$ | async }}%)</small>
+  <small>Downloading {{ name$ | async }}... ({{ percentage$ | async }}%)</small>
   <mat-progress-bar
     mode="determinate"
     [value]="percentage$ | async"

@@ -1,5 +1,12 @@
 import { Injectable } from '@angular/core';
-import { addDays, formatISO, startOfToday } from 'date-fns';
+import {
+  formatISO,
+  addDays,
+  addMonths,
+  endOfMonth,
+  startOfMonth,
+  startOfToday,
+} from 'date-fns';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +20,19 @@ export class DateService {
     return addDays(date, n);
   }
 
+  public addMonths(date: Date, n: number): Date {
+    return addMonths(date, n);
+  }
+
   public startOfToday(): Date {
     return startOfToday();
+  }
+
+  public startOfMonth(date: Date): Date {
+    return startOfMonth(date);
+  }
+
+  public endOfMonth(date: Date): Date {
+    return endOfMonth(date);
   }
 }

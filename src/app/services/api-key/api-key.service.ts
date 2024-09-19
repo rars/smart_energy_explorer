@@ -22,8 +22,8 @@ export class ApiKeyService {
     }
   }
 
-  public testConnection(): Observable<{ active: boolean }> {
-    return from(invoke<{ active: boolean }>('test_connection', {}));
+  public async testConnection(): Promise<{ active: boolean }> {
+    return invoke<{ active: boolean }>('test_connection', {});
   }
 
   public closeWelcomeScreen(): Promise<void> {

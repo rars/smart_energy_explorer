@@ -46,6 +46,7 @@ html {
   @include mat.form-field-theme($light-theme);
   @include mat.datepicker-theme($light-theme);
   @include mat.progress-bar-theme($light-theme);
+  @include mat.progress-spinner-theme($light-theme);
   @include mat.menu-theme($light-theme);
   @include mat.select-theme($light-theme);
   @include mat.toolbar-theme($light-theme);
@@ -68,6 +69,7 @@ html {
     @include mat.form-field-color($dark-theme);
     @include mat.datepicker-color($dark-theme);
     @include mat.progress-bar-color($dark-theme);
+    @include mat.progress-spinner-color($dark-theme);
     @include mat.menu-color($dark-theme);
     @include mat.select-color($dark-theme);
     @include mat.toolbar-color($dark-theme);

@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { ApiKeyFormComponent } from '../api-key-form/api-key-form.component';
 import { MatStepperModule } from '@angular/material/stepper';
 import {
@@ -11,9 +12,10 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiKeyService } from '../../services/api-key/api-key.service';
-import { EMPTY, map, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import {
@@ -33,16 +35,29 @@ import {
     MatIconModule,
     MatInputModule,
     MatButtonModule,
+    MatProgressSpinnerModule,
     MatStepperModule,
     ApiKeyFormComponent,
     ApiKeyFormComponent,
   ],
   templateUrl: './welcome.component.html',
   styleUrl: './welcome.component.scss',
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('500ms ease-in', style({ opacity: 1 })),
+      ]),
+    ]),
+  ],
 })
 export class WelcomeComponent {
+  protected showElement = false;
   protected active$: Observable<boolean>;
+  protected isTestingConnection$: Observable<boolean>;
 
+  private readonly isActiveSubject = new ReplaySubject<boolean>(1);
+  private readonly isTestingConnectionSubject = new BehaviorSubject(false);
   private readonly formBuilder = inject(FormBuilder);
 
   protected readonly firstFormGroup = this.formBuilder.group({
@@ -56,6 +71,9 @@ export class WelcomeComponent {
   });
 
   public constructor(private readonly apiKeyService: ApiKeyService) {
+    this.active$ = this.isActiveSubject.asObservable();
+    this.isTestingConnection$ = this.isTestingConnectionSubject.asObservable();
+
     this.apiKeyService
       .getApiKey()
       .pipe(takeUntilDestroyed())
@@ -63,17 +81,17 @@ export class WelcomeComponent {
         this.secondFormGroup.get('apiKeyCtrl')?.setValue(apiKey);
       });
 
-    this.active$ = EMPTY;
+    setTimeout(() => (this.showElement = true), 2000);
   }
 
   public async saveApiKey(): Promise<void> {
     const apiKey = this.secondFormGroup.get('apiKeyCtrl')?.value || '';
     await this.apiKeyService.saveApiKey(apiKey);
-    this.active$ = this.apiKeyService.testConnection().pipe(
-      map((status) => {
-        return status.active;
-      }),
-    );
+
+    this.isTestingConnectionSubject.next(true);
+    const testResponse = await this.apiKeyService.testConnection();
+    this.isActiveSubject.next(testResponse.active);
+    this.isTestingConnectionSubject.next(false);
   }
 
   public complete(): void {

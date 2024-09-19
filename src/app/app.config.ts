@@ -11,7 +11,6 @@ import {
   provideHttpClient,
   withInterceptorsFromDi,
 } from '@angular/common/http';
-import { BASE_PATH } from './core/modules/n3rgyapi';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
@@ -22,7 +21,6 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withInterceptorsFromDi()),
-    { provide: BASE_PATH, useValue: 'http://localhost:4200/api' },
     provideAnimationsAsync(),
     { provide: MAT_DATE_LOCALE, useValue: enGB },
     provideDateFnsAdapter(),

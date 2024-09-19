@@ -1,5 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { GasConsumptionDto, GasService } from '../../core/modules/n3rgyapi';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { ChartComponent } from '../chart/chart.component';
@@ -15,12 +14,14 @@ import {
   of,
   startWith,
   switchMap,
+  take,
 } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DateService } from '../../services/date/date.service';
-import { addDays, startOfToday } from 'date-fns';
 import { MatSelectModule } from '@angular/material/select';
 import { invoke } from '@tauri-apps/api/core';
+import { MatButtonModule } from '@angular/material/button';
+import { FormControlService } from '../../services/form-control/form-control.service';
 
 type Aggregation = 'raw' | 'daily' | 'monthly';
 
@@ -33,28 +34,45 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
   selector: 'app-gas-consumption-line-chart',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatDatepickerModule,
-    MatSelectModule,
-    MatProgressBarModule,
     ChartComponent,
+    MatButtonModule,
+    MatDatepickerModule,
+    MatFormFieldModule,
+    MatProgressBarModule,
+    MatSelectModule,
+    ReactiveFormsModule,
   ],
   templateUrl: './gas-consumption-line-chart.component.html',
   styleUrl: './gas-consumption-line-chart.component.scss',
 })
-export class GasConsumptionLineChartComponent implements OnInit {
+export class GasConsumptionLineChartComponent implements OnInit, OnDestroy {
+  public readonly startDateControl: FormControl<Date | null>;
+  public readonly endDateControl: FormControl<Date | null>;
+  public readonly aggregationControl = new FormControl<Aggregation>('raw');
+
   public values?: any[];
   public chartConfiguration: any;
-  public startDateControl = new FormControl<Date>(addDays(startOfToday(), -7));
-  public endDateControl = new FormControl<Date>(startOfToday());
-  public aggregationControl = new FormControl<Aggregation>('raw');
   public loading = false;
 
   public constructor(
     private readonly dateService: DateService,
-    private readonly gasService: GasService,
+    private readonly formControlService: FormControlService,
   ) {
+    this.startDateControl = new FormControl<Date>(
+      this.dateService.addDays(this.dateService.startOfToday(), -7),
+    );
+    this.endDateControl = new FormControl<Date>(
+      this.dateService.startOfToday(),
+    );
+
+    this.formControlService
+      .getDateRange()
+      .pipe(take(1))
+      .subscribe(([startDate, endDate]) => {
+        this.startDateControl.setValue(startDate);
+        this.endDateControl.setValue(endDate);
+      });
+
     combineLatest([
       getValueStream(this.startDateControl),
       getValueStream(this.endDateControl),
@@ -69,15 +87,12 @@ export class GasConsumptionLineChartComponent implements OnInit {
         switchMap(([startDate, endDate, aggregation]) => {
           this.loading = true;
 
-          let data: Observable<GasConsumptionDto[]> = of([]);
+          let data: Observable<
+            { timestamp: string; energyConsumptionM3: number }[]
+          > = of([]);
 
           switch (aggregation) {
             case 'monthly': {
-              /*data = this.gasService.apiGasConsumptionMonthlyGet(
-                startDate,
-                endDate
-              );*/
-
               data = from(
                 invoke<{ timestamp: string; value: number }[]>(
                   'get_monthly_gas_consumption',
@@ -95,11 +110,6 @@ export class GasConsumptionLineChartComponent implements OnInit {
               break;
             }
             case 'daily': {
-              /* data = this.gasService.apiGasConsumptionDailyGet(
-                startDate,
-                endDate
-              ); */
-
               data = from(
                 invoke<{ timestamp: string; value: number }[]>(
                   'get_daily_gas_consumption',
@@ -131,11 +141,6 @@ export class GasConsumptionLineChartComponent implements OnInit {
                   })),
                 ),
               );
-
-              /* data = this.gasService.apiGasConsumptionRawGet(
-                startDate,
-                endDate
-              );*/
             }
           }
 
@@ -200,4 +205,43 @@ export class GasConsumptionLineChartComponent implements OnInit {
   }
 
   public ngOnInit() {}
+
+  public ngOnDestroy(): void {
+    if (this.startDateControl.value && this.endDateControl.value) {
+      this.formControlService.setDateRange(
+        this.startDateControl.value,
+        this.endDateControl.value,
+      );
+    }
+  }
+
+  public showLastSevenDays(): void {
+    const today = this.dateService.startOfToday();
+
+    this.setDateRange(this.dateService.addDays(today, -6), today);
+  }
+
+  public showThisMonth(): void {
+    const startOfThisMonth = this.dateService.startOfMonth(
+      this.dateService.startOfToday(),
+    );
+    const endDate = this.dateService.startOfToday();
+
+    this.setDateRange(startOfThisMonth, endDate);
+  }
+
+  public showPreviousMonth(): void {
+    const startOfLastMonth = this.dateService.addMonths(
+      this.dateService.startOfMonth(this.dateService.startOfToday()),
+      -1,
+    );
+    const endDate = this.dateService.endOfMonth(startOfLastMonth);
+
+    this.setDateRange(startOfLastMonth, endDate);
+  }
+
+  private setDateRange(startDate: Date, endDate: Date): void {
+    this.startDateControl.setValue(startDate);
+    this.endDateControl.setValue(endDate);
+  }
 }

@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 use chrono::NaiveDateTime;
 use diesel::sql_types::{Double, Timestamp};
-use diesel::{insert_into, sql_query, Queryable, SqliteConnection};
+use diesel::{insert_into, sql_query, SqliteConnection};
 use diesel::{prelude::*, upsert::excluded};
 use n3rgy_consumer_api_client::{ElectricityTariff, GasTariff};
 
@@ -39,20 +39,6 @@ struct NewGasUnitPrice {
     unit_price_pence: f64,
 }
 
-#[derive(Queryable)]
-pub struct ElectricityTariffRecord {
-    pub electricity_consumption_id: i32,
-    pub timestamp: NaiveDateTime,
-    pub energy_consumption_kwh: f64,
-}
-
-#[derive(Queryable)]
-pub struct GasTariffRecord {
-    pub electricity_consumption_id: i32,
-    pub timestamp: NaiveDateTime,
-    pub energy_consumption_kwh: f64,
-}
-
 #[derive(QueryableByName, Debug)]
 pub struct StandingChargeRecord {
     #[diesel(sql_type = Timestamp)]
@@ -71,7 +57,7 @@ pub struct UnitPriceRecord {
 
 type RepositoryResult<T> = Result<T, RepositoryError>;
 
-pub trait TariffRepository<T, U> {
+pub trait TariffRepository<T> {
     fn insert(&self, records: Vec<T>) -> RepositoryResult<()>;
 
     fn get_standing_charge_history(&self) -> RepositoryResult<Vec<StandingChargeRecord>>;
@@ -91,13 +77,11 @@ impl SqliteElectricityTariffRepository {
     fn get_connection(&self) -> RepositoryResult<MutexGuard<'_, SqliteConnection>> {
         self.conn
             .lock()
-            .map_err(|e| RepositoryError::ConnectionError(format!("Could not lock db: {}", e)))
+            .map_err(|_| RepositoryError::SqliteConnectionMutexPoisonedError())
     }
 }
 
-impl TariffRepository<ElectricityTariff, ElectricityTariffRecord>
-    for SqliteElectricityTariffRepository
-{
+impl TariffRepository<ElectricityTariff> for SqliteElectricityTariffRepository {
     fn insert(&self, records: Vec<ElectricityTariff>) -> RepositoryResult<()> {
         let standing_charges = records
             .iter()
@@ -210,11 +194,11 @@ impl SqliteGasTariffRepository {
     fn get_connection(&self) -> RepositoryResult<MutexGuard<'_, SqliteConnection>> {
         self.conn
             .lock()
-            .map_err(|e| RepositoryError::ConnectionError(format!("Could not lock db: {}", e)))
+            .map_err(|_| RepositoryError::SqliteConnectionMutexPoisonedError())
     }
 }
 
-impl TariffRepository<GasTariff, GasTariffRecord> for SqliteGasTariffRepository {
+impl TariffRepository<GasTariff> for SqliteGasTariffRepository {
     fn insert(&self, records: Vec<GasTariff>) -> RepositoryResult<()> {
         let standing_charges = records
             .iter()
