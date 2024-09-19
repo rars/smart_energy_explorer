@@ -7,12 +7,13 @@ use std::{
 
 use chrono::{Datelike, Duration, Local, NaiveDate, NaiveDateTime};
 use diesel::SqliteConnection;
-use log::info;
+use log::{debug, error, info};
 use n3rgy_consumer_api_client::{
     AuthorizationProvider, ConsumerApiClient, ElectricityConsumption, ElectricityTariff,
-    GasConsumption, GasTariff, N3rgyClientError,
+    GasConsumption, GasTariff, N3rgyClientError, StaticAuthorizationProvider,
 };
-use tauri::AppHandle;
+use serde::Serialize;
+use tauri::{async_runtime, AppHandle};
 
 use crate::{
     data::{
@@ -25,13 +26,19 @@ use crate::{
         RepositoryError,
     },
     utils::{emit_event, get_or_create_energy_profile},
-    AppError, AppState, AppStatusUpdateEvent,
+    AppError, AppState,
 };
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Serialize, Clone)]
 struct DownloadUpdateEvent {
     percentage: u32,
     name: String,
+}
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AppStatusUpdateEvent {
+    pub is_downloading: bool,
 }
 
 trait DataLoader<T> {
@@ -412,6 +419,27 @@ where
         })?;
 
     info!("Successfully updated {} consumption profile", profile_name);
+
+    Ok(())
+}
+
+pub fn spawn_download_tasks(
+    app_handle: AppHandle,
+    app_state: AppState,
+    client: ConsumerApiClient<StaticAuthorizationProvider>,
+) -> Result<(), AppError> {
+    info!("Spawning download tasks");
+    let client = Arc::new(client);
+
+    async_runtime::spawn(async move {
+        match check_and_download_new_data(app_handle, app_state, client).await {
+            Ok(_) => debug!("Data download tasks completed successfully"),
+            Err(e) => {
+                error!("Data download tasks panicked: {:?}", e);
+                // Handle the panic (e.g., restart the task, log the error, etc.)
+            }
+        }
+    });
 
     Ok(())
 }

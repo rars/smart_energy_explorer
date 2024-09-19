@@ -1,28 +1,20 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use chrono::Days;
-use chrono::Local;
-use chrono::NaiveDate;
-use chrono::NaiveDateTime;
 use diesel::SqliteConnection;
-use keyring::Entry;
-use log::{debug, error, info};
-use n3rgy_consumer_api_client::{ConsumerApiClient, N3rgyClientError, StaticAuthorizationProvider};
-use serde::Serialize;
+use log::{debug, error};
+use n3rgy_consumer_api_client::N3rgyClientError;
 use std::env;
-use std::sync::Arc;
-use std::sync::Mutex;
-use tauri::{async_runtime, AppHandle, Manager};
-use tauri_plugin_log::Target;
-use tauri_plugin_log::TargetKind;
+use std::sync::{Arc, Mutex};
+use tauri::{async_runtime, Manager};
+use tauri_plugin_log::{Target, TargetKind};
+use utils::get_consumer_api_client;
 
 use commands::app::*;
 use commands::electricity::*;
 use commands::gas::*;
 use commands::n3rgy::*;
 use commands::profiles::*;
-use download::check_and_download_new_data;
 
 mod commands;
 mod data;
@@ -44,97 +36,6 @@ pub enum AppError {
     N3rgyClientError(#[from] N3rgyClientError),
     #[error("Error: {0}")]
     CustomError(String),
-}
-
-#[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct StandingCharge {
-    start_date: NaiveDateTime,
-    standing_charge_pence: f64,
-}
-
-#[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct UnitPrice {
-    price_effective_time: NaiveDateTime,
-    unit_price_pence: f64,
-}
-
-#[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct TariffHistoryResponse {
-    standing_charges: Vec<StandingCharge>,
-    unit_prices: Vec<UnitPrice>,
-}
-
-#[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct DailyCost {
-    date: NaiveDate,
-    cost_pence: f64,
-}
-
-async fn get_consumer_api_client(
-) -> Result<Option<ConsumerApiClient<StaticAuthorizationProvider>>, AppError> {
-    if let Some(api_key) = get_api_key_opt()? {
-        let ap = StaticAuthorizationProvider::new(api_key);
-        let client = ConsumerApiClient::new(ap, None);
-
-        let today = Local::now().date_naive();
-        let tomorrow = today.checked_add_days(Days::new(1)).unwrap();
-
-        if let Ok(_) = client.get_electricity_tariff(today, tomorrow).await {
-            return Ok(Some(client));
-        }
-
-        if let Ok(_) = client.get_gas_tariff(today, tomorrow).await {
-            return Ok(Some(client));
-        }
-    }
-
-    Ok(None)
-}
-
-fn get_api_key_opt() -> Result<Option<String>, AppError> {
-    let entry = Entry::new("n3rgy.rars.github.io", "api_key")
-        .map_err(|e| AppError::CustomError(e.to_string()))?;
-
-    match entry.get_password() {
-        Ok(password) => return Ok(Some(password)),
-        Err(e) => {
-            return match e {
-                keyring::Error::NoEntry => Ok(None),
-                _ => Err(AppError::CustomError(e.to_string())),
-            }
-        }
-    }
-}
-
-fn spawn_download_tasks(
-    app_handle: AppHandle,
-    app_state: AppState,
-    client: ConsumerApiClient<StaticAuthorizationProvider>,
-) -> Result<(), AppError> {
-    info!("Spawning download tasks");
-    let client = Arc::new(client);
-
-    async_runtime::spawn(async move {
-        match check_and_download_new_data(app_handle, app_state, client).await {
-            Ok(_) => debug!("Data download tasks completed successfully"),
-            Err(e) => {
-                error!("Data download tasks panicked: {:?}", e);
-                // Handle the panic (e.g., restart the task, log the error, etc.)
-            }
-        }
-    });
-
-    Ok(())
-}
-
-#[derive(Serialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct AppStatusUpdateEvent {
-    pub is_downloading: bool,
 }
 
 fn main() {
@@ -179,7 +80,8 @@ fn main() {
                         *client_available = true;
                     }
 
-                    if let Err(e) = spawn_download_tasks(app_handle_clone, app_state_clone, client)
+                    if let Err(e) =
+                        download::spawn_download_tasks(app_handle_clone, app_state_clone, client)
                     {
                         error!("Failed to spawn download tasks: {}", e);
                     }

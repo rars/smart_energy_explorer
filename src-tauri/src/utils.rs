@@ -1,7 +1,9 @@
 use std::sync::{Arc, Mutex};
 
-use chrono::NaiveDate;
+use chrono::{Days, Local, NaiveDate};
 use diesel::SqliteConnection;
+use keyring::Entry;
+use n3rgy_consumer_api_client::{ConsumerApiClient, StaticAuthorizationProvider};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
@@ -42,4 +44,40 @@ pub fn get_or_create_energy_profile(
                 ))
             })
     })
+}
+
+pub async fn get_consumer_api_client(
+) -> Result<Option<ConsumerApiClient<StaticAuthorizationProvider>>, AppError> {
+    if let Some(api_key) = get_api_key_opt()? {
+        let ap = StaticAuthorizationProvider::new(api_key);
+        let client = ConsumerApiClient::new(ap, None);
+
+        let today = Local::now().date_naive();
+        let tomorrow = today.checked_add_days(Days::new(1)).unwrap();
+
+        if let Ok(_) = client.get_electricity_tariff(today, tomorrow).await {
+            return Ok(Some(client));
+        }
+
+        if let Ok(_) = client.get_gas_tariff(today, tomorrow).await {
+            return Ok(Some(client));
+        }
+    }
+
+    Ok(None)
+}
+
+pub fn get_api_key_opt() -> Result<Option<String>, AppError> {
+    let entry = Entry::new("n3rgy.rars.github.io", "api_key")
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    match entry.get_password() {
+        Ok(password) => return Ok(Some(password)),
+        Err(e) => {
+            return match e {
+                keyring::Error::NoEntry => Ok(None),
+                _ => Err(AppError::CustomError(e.to_string())),
+            }
+        }
+    }
 }

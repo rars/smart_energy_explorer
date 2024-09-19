@@ -4,7 +4,8 @@ use tauri::{AppHandle, State};
 
 use crate::{
     data::energy_profile::{EnergyProfile, EnergyProfileRepository, SqliteEnergyProfileRepository},
-    get_consumer_api_client, spawn_download_tasks,
+    download::spawn_download_tasks,
+    get_consumer_api_client,
     utils::parse_iso_string_to_naive_date,
     AppState,
 };

@@ -1,7 +1,9 @@
 use keyring::Entry;
 use tauri::{AppHandle, State};
 
-use crate::{get_api_key_opt, get_consumer_api_client, spawn_download_tasks, AppState};
+use crate::{
+    download::spawn_download_tasks, get_consumer_api_client, utils::get_api_key_opt, AppState,
+};
 
 use super::ApiError;
 

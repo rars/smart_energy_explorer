@@ -7,6 +7,7 @@ pub mod electricity;
 pub mod gas;
 pub mod n3rgy;
 pub mod profiles;
+pub mod tariff;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
