@@ -22,6 +22,8 @@ import {
   exactLengthValidator,
   noHyphenValidator,
 } from '../../common/validators';
+import { MatDialog } from '@angular/material/dialog';
+import { TermsOfUseDialogComponent } from '../terms-of-use-dialog/terms-of-use-dialog.component';
 
 @Component({
   selector: 'app-welcome',
@@ -70,7 +72,10 @@ export class WelcomeComponent {
     ],
   });
 
-  public constructor(private readonly apiKeyService: ApiKeyService) {
+  public constructor(
+    private readonly apiKeyService: ApiKeyService,
+    private readonly dialog: MatDialog,
+  ) {
     this.active$ = this.isActiveSubject.asObservable();
     this.isTestingConnection$ = this.isTestingConnectionSubject.asObservable();
 
@@ -82,6 +87,10 @@ export class WelcomeComponent {
       });
 
     setTimeout(() => (this.showElement = true), 2000);
+  }
+
+  public showTermsOfUse() {
+    this.dialog.open(TermsOfUseDialogComponent, {});
   }
 
   public async saveApiKey(): Promise<void> {

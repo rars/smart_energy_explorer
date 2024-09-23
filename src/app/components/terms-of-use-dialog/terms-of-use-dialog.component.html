@@ -1,0 +1,10 @@
+<h2 mat-dialog-title>Terms Of Use</h2>
+<mat-dialog-content>
+  <app-terms-of-use></app-terms-of-use>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="{ accept: false }">Refuse</button>
+  <button mat-button [mat-dialog-close]="{ accept: true }" cdkFocusInitial>
+    Agree
+  </button>
+</mat-dialog-actions>
