@@ -7,12 +7,17 @@
       <form [formGroup]="firstFormGroup">
         <ng-template matStepLabel>Review terms and conditions</ng-template>
         <p>
-          Please acknowledge that you have read and agreed to the terms and
-          conditions of use of this app.
+          Please acknowledge that you have read and agreed to the terms of use
+          of this application.
         </p>
+        <div>
+          <button mat-raised-button type="button" (click)="showTermsOfUse()">
+            View Terms Of Use
+          </button>
+        </div>
         <mat-checkbox formControlName="agreement"
-          >I have read and agree to the terms and conditions of this
-          app.</mat-checkbox
+          >I have read and agree to the terms of use of this
+          application.</mat-checkbox
         >
         <div>
           <button
