@@ -32,7 +32,7 @@ export class ThemeService {
 
     this.setDocumentClass(newIsLightModeValue);
 
-    await this.storeService.set(
+    await this.storeService.safe_set(
       this.themeStorageKey,
       newIsLightModeValue ? 'light' : 'dark',
     );

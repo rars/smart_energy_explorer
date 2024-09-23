@@ -14,6 +14,7 @@ use crate::{
 };
 
 use super::ApiError;
+use crate::app_settings::AppSettings;
 
 const GIT_VERSION: &str = git_version!();
 
@@ -31,7 +32,14 @@ pub fn get_app_version() -> String {
 
 #[tauri::command]
 pub async fn close_welcome_screen(app_handle: AppHandle) -> Result<(), ApiError> {
+    let app_settings = AppSettings::new();
+
+    app_settings
+        .safe_set(&app_handle, "termsAccepted", true)
+        .map_err(|e| ApiError::Custom(format!("{}", e)))?;
+
     switch_splashscreen_to_main(&app_handle);
+
     Ok(())
 }
 
