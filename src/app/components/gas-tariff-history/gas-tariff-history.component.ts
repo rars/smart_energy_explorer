@@ -41,7 +41,6 @@ export class GasTariffHistoryComponent {
         unitPrices: { priceEffectiveTime: string; unitPricePence: number }[];
       }>('get_gas_tariff_history', {}),
     ).subscribe((data) => {
-      console.log(data);
       this.standingChargesDataSource = data?.standingCharges?.map((x) => {
         return {
           startDate: new Date(x.startDate),

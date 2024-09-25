@@ -114,4 +114,15 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
   public async fetchData(): Promise<void> {
     return invoke<void>('fetch_data', {});
   }
+
+  public async reset(): Promise<void> {
+    const confirmation = await confirm(
+      'This will delete all local data. Are you sure you want to continue?',
+      { title: 'Reset?', kind: 'warning' },
+    );
+
+    if (confirmation) {
+      await invoke<void>('reset', {});
+    }
+  }
 }

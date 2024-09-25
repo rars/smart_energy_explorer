@@ -86,11 +86,19 @@ export class WelcomeComponent {
         this.secondFormGroup.get('apiKeyCtrl')?.setValue(apiKey);
       });
 
-    setTimeout(() => (this.showElement = true), 2000);
+    setTimeout(() => (this.showElement = true), 100);
   }
 
   public showTermsOfUse() {
-    this.dialog.open(TermsOfUseDialogComponent, {});
+    const dialogRef = this.dialog.open(TermsOfUseDialogComponent, {
+      data: { isReadonly: false },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.accept !== undefined) {
+        this.firstFormGroup.get('agreement')?.setValue(result.accept);
+      }
+    });
   }
 
   public async saveApiKey(): Promise<void> {

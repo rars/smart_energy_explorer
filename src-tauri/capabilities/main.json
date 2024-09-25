@@ -1,10 +1,8 @@
 {
-  "identifier": "migrated",
-  "description": "permissions that were migrated from v1",
+  "identifier": "main",
+  "description": "permissions for the main window",
   "local": true,
-  "windows": [
-    "main"
-  ],
+  "windows": ["main"],
   "permissions": [
     "core:default",
     "sql:allow-load",

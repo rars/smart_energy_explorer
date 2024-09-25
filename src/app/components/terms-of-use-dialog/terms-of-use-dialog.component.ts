@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { Component, Inject, Input } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { TermsOfUseComponent } from '../terms-of-use/terms-of-use.component';
 import { MatButtonModule } from '@angular/material/button';
 
@@ -11,7 +11,11 @@ import { MatButtonModule } from '@angular/material/button';
   styleUrl: './terms-of-use-dialog.component.scss',
 })
 export class TermsOfUseDialogComponent {
+  public readonly isReadonly: boolean;
+
   public constructor(
-    private dialogRef: MatDialogRef<TermsOfUseDialogComponent>,
-  ) {}
+    @Inject(MAT_DIALOG_DATA) private data: { isReadonly: boolean },
+  ) {
+    this.isReadonly = data.isReadonly;
+  }
 }

@@ -1,6 +1,15 @@
 <div class="container mx-auto flex flex-col w-screen h-screen">
   @if (!(isWelcomeActive$ | async)) {
     <app-navigation-bar></app-navigation-bar>
+  } @else {
+    <div class="flex flex-row pt-2">
+      <div class="grow"></div>
+      <button type="button" mat-icon-button (click)="toggleTheme()">
+        <mat-icon>{{
+          (isLightMode$ | async) ? 'dark_mode' : 'light_mode'
+        }}</mat-icon>
+      </button>
+    </div>
   }
 
   <div class="flex flex-col flex-1 overflow-hidden">

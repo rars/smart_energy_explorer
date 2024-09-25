@@ -21,6 +21,6 @@ export class AboutComponent {
   }
 
   public showTermsOfUse() {
-    this.dialog.open(TermsOfUseDialogComponent, {});
+    this.dialog.open(TermsOfUseDialogComponent, { data: { isReadonly: true } });
   }
 }

@@ -1,23 +1,20 @@
 <div *ngIf="showElement" @fadeIn class="w-full h-full overflow-auto">
   <h1 class="mat-headline-small">Smart Energy Explorer</h1>
-  Welcome to smart energy explorer, a tool to see your energy usages.
+  <p>Welcome to Smart Energy Explorer: your personal energy usage dashboard.</p>
 
   <mat-stepper orientation="vertical" [linear]="true" #stepper>
     <mat-step [stepControl]="firstFormGroup">
       <form [formGroup]="firstFormGroup">
         <ng-template matStepLabel>Review terms and conditions</ng-template>
-        <p>
-          Please acknowledge that you have read and agreed to the terms of use
-          of this application.
-        </p>
+        <p>Before proceeding, please review and accept our Terms of Use.</p>
         <div>
           <button mat-raised-button type="button" (click)="showTermsOfUse()">
-            View Terms Of Use
+            View Terms of Use
           </button>
         </div>
         <mat-checkbox formControlName="agreement"
-          >I have read and agree to the terms of use of this
-          application.</mat-checkbox
+          >I have read and agree to the application's Terms of
+          Use.</mat-checkbox
         >
         <div>
           <button

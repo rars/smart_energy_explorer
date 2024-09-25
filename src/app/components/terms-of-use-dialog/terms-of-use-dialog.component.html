@@ -3,8 +3,12 @@
   <app-terms-of-use></app-terms-of-use>
 </mat-dialog-content>
 <mat-dialog-actions>
-  <button mat-button [mat-dialog-close]="{ accept: false }">Refuse</button>
-  <button mat-button [mat-dialog-close]="{ accept: true }" cdkFocusInitial>
-    Agree
-  </button>
+  @if (isReadonly) {
+    <button mat-button [mat-dialog-close]="{}">Close</button>
+  } @else {
+    <button mat-button [mat-dialog-close]="{ accept: false }">Refuse</button>
+    <button mat-button [mat-dialog-close]="{ accept: true }" cdkFocusInitial>
+      Agree
+    </button>
+  }
 </mat-dialog-actions>

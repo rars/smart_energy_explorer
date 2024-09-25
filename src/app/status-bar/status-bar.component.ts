@@ -18,13 +18,10 @@ export class StatusBarComponent implements OnInit, OnDestroy {
   private unlistenFn?: UnlistenFn;
 
   public ngOnInit(): void {
-    console.log('listening...');
     listen<{ isDownloading: boolean }>('appStatusUpdate', (event) => {
       // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
       // event.payload is the payload object
       this.isDownloading$.next(event.payload.isDownloading);
-
-      console.log(event);
     }).then((unlisten) => {
       this.unlistenFn = unlisten;
     });

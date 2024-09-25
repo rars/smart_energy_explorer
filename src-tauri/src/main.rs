@@ -120,6 +120,7 @@ fn main() {
             get_monthly_gas_consumption,
             get_raw_electricity_consumption,
             get_raw_gas_consumption,
+            reset,
             store_api_key,
             test_connection,
             update_energy_profile_settings
