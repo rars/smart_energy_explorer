@@ -1,12 +1,37 @@
-<h2 class="mat-title-medium">About</h2>
-<p>Version: {{ version }}</p>
-<h3 class="mat-title-small">Terms Of Use</h3>
-<button mat-raised-button type="button" (click)="showTermsOfUse()">
-  View Terms Of Use
-</button>
-
-<div class="mt-4">
+<div class="w-full h-full overflow-auto">
+  <h2 class="mat-title-medium">About</h2>
+  <p>Version: {{ version }}</p>
   <p>
-    <small>&copy; 2024 Richard Russell. All rights reserved.</small>
+    Source code available at:
+    <a
+      href="https://github.com/rars/n3rgy-angular/"
+      target="_blank"
+      rel="noopener noreferrer"
+      >https://github.com/rars/n3rgy-angular/</a
+    >.
   </p>
+  <div>
+    <h3 class="mat-title-small">Found a bug?</h3>
+    <p>
+      Create an issue to report it here:
+      <a
+        href="https://github.com/rars/n3rgy-angular/issues"
+        target="_blank"
+        rel="noopener noreferrer"
+        >https://github.com/rars/n3rgy-angular/issues</a
+      >
+    </p>
+  </div>
+  <div class="mb-4">
+    <h3 class="mat-title-small">Licensing</h3>
+    <button mat-raised-button type="button" (click)="showLicensing()">
+      View Licensing
+    </button>
+  </div>
+  <div>
+    <h3 class="mat-title-small">Terms Of Use</h3>
+    <button mat-raised-button type="button" (click)="showTermsOfUse()">
+      View Terms Of Use
+    </button>
+  </div>
 </div>
