@@ -5,6 +5,7 @@ import { TermsOfUseDialogComponent } from '../terms-of-use-dialog/terms-of-use-d
 import { MatDialog } from '@angular/material/dialog';
 import { LicenseComponent } from '../license/license.component';
 import { LicenseDialogComponent } from '../license-dialog/license-dialog.component';
+import { ShellService } from '../../services/shell/shell.service';
 
 @Component({
   selector: 'app-about',
@@ -16,7 +17,10 @@ import { LicenseDialogComponent } from '../license-dialog/license-dialog.compone
 export class AboutComponent {
   protected version: string = '';
 
-  public constructor(private readonly dialog: MatDialog) {
+  public constructor(
+    protected readonly shellService: ShellService,
+    private readonly dialog: MatDialog,
+  ) {
     invoke<string>('get_app_version', {}).then((version) => {
       this.version = version;
     });

@@ -10,6 +10,8 @@
     "sql:allow-select",
     "sql:default",
     "dialog:default",
-    "store:default"
+    "store:default",
+    "shell:default",
+    "shell:allow-open"
   ]
 }

@@ -3,5 +3,10 @@
   "description": "permissions for the splashscreen window",
   "local": true,
   "windows": ["splashscreen"],
-  "permissions": ["core:default", "store:default"]
+  "permissions": [
+    "core:default",
+    "store:default",
+    "shell:default",
+    "shell:allow-open"
+  ]
 }

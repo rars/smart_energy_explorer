@@ -24,6 +24,7 @@ import {
 } from '../../common/validators';
 import { MatDialog } from '@angular/material/dialog';
 import { TermsOfUseDialogComponent } from '../terms-of-use-dialog/terms-of-use-dialog.component';
+import { ShellService } from '../../services/shell/shell.service';
 
 @Component({
   selector: 'app-welcome',
@@ -73,6 +74,7 @@ export class WelcomeComponent {
   });
 
   public constructor(
+    protected readonly shellService: ShellService,
     private readonly apiKeyService: ApiKeyService,
     private readonly dialog: MatDialog,
   ) {

@@ -94,6 +94,7 @@ fn main() {
         })
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_shell::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .targets([
