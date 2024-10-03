@@ -42,7 +42,7 @@
   },
   "productName": "smart-energy-explorer",
   "version": "../package.json",
-  "identifier": "io.github.rars.smart_energy_explorer_app",
+  "identifier": "io.github.rars.smart-energy-explorer",
   "plugins": {},
   "app": {
     "windows": [

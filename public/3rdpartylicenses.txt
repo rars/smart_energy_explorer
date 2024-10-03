@@ -1,10 +1,10 @@
 Third Party Licenses
 
-This page lists the licenses of the projects used in smart_energy_explorer_app (as generated using cargo-about and Angular CLI).
+This page lists the licenses of the projects used in smart_energy_explorer (as generated using cargo-about and Angular CLI).
 
 <AGPL-3.0> GNU Affero General Public License v3.0
 Used by:
-* <https://crates.io/crates/smart_energy_explorer_app> smart_energy_explorer_app 0.1.0
+* <https://crates.io/crates/smart_energy_explorer> smart_energy_explorer 0.1.0
 
 GNU AFFERO GENERAL PUBLIC LICENSE
 Version 3, 19 November 2007

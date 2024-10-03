@@ -1,4 +1,4 @@
-# smart_energy_explorer_app
+# Smart Energy Explorer
 
 An energy usage dashboard.
 

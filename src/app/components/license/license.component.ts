@@ -16,7 +16,7 @@ export class LicenseComponent {
   private readonly httpClient = inject(HttpClient);
 
   protected readonly shellService = inject(ShellService);
-  protected readonly gplaffero = this.httpClient.get<string>('gplaffero.txt', {
+  protected readonly afferogpl = this.httpClient.get<string>('afferogpl.txt', {
     responseType: 'text' as 'json',
   });
 }
