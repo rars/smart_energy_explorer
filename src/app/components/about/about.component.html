@@ -4,11 +4,15 @@
   <p>
     Source code available at:
     <a
-      href="https://github.com/rars/n3rgy-angular/"
+      href="https://github.com/rars/smart_energy_explorer_app"
       target="_blank"
       rel="noopener noreferrer"
-      (click)="shellService.openLink('https://github.com/rars/n3rgy-angular/')"
-      >https://github.com/rars/n3rgy-angular/</a
+      (click)="
+        shellService.openLink(
+          'https://github.com/rars/smart_energy_explorer_app'
+        )
+      "
+      >https://github.com/rars/smart_energy_explorer_app</a
     >.
   </p>
   <div>
@@ -16,26 +20,30 @@
     <p>
       Create an issue to report it here:
       <a
-        href="https://github.com/rars/n3rgy-angular/issues"
+        href="https://github.com/rars/smart_energy_explorer_app/issues"
         target="_blank"
         rel="noopener noreferrer"
         (click)="
-          shellService.openLink('https://github.com/rars/n3rgy-angular/issues')
+          shellService.openLink(
+            'https://github.com/rars/smart_energy_explorer_app/issues'
+          )
         "
-        >https://github.com/rars/n3rgy-angular/issues</a
+        >https://github.com/rars/smart_energy_explorer_app/issues</a
       >
     </p>
   </div>
-  <div class="mb-4">
-    <h3 class="mat-title-small">Licensing</h3>
+  <div>
+    <h3 class="mat-title-small">Contact</h3>
+    <p>
+      rarsconnect<span class="hidden">SPAMPROTECTION</span>&commat;gmail.com
+    </p>
+  </div>
+  <div class="mb-4 flex gap-4">
     <button mat-raised-button type="button" (click)="showLicensing()">
       View Licensing
     </button>
-  </div>
-  <div>
-    <h3 class="mat-title-small">Terms Of Use</h3>
-    <button mat-raised-button type="button" (click)="showTermsOfUse()">
-      View Terms Of Use
+    <button mat-raised-button type="button" (click)="showUsageGuidance()">
+      View Usage Guidance
     </button>
   </div>
 </div>

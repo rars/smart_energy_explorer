@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
+
 import { BehaviorSubject } from 'rxjs';
+
+import { UnlistenFn, listen } from '@tauri-apps/api/event';
 
 @Component({
   selector: 'app-data-downloading',

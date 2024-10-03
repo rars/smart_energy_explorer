@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { NavigationBarComponent } from './components/navigation-bar/navigation-bar.component';
-import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
-
-import { StatusBarComponent } from './status-bar/status-bar.component';
-import { filter, map, Observable, startWith } from 'rxjs';
-import { ThemeService } from './services/theme/theme.service';
+import { Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+
+import { Observable, filter, map, startWith } from 'rxjs';
+
+import { NavigationBarComponent } from './components/navigation-bar/navigation-bar.component';
+import { StatusBarComponent } from './components/status-bar/status-bar.component';
+import { ThemeService } from './services/theme/theme.service';
 
 @Component({
   selector: 'app-root',

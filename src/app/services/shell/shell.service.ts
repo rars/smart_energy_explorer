@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
+
 import { open } from '@tauri-apps/plugin-shell';
+
 import { ErrorService } from '../error/error.service';
 
 @Injectable({

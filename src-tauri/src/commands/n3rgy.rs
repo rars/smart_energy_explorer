@@ -7,14 +7,16 @@ use crate::{
 
 use super::ApiError;
 
+pub(crate) const APP_SERVICE_NAME: &str = "io.github.rars.smart_energy_explorer";
+
 #[tauri::command]
 pub async fn store_api_key(
     app_handle: AppHandle,
     app_state: State<'_, AppState>,
     api_key: String,
 ) -> Result<(), ApiError> {
-    let entry = Entry::new("n3rgy.rars.github.io", "api_key")
-        .map_err(|e| ApiError::Custom(e.to_string()))?;
+    let entry =
+        Entry::new(APP_SERVICE_NAME, "api_key").map_err(|e| ApiError::Custom(e.to_string()))?;
 
     entry
         .set_password(&api_key)

@@ -2,7 +2,7 @@
   "build": {
     "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run start",
-    "frontendDist": "../dist/n3rgy-angular/browser",
+    "frontendDist": "../dist/smart-energy-explorer-angular/browser",
     "devUrl": "http://localhost:4200"
   },
   "bundle": {
@@ -40,9 +40,9 @@
     },
     "createUpdaterArtifacts": false
   },
-  "productName": "n3rgy-explorer",
+  "productName": "smart-energy-explorer",
   "version": "../package.json",
-  "identifier": "io.github.rars.n3rgy",
+  "identifier": "io.github.rars.smart_energy_explorer_app",
   "plugins": {},
   "app": {
     "windows": [

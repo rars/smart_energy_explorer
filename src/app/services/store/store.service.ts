@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+
 import { Store } from '@tauri-apps/plugin-store';
 
 @Injectable({

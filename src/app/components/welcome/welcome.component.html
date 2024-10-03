@@ -5,16 +5,25 @@
   <mat-stepper orientation="vertical" [linear]="true" #stepper>
     <mat-step [stepControl]="firstFormGroup">
       <form [formGroup]="firstFormGroup">
-        <ng-template matStepLabel>Review terms and conditions</ng-template>
-        <p>Before proceeding, please review and accept our Terms of Use.</p>
-        <div>
-          <button mat-raised-button type="button" (click)="showTermsOfUse()">
-            View Terms of Use
+        <ng-template matStepLabel
+          >Review licensing and usage guidance</ng-template
+        >
+        <p>
+          Before proceeding, please review and accept the licensing terms and
+          review the usage guidance.
+        </p>
+        <div class="flex gap-4">
+          <button mat-raised-button type="button" (click)="showLicensing()">
+            View Licensing
+          </button>
+
+          <button mat-raised-button type="button" (click)="showUsageGuidance()">
+            View Usage Guidance
           </button>
         </div>
         <mat-checkbox formControlName="agreement"
-          >I have read and agree to the application's Terms of
-          Use.</mat-checkbox
+          >I have read and agree to the application's licensing
+          terms.</mat-checkbox
         >
         <div>
           <button

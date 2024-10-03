@@ -2,16 +2,16 @@ import { Component, Inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 
-import { LicenseComponent } from '../license/license.component';
+import { UsageGuidanceComponent } from '../usage-guidance/usage-guidance.component';
 
 @Component({
-  selector: 'app-license-dialog',
+  selector: 'app-usage-guidance-dialog',
   standalone: true,
-  imports: [LicenseComponent, MatDialogModule, MatButtonModule],
-  templateUrl: './license-dialog.component.html',
-  styleUrl: './license-dialog.component.scss',
+  imports: [UsageGuidanceComponent, MatDialogModule, MatButtonModule],
+  templateUrl: './usage-guidance-dialog.component.html',
+  styleUrl: './usage-guidance-dialog.component.scss',
 })
-export class LicenseDialogComponent {
+export class UsageGuidanceDialogComponent {
   public readonly isReadonly: boolean;
 
   public constructor(@Inject(MAT_DIALOG_DATA) data: { isReadonly: boolean }) {

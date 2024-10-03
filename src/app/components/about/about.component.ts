@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { invoke } from '@tauri-apps/api/core';
-import { TermsOfUseDialogComponent } from '../terms-of-use-dialog/terms-of-use-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { LicenseComponent } from '../license/license.component';
-import { LicenseDialogComponent } from '../license-dialog/license-dialog.component';
+
+import { invoke } from '@tauri-apps/api/core';
+
 import { ShellService } from '../../services/shell/shell.service';
+import { LicenseDialogComponent } from '../license-dialog/license-dialog.component';
+import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-guidance-dialog.component';
 
 @Component({
   selector: 'app-about',
@@ -26,11 +27,23 @@ export class AboutComponent {
     });
   }
 
-  public showTermsOfUse(): void {
-    this.dialog.open(TermsOfUseDialogComponent, { data: { isReadonly: true } });
+  public showUsageGuidance(): void {
+    this.dialog.open(UsageGuidanceDialogComponent, {
+      width: '90%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      data: { isReadonly: true },
+    });
   }
 
   public showLicensing(): void {
-    this.dialog.open(LicenseDialogComponent);
+    this.dialog.open(LicenseDialogComponent, {
+      width: '90%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      data: {
+        isReadonly: true,
+      },
+    });
   }
 }

@@ -1,11 +1,11 @@
 [package]
-name = "app"
+name = "smart_energy_explorer_app"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "A dashboard for exploring home energy usage"
+authors = ["Richard Russell"]
 license = "AGPL-3.0-or-later"
 repository = ""
-default-run = "app"
+default-run = "smart_energy_explorer_app"
 edition = "2021"
 rust-version = "1.81"
 

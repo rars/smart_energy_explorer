@@ -1,9 +1,12 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
-import { invoke } from '@tauri-apps/api/core';
-import { BehaviorSubject, from } from 'rxjs';
-import { DataDownloadingComponent } from '../components/data-downloading/data-downloading.component';
 import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+
+import { BehaviorSubject, from } from 'rxjs';
+
+import { invoke } from '@tauri-apps/api/core';
+import { UnlistenFn, listen } from '@tauri-apps/api/event';
+
+import { DataDownloadingComponent } from '../data-downloading/data-downloading.component';
 
 @Component({
   selector: 'app-status-bar',

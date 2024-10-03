@@ -1,5 +1,6 @@
+import Chart from 'chart.js/auto';
+
 import { Component, Input, OnDestroy, SimpleChanges } from '@angular/core';
-import Chart, { ChartItem } from 'chart.js/auto';
 
 @Component({
   selector: 'app-chart',
@@ -21,7 +22,7 @@ export class ChartComponent implements OnDestroy {
       this.chart?.destroy();
       this.chart = new Chart(
         'canvas',
-        simpleChanges['chartConfiguration'].currentValue
+        simpleChanges['chartConfiguration'].currentValue,
       );
     }
   }
