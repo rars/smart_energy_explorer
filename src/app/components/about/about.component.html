@@ -1,3 +1,47 @@
-<h2 class="mat-title-medium">About</h2>
-<p>Version: {{ version }}</p>
-<p><small>&copy; 2024 Richard Russell. All rights reserved.</small></p>
+<div class="w-full h-full overflow-auto">
+  <h2 class="mat-title-medium">About</h2>
+  <p>Version: {{ version }}</p>
+  <p>
+    Source code available at:
+    <a
+      href="https://github.com/rars/smart_energy_explorer"
+      target="_blank"
+      rel="noopener noreferrer"
+      (click)="
+        shellService.openLink('https://github.com/rars/smart_energy_explorer')
+      "
+      >https://github.com/rars/smart_energy_explorer</a
+    >.
+  </p>
+  <div>
+    <h3 class="mat-title-small">Found a bug?</h3>
+    <p>
+      Create an issue to report it here:
+      <a
+        href="https://github.com/rars/smart_energy_explorer/issues"
+        target="_blank"
+        rel="noopener noreferrer"
+        (click)="
+          shellService.openLink(
+            'https://github.com/rars/smart_energy_explorer/issues'
+          )
+        "
+        >https://github.com/rars/smart_energy_explorer/issues</a
+      >
+    </p>
+  </div>
+  <div>
+    <h3 class="mat-title-small">Contact</h3>
+    <p>
+      rarsconnect<span class="hidden">SPAMPROTECTION</span>&commat;gmail.com
+    </p>
+  </div>
+  <div class="mb-4 flex gap-4">
+    <button mat-raised-button type="button" (click)="showLicensing()">
+      View Licensing
+    </button>
+    <button mat-raised-button type="button" (click)="showUsageGuidance()">
+      View Usage Guidance
+    </button>
+  </div>
+</div>

@@ -10,7 +10,7 @@ use tauri::{AppHandle, Emitter, Manager};
 use crate::{
     commands::ApiError,
     data::energy_profile::{EnergyProfile, EnergyProfileRepository, SqliteEnergyProfileRepository},
-    AppError,
+    AppError, APP_SERVICE_NAME,
 };
 
 pub fn parse_iso_string_to_naive_date(iso_date_str: &str) -> Result<NaiveDate, ApiError> {
@@ -68,7 +68,7 @@ pub async fn get_consumer_api_client(
 }
 
 pub fn get_api_key_opt() -> Result<Option<String>, AppError> {
-    let entry = Entry::new("n3rgy.rars.github.io", "api_key")
+    let entry = Entry::new(APP_SERVICE_NAME, "api_key")
         .map_err(|e| AppError::CustomError(e.to_string()))?;
 
     match entry.get_password() {

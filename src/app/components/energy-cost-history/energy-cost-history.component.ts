@@ -6,26 +6,28 @@ import {
   OnDestroy,
   ViewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { invoke } from '@tauri-apps/api/core';
 
 import {
+  ReplaySubject,
   combineLatest,
   filter,
   from,
   map,
-  ReplaySubject,
   startWith,
   switchMap,
   take,
 } from 'rxjs';
+
+import { invoke } from '@tauri-apps/api/core';
+
 import { DateService } from '../../services/date/date.service';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatButtonModule } from '@angular/material/button';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControlService } from '../../services/form-control/form-control.service';
 
 const nonNullOrUndefined = <T>(x: T | null | undefined): x is T => !!x;

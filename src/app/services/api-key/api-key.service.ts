@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
+
+import { Observable, from } from 'rxjs';
+
 import { invoke } from '@tauri-apps/api/core';
+
 import { ErrorService } from '../error/error.service';
-import { from, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',

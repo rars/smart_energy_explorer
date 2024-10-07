@@ -1,25 +1,32 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { ChartComponent } from '../chart/chart.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+
 import {
+  Observable,
   catchError,
   combineLatest,
   filter,
   forkJoin,
   from,
   map,
-  Observable,
   of,
   startWith,
   switchMap,
   take,
 } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+
+// When using the Tauri API npm package:
+import { invoke } from '@tauri-apps/api/core';
+
 import { DateService } from '../../services/date/date.service';
-import { MatSelectModule } from '@angular/material/select';
+import { FormControlService } from '../../services/form-control/form-control.service';
+import { ChartComponent } from '../chart/chart.component';
 
 type Aggregation = 'raw' | 'daily' | 'monthly';
 
@@ -27,11 +34,6 @@ const nonNullOrUndefined = <T>(x: T | null | undefined): x is T => !!x;
 
 const getValueStream = <T>(x: FormControl<T | null>) =>
   x.valueChanges.pipe(startWith(x.value), filter(nonNullOrUndefined));
-
-// When using the Tauri API npm package:
-import { invoke } from '@tauri-apps/api/core';
-import { MatButtonModule } from '@angular/material/button';
-import { FormControlService } from '../../services/form-control/form-control.service';
 
 @Component({
   selector: 'app-electricity-consumption-line-chart',

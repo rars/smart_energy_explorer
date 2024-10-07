@@ -1,18 +1,29 @@
 <div *ngIf="showElement" @fadeIn class="w-full h-full overflow-auto">
   <h1 class="mat-headline-small">Smart Energy Explorer</h1>
-  Welcome to smart energy explorer, a tool to see your energy usages.
+  <p>Welcome to Smart Energy Explorer: your personal energy usage dashboard.</p>
 
   <mat-stepper orientation="vertical" [linear]="true" #stepper>
     <mat-step [stepControl]="firstFormGroup">
       <form [formGroup]="firstFormGroup">
-        <ng-template matStepLabel>Review terms and conditions</ng-template>
+        <ng-template matStepLabel
+          >Review licensing and usage guidance</ng-template
+        >
         <p>
-          Please acknowledge that you have read and agreed to the terms and
-          conditions of use of this app.
+          Before proceeding, please review and accept the licensing terms and
+          review the usage guidance.
         </p>
+        <div class="flex gap-4">
+          <button mat-raised-button type="button" (click)="showLicensing()">
+            View Licensing
+          </button>
+
+          <button mat-raised-button type="button" (click)="showUsageGuidance()">
+            View Usage Guidance
+          </button>
+        </div>
         <mat-checkbox formControlName="agreement"
-          >I have read and agree to the terms and conditions of this
-          app.</mat-checkbox
+          >I have read and agree to the application's licensing
+          terms.</mat-checkbox
         >
         <div>
           <button
@@ -30,13 +41,23 @@
         <ng-template matStepLabel>Grant access to your data</ng-template>
         <p>
           This app uses
-          <a href="https://www.n3rgy.com/" target="_blank">n3rgy</a>, a
-          third-party service, to retrieve your smart meter data. To proceed,
-          you need to:
+          <a
+            href="https://www.n3rgy.com/"
+            target="_blank"
+            (click)="shellService.openLink('https://www.n3rgy.com/')"
+            >n3rgy</a
+          >, a third-party service, to retrieve your smart meter data. To
+          proceed, you need to:
         </p>
         <ol>
           <li>
-            <a href="https://data.n3rgy.com/consumer-sign-up" target="_blank">
+            <a
+              href="https://data.n3rgy.com/consumer-sign-up"
+              target="_blank"
+              (click)="
+                shellService.openLink('https://data.n3rgy.com/consumer-sign-up')
+              "
+            >
               Enroll with n3rgy as a consumer
               <mat-icon class="text-xs">open_in_new</mat-icon>
             </a>

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+
 import { Store } from '@tauri-apps/plugin-store';
 
 @Injectable({
@@ -11,8 +12,10 @@ export class StoreService {
     this.store = new Store('app_settings.bin');
   }
 
-  public set(key: string, value: unknown): Promise<void> {
-    return this.store.set(key, value);
+  public async safe_set(key: string, value: unknown): Promise<void> {
+    await this.store.set(key, value);
+
+    await this.store.save();
   }
 
   public get(key: string): Promise<unknown> {

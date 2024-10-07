@@ -135,6 +135,155 @@
           "type": "object",
           "allOf": [
             {
+              "if": {
+                "properties": {
+                  "identifier": {
+                    "anyOf": [
+                      {
+                        "description": "This permission set configures which\nshell functionality is exposed by default.\n\n#### Granted Permissions\n\nIt allows to use the `open` functionality without any specific\nscope pre-configured. It will allow opening `http(s)://`,\n`tel:` and `mailto:` links.\n",
+                        "type": "string",
+                        "const": "shell:default"
+                      },
+                      {
+                        "description": "Enables the execute command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "shell:allow-execute"
+                      },
+                      {
+                        "description": "Enables the kill command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "shell:allow-kill"
+                      },
+                      {
+                        "description": "Enables the open command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "shell:allow-open"
+                      },
+                      {
+                        "description": "Enables the spawn command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "shell:allow-spawn"
+                      },
+                      {
+                        "description": "Enables the stdin_write command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "shell:allow-stdin-write"
+                      },
+                      {
+                        "description": "Denies the execute command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "shell:deny-execute"
+                      },
+                      {
+                        "description": "Denies the kill command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "shell:deny-kill"
+                      },
+                      {
+                        "description": "Denies the open command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "shell:deny-open"
+                      },
+                      {
+                        "description": "Denies the spawn command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "shell:deny-spawn"
+                      },
+                      {
+                        "description": "Denies the stdin_write command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "shell:deny-stdin-write"
+                      }
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "allow": {
+                    "items": {
+                      "title": "Entry",
+                      "description": "A command allowed to be executed by the webview API.",
+                      "type": "object",
+                      "required": [
+                        "args",
+                        "cmd",
+                        "name",
+                        "sidecar"
+                      ],
+                      "properties": {
+                        "args": {
+                          "description": "The allowed arguments for the command execution.",
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/ShellAllowedArgs"
+                            }
+                          ]
+                        },
+                        "cmd": {
+                          "description": "The command name. It can start with a variable that resolves to a system base directory. The variables are: `$AUDIO`, `$CACHE`, `$CONFIG`, `$DATA`, `$LOCALDATA`, `$DESKTOP`, `$DOCUMENT`, `$DOWNLOAD`, `$EXE`, `$FONT`, `$HOME`, `$PICTURE`, `$PUBLIC`, `$RUNTIME`, `$TEMPLATE`, `$VIDEO`, `$RESOURCE`, `$APP`, `$LOG`, `$TEMP`, `$APPCONFIG`, `$APPDATA`, `$APPLOCALDATA`, `$APPCACHE`, `$APPLOG`.",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "The name for this allowed shell command configuration.\n\nThis name will be used inside of the webview API to call this command along with any specified arguments.",
+                          "type": "string"
+                        },
+                        "sidecar": {
+                          "description": "If this command is a sidecar command.",
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
+                  "deny": {
+                    "items": {
+                      "title": "Entry",
+                      "description": "A command allowed to be executed by the webview API.",
+                      "type": "object",
+                      "required": [
+                        "args",
+                        "cmd",
+                        "name",
+                        "sidecar"
+                      ],
+                      "properties": {
+                        "args": {
+                          "description": "The allowed arguments for the command execution.",
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/ShellAllowedArgs"
+                            }
+                          ]
+                        },
+                        "cmd": {
+                          "description": "The command name. It can start with a variable that resolves to a system base directory. The variables are: `$AUDIO`, `$CACHE`, `$CONFIG`, `$DATA`, `$LOCALDATA`, `$DESKTOP`, `$DOCUMENT`, `$DOWNLOAD`, `$EXE`, `$FONT`, `$HOME`, `$PICTURE`, `$PUBLIC`, `$RUNTIME`, `$TEMPLATE`, `$VIDEO`, `$RESOURCE`, `$APP`, `$LOG`, `$TEMP`, `$APPCONFIG`, `$APPDATA`, `$APPLOCALDATA`, `$APPCACHE`, `$APPLOG`.",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "The name for this allowed shell command configuration.\n\nThis name will be used inside of the webview API to call this command along with any specified arguments.",
+                          "type": "string"
+                        },
+                        "sidecar": {
+                          "description": "If this command is a sidecar command.",
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "properties": {
+                "identifier": {
+                  "description": "Identifier of the permission or permission set.",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Identifier"
+                    }
+                  ]
+                }
+              }
+            },
+            {
               "properties": {
                 "identifier": {
                   "description": "Identifier of the permission or permission set.",
@@ -207,6 +356,11 @@
           "const": "core:app:allow-name"
         },
         {
+          "description": "Enables the set_app_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:app:allow-set-app-theme"
+        },
+        {
           "description": "Enables the tauri_version command without any pre-configured scope.",
           "type": "string",
           "const": "core:app:allow-tauri-version"
@@ -235,6 +389,11 @@
           "description": "Denies the name command without any pre-configured scope.",
           "type": "string",
           "const": "core:app:deny-name"
+        },
+        {
+          "description": "Denies the set_app_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:app:deny-set-app-theme"
         },
         {
           "description": "Denies the tauri_version command without any pre-configured scope.",
@@ -792,6 +951,11 @@
           "const": "core:webview:default"
         },
         {
+          "description": "Enables the clear_all_browsing_data command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:webview:allow-clear-all-browsing-data"
+        },
+        {
           "description": "Enables the create_webview command without any pre-configured scope.",
           "type": "string",
           "const": "core:webview:allow-create-webview"
@@ -847,14 +1011,29 @@
           "const": "core:webview:allow-webview-close"
         },
         {
+          "description": "Enables the webview_hide command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:webview:allow-webview-hide"
+        },
+        {
           "description": "Enables the webview_position command without any pre-configured scope.",
           "type": "string",
           "const": "core:webview:allow-webview-position"
         },
         {
+          "description": "Enables the webview_show command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:webview:allow-webview-show"
+        },
+        {
           "description": "Enables the webview_size command without any pre-configured scope.",
           "type": "string",
           "const": "core:webview:allow-webview-size"
+        },
+        {
+          "description": "Denies the clear_all_browsing_data command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:webview:deny-clear-all-browsing-data"
         },
         {
           "description": "Denies the create_webview command without any pre-configured scope.",
@@ -912,9 +1091,19 @@
           "const": "core:webview:deny-webview-close"
         },
         {
+          "description": "Denies the webview_hide command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:webview:deny-webview-hide"
+        },
+        {
           "description": "Denies the webview_position command without any pre-configured scope.",
           "type": "string",
           "const": "core:webview:deny-webview-position"
+        },
+        {
+          "description": "Denies the webview_show command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:webview:deny-webview-show"
         },
         {
           "description": "Denies the webview_size command without any pre-configured scope.",
@@ -995,6 +1184,11 @@
           "description": "Enables the is_decorated command without any pre-configured scope.",
           "type": "string",
           "const": "core:window:allow-is-decorated"
+        },
+        {
+          "description": "Enables the is_enabled command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:window:allow-is-enabled"
         },
         {
           "description": "Enables the is_focused command without any pre-configured scope.",
@@ -1127,6 +1321,11 @@
           "const": "core:window:allow-set-effects"
         },
         {
+          "description": "Enables the set_enabled command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:window:allow-set-enabled"
+        },
+        {
           "description": "Enables the set_focus command without any pre-configured scope.",
           "type": "string",
           "const": "core:window:allow-set-focus"
@@ -1200,6 +1399,11 @@
           "description": "Enables the set_skip_taskbar command without any pre-configured scope.",
           "type": "string",
           "const": "core:window:allow-set-skip-taskbar"
+        },
+        {
+          "description": "Enables the set_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:window:allow-set-theme"
         },
         {
           "description": "Enables the set_title command without any pre-configured scope.",
@@ -1325,6 +1529,11 @@
           "description": "Denies the is_decorated command without any pre-configured scope.",
           "type": "string",
           "const": "core:window:deny-is-decorated"
+        },
+        {
+          "description": "Denies the is_enabled command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:window:deny-is-enabled"
         },
         {
           "description": "Denies the is_focused command without any pre-configured scope.",
@@ -1457,6 +1666,11 @@
           "const": "core:window:deny-set-effects"
         },
         {
+          "description": "Denies the set_enabled command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:window:deny-set-enabled"
+        },
+        {
           "description": "Denies the set_focus command without any pre-configured scope.",
           "type": "string",
           "const": "core:window:deny-set-focus"
@@ -1530,6 +1744,11 @@
           "description": "Denies the set_skip_taskbar command without any pre-configured scope.",
           "type": "string",
           "const": "core:window:deny-set-skip-taskbar"
+        },
+        {
+          "description": "Denies the set_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:window:deny-set-theme"
         },
         {
           "description": "Denies the set_title command without any pre-configured scope.",
@@ -1655,6 +1874,61 @@
           "description": "Denies the log command without any pre-configured scope.",
           "type": "string",
           "const": "log:deny-log"
+        },
+        {
+          "description": "This permission set configures which\nshell functionality is exposed by default.\n\n#### Granted Permissions\n\nIt allows to use the `open` functionality without any specific\nscope pre-configured. It will allow opening `http(s)://`,\n`tel:` and `mailto:` links.\n",
+          "type": "string",
+          "const": "shell:default"
+        },
+        {
+          "description": "Enables the execute command without any pre-configured scope.",
+          "type": "string",
+          "const": "shell:allow-execute"
+        },
+        {
+          "description": "Enables the kill command without any pre-configured scope.",
+          "type": "string",
+          "const": "shell:allow-kill"
+        },
+        {
+          "description": "Enables the open command without any pre-configured scope.",
+          "type": "string",
+          "const": "shell:allow-open"
+        },
+        {
+          "description": "Enables the spawn command without any pre-configured scope.",
+          "type": "string",
+          "const": "shell:allow-spawn"
+        },
+        {
+          "description": "Enables the stdin_write command without any pre-configured scope.",
+          "type": "string",
+          "const": "shell:allow-stdin-write"
+        },
+        {
+          "description": "Denies the execute command without any pre-configured scope.",
+          "type": "string",
+          "const": "shell:deny-execute"
+        },
+        {
+          "description": "Denies the kill command without any pre-configured scope.",
+          "type": "string",
+          "const": "shell:deny-kill"
+        },
+        {
+          "description": "Denies the open command without any pre-configured scope.",
+          "type": "string",
+          "const": "shell:deny-open"
+        },
+        {
+          "description": "Denies the spawn command without any pre-configured scope.",
+          "type": "string",
+          "const": "shell:deny-spawn"
+        },
+        {
+          "description": "Denies the stdin_write command without any pre-configured scope.",
+          "type": "string",
+          "const": "shell:deny-stdin-write"
         },
         {
           "description": "# Tauri SQL Default Permissions\n\nThis permission set configures what kind of\ndatabase operations are available from the sql plugin.\n\n### Granted Permissions\n\nAll reading related operations are enabled.\nAlso allows to load or close a connection.\n\n",
@@ -1919,6 +2193,50 @@
           "enum": [
             "iOS"
           ]
+        }
+      ]
+    },
+    "ShellAllowedArg": {
+      "description": "A command argument allowed to be executed by the webview API.",
+      "anyOf": [
+        {
+          "description": "A non-configurable argument that is passed to the command in the order it was specified.",
+          "type": "string"
+        },
+        {
+          "description": "A variable that is set while calling the command from the webview API.",
+          "type": "object",
+          "required": [
+            "validator"
+          ],
+          "properties": {
+            "raw": {
+              "description": "Marks the validator as a raw regex, meaning the plugin should not make any modification at runtime.\n\nThis means the regex will not match on the entire string by default, which might be exploited if your regex allow unexpected input to be considered valid. When using this option, make sure your regex is correct.",
+              "default": false,
+              "type": "boolean"
+            },
+            "validator": {
+              "description": "[regex] validator to require passed values to conform to an expected input.\n\nThis will require the argument value passed to this variable to match the `validator` regex before it will be executed.\n\nThe regex string is by default surrounded by `^...$` to match the full string. For example the `https?://\\w+` regex would be registered as `^https?://\\w+$`.\n\n[regex]: <https://docs.rs/regex/latest/regex/#syntax>",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ShellAllowedArgs": {
+      "description": "A set of command arguments allowed to be executed by the webview API.\n\nA value of `true` will allow any arguments to be passed to the command. `false` will disable all arguments. A list of [`ShellAllowedArg`] will set those arguments as the only valid arguments to be passed to the attached command configuration.",
+      "anyOf": [
+        {
+          "description": "Use a simple boolean to allow all or disable all arguments to this command configuration.",
+          "type": "boolean"
+        },
+        {
+          "description": "A specific set of [`ShellAllowedArg`] that are valid to call for the command configuration.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ShellAllowedArg"
+          }
         }
       ]
     }

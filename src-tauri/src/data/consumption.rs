@@ -13,6 +13,8 @@ use crate::schema::{electricity_consumption, gas_consumption};
 
 use super::RepositoryError;
 
+const ENERGY_CONSUMPTION_M3_ERROR_CODE: f64 = 16777.215f64;
+
 #[derive(Insertable)]
 #[diesel(table_name = electricity_consumption)]
 struct NewElectricityConsumption {
@@ -231,6 +233,7 @@ impl ConsumptionRepository<GasConsumption, GasConsumptionRecord>
         Ok(gas_consumption
             .filter(timestamp.ge(NaiveDateTime::from(start)))
             .filter(timestamp.lt(NaiveDateTime::from(end)))
+            .filter(energy_consumption_m3.ne(ENERGY_CONSUMPTION_M3_ERROR_CODE))
             .load::<GasConsumptionRecord>(&mut *conn)?)
     }
 
@@ -246,6 +249,7 @@ impl ConsumptionRepository<GasConsumption, GasConsumptionRecord>
         Ok(gas_consumption
             .filter(timestamp.ge(NaiveDateTime::from(start)))
             .filter(timestamp.lt(NaiveDateTime::from(end)))
+            .filter(energy_consumption_m3.ne(ENERGY_CONSUMPTION_M3_ERROR_CODE))
             .select((
                 sql::<Date>("DATE(timestamp)"),
                 sql::<Double>("COALESCE(SUM(energy_consumption_m3), 0.0)"),
@@ -267,6 +271,7 @@ impl ConsumptionRepository<GasConsumption, GasConsumptionRecord>
         Ok(gas_consumption
             .filter(timestamp.ge(NaiveDateTime::from(start)))
             .filter(timestamp.lt(NaiveDateTime::from(end)))
+            .filter(energy_consumption_m3.ne(ENERGY_CONSUMPTION_M3_ERROR_CODE))
             .select((
                 sql::<Date>("DATE(timestamp, 'start of month')"),
                 sql::<Double>("COALESCE(SUM(energy_consumption_m3), 0.0)"),

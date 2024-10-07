@@ -1,11 +1,11 @@
 [package]
-name = "app"
+name = "smart_energy_explorer"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
+description = "A dashboard for exploring home energy usage"
+authors = ["Richard Russell"]
+license = "AGPL-3.0-or-later"
 repository = ""
-default-run = "app"
+default-run = "smart_energy_explorer"
 edition = "2021"
 rust-version = "1.81"
 
@@ -28,8 +28,8 @@ tauri = { version = "2.0.0-rc", features = [] }
 tauri-plugin-dialog = "2.0.0-alpha.2"
 tauri-plugin-log = "2.0.0-rc"
 tauri-plugin-store = "2.0.0-rc.3"
+tauri-plugin-shell = "2.0.0-rc"
 thiserror = "1.0"
-tokio = { version = "1", features = ["full"] }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

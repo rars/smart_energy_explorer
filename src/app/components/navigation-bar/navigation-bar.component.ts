@@ -1,12 +1,14 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
-import { ThemeService } from '../../services/theme/theme.service';
+
 import { Observable } from 'rxjs';
-import { CommonModule } from '@angular/common';
+
+import { ThemeService } from '../../services/theme/theme.service';
 
 @Component({
   selector: 'app-navigation-bar',

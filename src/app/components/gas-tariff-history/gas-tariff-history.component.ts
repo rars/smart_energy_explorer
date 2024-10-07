@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
-import { invoke } from '@tauri-apps/api/core';
+
 import { from } from 'rxjs';
+
+import { invoke } from '@tauri-apps/api/core';
 
 export interface StandingCharge {
   startDate: Date;
@@ -41,7 +43,6 @@ export class GasTariffHistoryComponent {
         unitPrices: { priceEffectiveTime: string; unitPricePence: number }[];
       }>('get_gas_tariff_history', {}),
     ).subscribe((data) => {
-      console.log(data);
       this.standingChargesDataSource = data?.standingCharges?.map((x) => {
         return {
           startDate: new Date(x.startDate),

@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use app_settings::AppSettings;
 use diesel::SqliteConnection;
 use log::{debug, error};
 use n3rgy_consumer_api_client::N3rgyClientError;
@@ -16,6 +17,7 @@ use commands::gas::*;
 use commands::n3rgy::*;
 use commands::profiles::*;
 
+mod app_settings;
 mod commands;
 mod data;
 mod db;
@@ -67,10 +69,14 @@ fn main() {
 
             app.manage(app_state);
 
+            let app_settings = AppSettings::new();
+
+            if let Some(true) = app_settings.get::<bool>(&app_handle_clone, "termsAccepted")? {
+                switch_splashscreen_to_main(&app_handle_clone);
+            }
+
             async_runtime::spawn(async move {
                 if let Ok(Some(client)) = get_consumer_api_client().await {
-                    switch_splashscreen_to_main(&app_handle_clone);
-
                     {
                         let mut client_available = app_state_clone.client_available.lock().unwrap();
                         *client_available = true;
@@ -88,6 +94,7 @@ fn main() {
         })
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_shell::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .targets([
@@ -114,6 +121,7 @@ fn main() {
             get_monthly_gas_consumption,
             get_raw_electricity_consumption,
             get_raw_gas_consumption,
+            reset,
             store_api_key,
             test_connection,
             update_energy_profile_settings

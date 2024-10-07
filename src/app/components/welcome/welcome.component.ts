@@ -1,27 +1,33 @@
+import { animate, style, transition, trigger } from '@angular/animations';
+import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { trigger, transition, style, animate } from '@angular/animations';
-import { ApiKeyFormComponent } from '../api-key-form/api-key-form.component';
-import { MatStepperModule } from '@angular/material/stepper';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormsModule,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { ApiKeyService } from '../../services/api-key/api-key.service';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatStepperModule } from '@angular/material/stepper';
+
 import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
+
 import {
   exactLengthValidator,
   noHyphenValidator,
 } from '../../common/validators';
+import { ApiKeyService } from '../../services/api-key/api-key.service';
+import { ShellService } from '../../services/shell/shell.service';
+import { ApiKeyFormComponent } from '../api-key-form/api-key-form.component';
+import { LicenseDialogComponent } from '../license-dialog/license-dialog.component';
+import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-guidance-dialog.component';
 
 @Component({
   selector: 'app-welcome',
@@ -70,7 +76,11 @@ export class WelcomeComponent {
     ],
   });
 
-  public constructor(private readonly apiKeyService: ApiKeyService) {
+  public constructor(
+    protected readonly shellService: ShellService,
+    private readonly apiKeyService: ApiKeyService,
+    private readonly dialog: MatDialog,
+  ) {
     this.active$ = this.isActiveSubject.asObservable();
     this.isTestingConnection$ = this.isTestingConnectionSubject.asObservable();
 
@@ -81,7 +91,37 @@ export class WelcomeComponent {
         this.secondFormGroup.get('apiKeyCtrl')?.setValue(apiKey);
       });
 
-    setTimeout(() => (this.showElement = true), 2000);
+    setTimeout(() => (this.showElement = true), 100);
+  }
+
+  public showUsageGuidance() {
+    const dialogRef = this.dialog.open(UsageGuidanceDialogComponent, {
+      width: '90%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      data: { isReadonly: false },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.accept !== undefined) {
+        this.firstFormGroup.get('agreement')?.setValue(result.accept);
+      }
+    });
+  }
+
+  public showLicensing(): void {
+    const dialogRef = this.dialog.open(LicenseDialogComponent, {
+      width: '90%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      data: { isReadonly: false },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.accept !== undefined) {
+        this.firstFormGroup.get('agreement')?.setValue(result.accept);
+      }
+    });
   }
 
   public async saveApiKey(): Promise<void> {

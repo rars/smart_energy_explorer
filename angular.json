@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "n3rgy-angular": {
+    "smart-energy-explorer-angular": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/n3rgy-angular",
+            "outputPath": "dist/smart-energy-explorer-angular",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -60,10 +60,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "n3rgy-angular:build:production"
+              "buildTarget": "smart-energy-explorer-angular:build:production"
             },
             "development": {
-              "buildTarget": "n3rgy-angular:build:development"
+              "buildTarget": "smart-energy-explorer-angular:build:development"
             }
           },
           "defaultConfiguration": "development"
