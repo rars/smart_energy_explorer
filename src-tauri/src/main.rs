@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use app_settings::AppSettings;
+use app_settings::{AppSettings, SETTINGS_FILE};
 use diesel::SqliteConnection;
 use log::{debug, error};
 use n3rgy_consumer_api_client::N3rgyClientError;
@@ -9,6 +9,7 @@ use std::env;
 use std::sync::{Arc, Mutex};
 use tauri::{async_runtime, Manager};
 use tauri_plugin_log::{Target, TargetKind};
+use tauri_plugin_store::StoreExt;
 use utils::{get_consumer_api_client, switch_splashscreen_to_main};
 
 use commands::app::*;
@@ -25,11 +26,22 @@ mod download;
 mod schema;
 mod utils;
 
-#[derive(Clone)]
 struct AppState {
     db: Arc<Mutex<SqliteConnection>>,
     downloading: Arc<Mutex<bool>>,
     client_available: Arc<Mutex<bool>>,
+    app_settings: Arc<Mutex<AppSettings>>,
+}
+
+impl Clone for AppState {
+    fn clone(&self) -> Self {
+        Self {
+            db: self.db.clone(),
+            downloading: self.downloading.clone(),
+            client_available: self.client_available.clone(),
+            app_settings: self.app_settings.clone(),
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -58,10 +70,15 @@ fn main() {
                 db::establish_connection(db_path.to_str().expect("db path needed"));
             db::run_migrations(&mut connection);
 
+            let store = app.store_builder(SETTINGS_FILE).build();
+
+            let app_settings = AppSettings::new(store);
+
             let app_state = AppState {
                 db: Arc::new(Mutex::new(connection)),
                 downloading: Arc::new(Mutex::new(false)),
                 client_available: Arc::new(Mutex::new(false)),
+                app_settings: Arc::new(Mutex::new(app_settings)),
             };
 
             let app_handle_clone = app.handle().clone();
@@ -69,10 +86,12 @@ fn main() {
 
             app.manage(app_state);
 
-            let app_settings = AppSettings::new();
+            {
+                let app_settings = app_state_clone.app_settings.lock().unwrap();
 
-            if let Some(true) = app_settings.get::<bool>(&app_handle_clone, "termsAccepted")? {
-                switch_splashscreen_to_main(&app_handle_clone);
+                if let Some(true) = app_settings.get::<bool>("termsAccepted")? {
+                    switch_splashscreen_to_main(&app_handle_clone);
+                }
             }
 
             async_runtime::spawn(async move {
