@@ -6,6 +6,7 @@ use diesel::SqliteConnection;
 use log::{debug, error};
 use n3rgy_consumer_api_client::N3rgyClientError;
 use std::env;
+use std::fs;
 use std::sync::{Arc, Mutex};
 use tauri::{async_runtime, Manager};
 use tauri_plugin_log::{Target, TargetKind};
@@ -63,6 +64,11 @@ fn main() {
                 .expect("Failed to resolve app data directory");
 
             debug!("App data directory: {}", app_data_dir.display());
+
+            if !app_data_dir.exists() {
+                fs::create_dir_all(&app_data_dir)
+                    .expect("app data directory does not exist and cannot be created");
+            }
 
             let db_path = app_data_dir.join("db.sqlite");
 
