@@ -15,7 +15,6 @@ use crate::{
 };
 
 use super::ApiError;
-use crate::app_settings::AppSettings;
 
 const GIT_VERSION: &str = git_version!();
 
@@ -32,11 +31,19 @@ pub fn get_app_version() -> String {
 }
 
 #[tauri::command]
-pub async fn close_welcome_screen(app_handle: AppHandle) -> Result<(), ApiError> {
-    let app_settings = AppSettings::new();
+pub async fn close_welcome_screen(
+    app_handle: AppHandle,
+    app_state: State<'_, AppState>,
+) -> Result<(), ApiError> {
+    let app_settings = app_state
+        .app_settings
+        .lock()
+        .map_err(|_| ApiError::MutexPoisonedError {
+            name: "app_settings".into(),
+        })?;
 
     app_settings
-        .safe_set(&app_handle, "termsAccepted", true)
+        .safe_set("termsAccepted", true)
         .map_err(|e| ApiError::Custom(format!("{}", e)))?;
 
     switch_splashscreen_to_main(&app_handle);
@@ -78,10 +85,15 @@ pub fn clear_all_data(app_state: State<'_, AppState>) -> Result<(), ApiError> {
 pub fn reset(app_handle: AppHandle, app_state: State<'_, AppState>) -> Result<(), ApiError> {
     reset_database(app_state.inner())?;
 
-    let app_settings = AppSettings::new();
+    let app_settings = app_state
+        .app_settings
+        .lock()
+        .map_err(|_| ApiError::MutexPoisonedError {
+            name: "app_settings".into(),
+        })?;
 
     app_settings
-        .safe_set(&app_handle, "termsAccepted", false)
+        .safe_set("termsAccepted", false)
         .map_err(|e| ApiError::Custom(format!("{}", e)))?;
 
     let entry =

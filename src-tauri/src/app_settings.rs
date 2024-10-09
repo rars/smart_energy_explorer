@@ -1,64 +1,54 @@
-use std::path::PathBuf;
+use std::fmt::Display;
 
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_value, to_value};
-use tauri::{AppHandle, Manager, Wry};
-use tauri_plugin_store::{with_store, StoreCollection};
+use tauri::Wry;
+use tauri_plugin_store::Store;
 
 use crate::AppError;
 
-const SETTINGS_FILE: &str = "app_settings.bin";
+pub(crate) const SETTINGS_FILE: &str = "app_settings.bin";
+
+type SettingsStore = Store<Wry>;
 
 pub struct AppSettings {
-    path: PathBuf,
+    store: SettingsStore,
 }
 
 impl AppSettings {
-    pub fn new() -> Self {
-        let path = PathBuf::from(SETTINGS_FILE);
-
-        Self { path }
+    pub fn new(store: SettingsStore) -> Self {
+        Self { store }
     }
 
-    pub fn get<T: DeserializeOwned>(
-        &self,
-        app_handle: &AppHandle,
-        key: &str,
-    ) -> Result<Option<T>, AppError> {
-        let stores = app_handle.state::<StoreCollection<Wry>>();
-
-        let result = with_store(app_handle.clone(), stores, &self.path, |store| {
-            store
-                .get(key)
-                .cloned()
-                .map(|v| from_value(v).map_err(|e| e.into()))
-                .transpose()
-        })
-        .map_err(|e| {
-            AppError::CustomError(format!("Failed to retrieve setting '{}': {}", key, e))
-        })?;
+    pub fn get<R: DeserializeOwned>(&self, key: &str) -> Result<Option<R>, AppError> {
+        let result = self
+            .store
+            .get(key)
+            .map(|v| from_value(v))
+            .transpose()
+            .map_err(|e| {
+                AppError::CustomError(format!("Failed to retrieve setting '{}': {}", key, e))
+            })?;
 
         Ok(result)
     }
 
-    pub fn safe_set<T: Serialize>(
-        &self,
-        app_handle: &AppHandle,
-        key: &str,
-        value: T,
-    ) -> Result<(), AppError> {
-        let stores = app_handle.state::<StoreCollection<Wry>>();
-
-        with_store(app_handle.clone(), stores, &self.path, |store| {
-            store.insert(key.into(), to_value(value)?)?;
-
-            store.save()?;
-
-            Ok(())
-        })
-        .map_err(|e| {
-            AppError::CustomError(format!("Failed to store app setting '{}': {}", key, e))
+    pub fn safe_set<R: Serialize>(&self, key: &str, value: R) -> Result<(), AppError>
+    where
+        R: Display + Copy,
+    {
+        let json_value = to_value(value).map_err(|e| {
+            AppError::CustomError(format!(
+                "Failed to convert '{}' to JSON value: {}",
+                value, e
+            ))
         })?;
+
+        self.store.set(key, json_value);
+
+        self.store
+            .save()
+            .map_err(|e| AppError::CustomError(format!("Could not save store: {}", e)))?;
 
         Ok(())
     }
