@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
@@ -15,7 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatStepperModule } from '@angular/material/stepper';
+import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 
 import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
 
@@ -58,6 +58,8 @@ import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-gui
   ],
 })
 export class WelcomeComponent {
+  @ViewChild('stepper') public stepper?: MatStepper;
+
   protected showElement = false;
   protected active$: Observable<boolean>;
   protected isTestingConnection$: Observable<boolean>;
@@ -135,6 +137,7 @@ export class WelcomeComponent {
   }
 
   public complete(): void {
+    this.stepper?.reset();
     this.apiKeyService.closeWelcomeScreen();
   }
 }

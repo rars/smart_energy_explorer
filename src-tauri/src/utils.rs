@@ -85,6 +85,15 @@ pub fn get_api_key_opt() -> Result<Option<String>, AppError> {
 pub fn switch_splashscreen_to_main(app_handle: &AppHandle) {
     let splash_window = app_handle.get_webview_window("splashscreen").unwrap();
     let main_window = app_handle.get_webview_window("main").unwrap();
-    splash_window.close().unwrap();
+    splash_window.hide().unwrap();
     main_window.show().unwrap();
+    main_window.eval("window.location.reload()").unwrap();
+}
+
+pub fn switch_main_to_splashscreen(app_handle: &AppHandle) {
+    let splash_window = app_handle.get_webview_window("splashscreen").unwrap();
+    let main_window = app_handle.get_webview_window("main").unwrap();
+    main_window.hide().unwrap();
+    splash_window.show().unwrap();
+    splash_window.eval("window.location.reload()").unwrap();
 }

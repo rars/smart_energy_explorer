@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use git_version::git_version;
+use keyring::Entry;
 use log::{debug, error};
 use serde::Serialize;
 use tauri::{async_runtime, AppHandle, State};
@@ -9,8 +10,8 @@ use crate::{
     db::{self, revert_all_migrations},
     download::check_and_download_new_data,
     get_consumer_api_client,
-    utils::switch_splashscreen_to_main,
-    AppState,
+    utils::{switch_main_to_splashscreen, switch_splashscreen_to_main},
+    AppState, APP_SERVICE_NAME,
 };
 
 use super::ApiError;
@@ -82,6 +83,17 @@ pub fn reset(app_handle: AppHandle, app_state: State<'_, AppState>) -> Result<()
     app_settings
         .safe_set(&app_handle, "termsAccepted", false)
         .map_err(|e| ApiError::Custom(format!("{}", e)))?;
+
+    let entry =
+        Entry::new(APP_SERVICE_NAME, "api_key").map_err(|e| ApiError::Custom(e.to_string()))?;
+
+    match entry.delete_credential() {
+        Ok(()) => Ok(()),
+        Err(keyring::Error::NoEntry) => Ok(()),
+        Err(e) => Err(ApiError::Custom(e.to_string())),
+    }?;
+
+    switch_main_to_splashscreen(&app_handle);
 
     Ok(())
 }

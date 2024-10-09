@@ -8,6 +8,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { from } from 'rxjs';
 
@@ -30,6 +31,7 @@ import { ApiKeyFormComponent } from '../api-key-form/api-key-form.component';
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule,
+    MatTooltipModule,
     ReactiveFormsModule,
   ],
   templateUrl: './settings.component.html',
@@ -120,7 +122,7 @@ export class SettingsComponent implements OnInit, CanComponentDeactivate {
 
   public async reset(): Promise<void> {
     const confirmation = await confirm(
-      'This will delete all local data. Are you sure you want to continue?',
+      'This will delete all local data and restore settings to their initial state. Are you sure you want to perform this action?',
       { title: 'Reset?', kind: 'warning' },
     );
 
