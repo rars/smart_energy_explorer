@@ -24,7 +24,7 @@ log = "^0.4"
 n3rgy_consumer_api_client = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tauri = { version = "2.0.0", features = [] }
+tauri = { version = "2.0.0", features = ["unstable"] }
 tauri-plugin-dialog = "2.0.0"
 tauri-plugin-log = "2.0.0"
 tauri-plugin-store = "2.0.0"

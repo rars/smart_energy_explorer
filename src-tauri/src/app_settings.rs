@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, sync::Arc};
 
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_value, to_value};
@@ -9,7 +9,7 @@ use crate::AppError;
 
 pub(crate) const SETTINGS_FILE: &str = "app_settings.bin";
 
-type SettingsStore = Store<Wry>;
+type SettingsStore = Arc<Store<Wry>>;
 
 pub struct AppSettings {
     store: SettingsStore,
