@@ -76,7 +76,7 @@ fn main() {
                 db::establish_connection(db_path.to_str().expect("db path needed"));
             db::run_migrations(&mut connection);
 
-            let store = app.store_builder(SETTINGS_FILE).build();
+            let store = app.store(SETTINGS_FILE)?;
 
             let app_settings = AppSettings::new(store);
 

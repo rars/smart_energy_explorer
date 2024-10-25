@@ -1,28 +1,24 @@
 import { Injectable } from '@angular/core';
 
-import { Store, createStore } from '@tauri-apps/plugin-store';
+import { LazyStore } from '@tauri-apps/plugin-store';
 
 @Injectable({
   providedIn: 'root',
 })
 export class StoreService {
-  private readonly storePromise: Promise<Store>;
+  private readonly store: LazyStore;
 
   public constructor() {
-    this.storePromise = createStore('app_settings.bin');
+    this.store = new LazyStore('app_settings.bin');
   }
 
   public async safe_set(key: string, value: unknown): Promise<void> {
-    const store = await this.storePromise;
+    await this.store.set(key, value);
 
-    await store.set(key, value);
-
-    await store.save();
+    await this.store.save();
   }
 
   public async get(key: string): Promise<unknown> {
-    const store = await this.storePromise;
-
-    return await store.get(key);
+    return await this.store.get(key);
   }
 }
