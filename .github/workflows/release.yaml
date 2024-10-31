@@ -9,6 +9,7 @@ on:
 
 jobs:
   publish-tauri:
+    timeout-minutes: 15
     permissions:
       contents: write
     strategy:
@@ -30,6 +31,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Debug information
+        run: |
+          echo "Current working directory: $(pwd)"
+          echo "Git ref: ${{ github.ref }}"
+          echo "Git sha: ${{ github.sha }}"
+          env
+
+      - name: List tags
+        run: git tag -l
+
+      - name: Git describe
+        run: git describe --always --tags --dirty=-modified
+
       - name: setup node
         uses: actions/setup-node@v4
         with:
@@ -50,7 +64,7 @@ jobs:
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
       - name: install frontend dependencies
-        run: npm install
+        run: npm ci
 
       - uses: tauri-apps/tauri-action@v0
         env:
