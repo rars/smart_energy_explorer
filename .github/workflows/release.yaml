@@ -30,7 +30,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          fetch-tags: true
+
+      - name: Fetch tags # necessary because actions/checkout appears to clobber annotated tags with lightweight tags: https://github.com/actions/checkout/issues/882
+        run: git fetch --force --tags
 
       - name: Debug information
         run: |
