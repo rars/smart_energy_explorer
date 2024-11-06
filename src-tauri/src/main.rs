@@ -8,6 +8,7 @@ use n3rgy_consumer_api_client::N3rgyClientError;
 use std::env;
 use std::fs;
 use std::sync::{Arc, Mutex};
+use tauri::Window;
 use tauri::{async_runtime, Manager};
 use tauri_plugin_log::{Target, TargetKind};
 use tauri_plugin_store::StoreExt;
@@ -51,6 +52,16 @@ pub enum AppError {
     N3rgyClientError(#[from] N3rgyClientError),
     #[error("Error: {0}")]
     CustomError(String),
+}
+
+fn set_close_handlers(window: &Window) {
+    window.on_window_event(|event| {
+        if let tauri::WindowEvent::CloseRequested { .. } = event {
+            std::process::exit(0);
+        }
+    });
+
+    ()
 }
 
 fn main() {
@@ -114,6 +125,14 @@ fn main() {
                     }
                 }
             });
+
+            let window = app.get_window("main").unwrap();
+
+            set_close_handlers(&window);
+
+            let window = app.get_window("splashscreen").unwrap();
+
+            set_close_handlers(&window);
 
             Ok(())
         })
