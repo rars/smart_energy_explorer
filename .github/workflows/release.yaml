@@ -88,3 +88,4 @@ jobs:
           git describe --always --tags --dirty=-modified
           git describe --always --dirty=-modified
           git status
+          git diff .
