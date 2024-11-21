@@ -30,32 +30,31 @@ import { LicenseDialogComponent } from '../license-dialog/license-dialog.compone
 import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-guidance-dialog.component';
 
 @Component({
-  selector: 'app-welcome',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatCheckboxModule,
-    MatIconModule,
-    MatInputModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatStepperModule,
-    ApiKeyFormComponent,
-    ApiKeyFormComponent,
-  ],
-  templateUrl: './welcome.component.html',
-  styleUrl: './welcome.component.scss',
-  animations: [
-    trigger('fadeIn', [
-      transition(':enter', [
-        style({ opacity: 0 }),
-        animate('500ms ease-in', style({ opacity: 1 })),
-      ]),
-    ]),
-  ],
+    selector: 'app-welcome',
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatCheckboxModule,
+        MatIconModule,
+        MatInputModule,
+        MatButtonModule,
+        MatProgressSpinnerModule,
+        MatStepperModule,
+        ApiKeyFormComponent,
+        ApiKeyFormComponent,
+    ],
+    templateUrl: './welcome.component.html',
+    styleUrl: './welcome.component.scss',
+    animations: [
+        trigger('fadeIn', [
+            transition(':enter', [
+                style({ opacity: 0 }),
+                animate('500ms ease-in', style({ opacity: 1 })),
+            ]),
+        ]),
+    ]
 })
 export class WelcomeComponent {
   @ViewChild('stepper') public stepper?: MatStepper;

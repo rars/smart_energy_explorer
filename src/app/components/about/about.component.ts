@@ -9,11 +9,10 @@ import { LicenseDialogComponent } from '../license-dialog/license-dialog.compone
 import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-guidance-dialog.component';
 
 @Component({
-  selector: 'app-about',
-  standalone: true,
-  imports: [MatButtonModule],
-  templateUrl: './about.component.html',
-  styleUrl: './about.component.scss',
+    selector: 'app-about',
+    imports: [MatButtonModule],
+    templateUrl: './about.component.html',
+    styleUrl: './about.component.scss'
 })
 export class AboutComponent {
   protected version: string = '';

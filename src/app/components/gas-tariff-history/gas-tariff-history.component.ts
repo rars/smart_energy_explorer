@@ -17,11 +17,10 @@ export interface UnitPrice {
 }
 
 @Component({
-  selector: 'app-gas-tariff-history',
-  standalone: true,
-  imports: [CommonModule, MatTableModule],
-  templateUrl: './gas-tariff-history.component.html',
-  styleUrl: './gas-tariff-history.component.scss',
+    selector: 'app-gas-tariff-history',
+    imports: [CommonModule, MatTableModule],
+    templateUrl: './gas-tariff-history.component.html',
+    styleUrl: './gas-tariff-history.component.scss'
 })
 export class GasTariffHistoryComponent {
   public readonly displayedStandingChargeColumns = [

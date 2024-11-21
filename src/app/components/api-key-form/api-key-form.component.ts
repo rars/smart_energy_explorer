@@ -16,16 +16,15 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'app-api-key-form',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-  ],
-  templateUrl: './api-key-form.component.html',
-  styleUrl: './api-key-form.component.scss',
+    selector: 'app-api-key-form',
+    imports: [
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+    ],
+    templateUrl: './api-key-form.component.html',
+    styleUrl: './api-key-form.component.scss'
 })
 export class ApiKeyFormComponent {
   public readonly apiKeyForm: FormGroup;

@@ -11,18 +11,17 @@ import { StatusBarComponent } from './components/status-bar/status-bar.component
 import { ThemeService } from './services/theme/theme.service';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [
-    RouterOutlet,
-    CommonModule,
-    NavigationBarComponent,
-    StatusBarComponent,
-    MatIconModule,
-    MatButtonModule,
-  ],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.scss',
+    selector: 'app-root',
+    imports: [
+        RouterOutlet,
+        CommonModule,
+        NavigationBarComponent,
+        StatusBarComponent,
+        MatIconModule,
+        MatButtonModule,
+    ],
+    templateUrl: './app.component.html',
+    styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
   public isWelcomeActive$: Observable<boolean>;

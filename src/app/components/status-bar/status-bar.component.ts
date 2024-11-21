@@ -9,11 +9,10 @@ import { UnlistenFn, listen } from '@tauri-apps/api/event';
 import { DataDownloadingComponent } from '../data-downloading/data-downloading.component';
 
 @Component({
-  selector: 'app-status-bar',
-  standalone: true,
-  imports: [CommonModule, DataDownloadingComponent, DataDownloadingComponent],
-  templateUrl: './status-bar.component.html',
-  styleUrl: './status-bar.component.scss',
+    selector: 'app-status-bar',
+    imports: [CommonModule, DataDownloadingComponent, DataDownloadingComponent],
+    templateUrl: './status-bar.component.html',
+    styleUrl: './status-bar.component.scss'
 })
 export class StatusBarComponent implements OnInit, OnDestroy {
   public isDownloading$ = new BehaviorSubject(false);

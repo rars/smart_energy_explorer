@@ -36,19 +36,18 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
   x.valueChanges.pipe(startWith(x.value), filter(nonNullOrUndefined));
 
 @Component({
-  selector: 'app-electricity-consumption-line-chart',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatDatepickerModule,
-    MatProgressBarModule,
-    MatSelectModule,
-    ChartComponent,
-  ],
-  templateUrl: './electricity-consumption-line-chart.component.html',
-  styleUrl: './electricity-consumption-line-chart.component.scss',
+    selector: 'app-electricity-consumption-line-chart',
+    imports: [
+        ReactiveFormsModule,
+        MatButtonModule,
+        MatFormFieldModule,
+        MatDatepickerModule,
+        MatProgressBarModule,
+        MatSelectModule,
+        ChartComponent,
+    ],
+    templateUrl: './electricity-consumption-line-chart.component.html',
+    styleUrl: './electricity-consumption-line-chart.component.scss'
 })
 export class ElectricityConsumptionLineChartComponent
   implements OnInit, OnDestroy

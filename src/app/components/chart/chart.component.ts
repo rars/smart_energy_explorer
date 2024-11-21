@@ -3,11 +3,10 @@ import Chart from 'chart.js/auto';
 import { Component, Input, OnDestroy, SimpleChanges } from '@angular/core';
 
 @Component({
-  selector: 'app-chart',
-  standalone: true,
-  imports: [],
-  templateUrl: './chart.component.html',
-  styleUrl: './chart.component.scss',
+    selector: 'app-chart',
+    imports: [],
+    templateUrl: './chart.component.html',
+    styleUrl: './chart.component.scss'
 })
 export class ChartComponent implements OnDestroy {
   @Input()
