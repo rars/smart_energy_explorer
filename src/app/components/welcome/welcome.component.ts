@@ -25,13 +25,11 @@ import {
 } from '../../common/validators';
 import { ApiKeyService } from '../../services/api-key/api-key.service';
 import { ShellService } from '../../services/shell/shell.service';
-import { ApiKeyFormComponent } from '../api-key-form/api-key-form.component';
 import { LicenseDialogComponent } from '../license-dialog/license-dialog.component';
 import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-guidance-dialog.component';
 
 @Component({
   selector: 'app-welcome',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -43,8 +41,6 @@ import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-gui
     MatButtonModule,
     MatProgressSpinnerModule,
     MatStepperModule,
-    ApiKeyFormComponent,
-    ApiKeyFormComponent,
   ],
   templateUrl: './welcome.component.html',
   styleUrl: './welcome.component.scss',

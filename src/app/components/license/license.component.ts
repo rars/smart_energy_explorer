@@ -6,11 +6,10 @@ import { ShellService } from '../../services/shell/shell.service';
 import { ThirdPartyLicensingComponent } from '../third-party-licensing/third-party-licensing.component';
 
 @Component({
-  selector: 'app-license',
-  standalone: true,
-  imports: [ThirdPartyLicensingComponent, CommonModule],
-  templateUrl: './license.component.html',
-  styleUrl: './license.component.scss',
+    selector: 'app-license',
+    imports: [ThirdPartyLicensingComponent, CommonModule],
+    templateUrl: './license.component.html',
+    styleUrl: './license.component.scss'
 })
 export class LicenseComponent {
   private readonly httpClient = inject(HttpClient);

@@ -5,11 +5,10 @@ import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { LicenseComponent } from '../license/license.component';
 
 @Component({
-  selector: 'app-license-dialog',
-  standalone: true,
-  imports: [LicenseComponent, MatDialogModule, MatButtonModule],
-  templateUrl: './license-dialog.component.html',
-  styleUrl: './license-dialog.component.scss',
+    selector: 'app-license-dialog',
+    imports: [LicenseComponent, MatDialogModule, MatButtonModule],
+    templateUrl: './license-dialog.component.html',
+    styleUrl: './license-dialog.component.scss'
 })
 export class LicenseDialogComponent {
   public readonly isReadonly: boolean;

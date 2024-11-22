@@ -34,19 +34,18 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
   x.valueChanges.pipe(startWith(x.value), filter(nonNullOrUndefined));
 
 @Component({
-  selector: 'app-gas-consumption-line-chart',
-  standalone: true,
-  imports: [
-    ChartComponent,
-    MatButtonModule,
-    MatDatepickerModule,
-    MatFormFieldModule,
-    MatProgressBarModule,
-    MatSelectModule,
-    ReactiveFormsModule,
-  ],
-  templateUrl: './gas-consumption-line-chart.component.html',
-  styleUrl: './gas-consumption-line-chart.component.scss',
+    selector: 'app-gas-consumption-line-chart',
+    imports: [
+        ChartComponent,
+        MatButtonModule,
+        MatDatepickerModule,
+        MatFormFieldModule,
+        MatProgressBarModule,
+        MatSelectModule,
+        ReactiveFormsModule,
+    ],
+    templateUrl: './gas-consumption-line-chart.component.html',
+    styleUrl: './gas-consumption-line-chart.component.scss'
 })
 export class GasConsumptionLineChartComponent implements OnInit, OnDestroy {
   public readonly startDateControl: FormControl<Date | null>;

@@ -7,11 +7,10 @@ import { BehaviorSubject } from 'rxjs';
 import { UnlistenFn, listen } from '@tauri-apps/api/event';
 
 @Component({
-  selector: 'app-data-downloading',
-  standalone: true,
-  imports: [MatProgressBarModule, CommonModule],
-  templateUrl: './data-downloading.component.html',
-  styleUrl: './data-downloading.component.scss',
+    selector: 'app-data-downloading',
+    imports: [MatProgressBarModule, CommonModule],
+    templateUrl: './data-downloading.component.html',
+    styleUrl: './data-downloading.component.scss'
 })
 export class DataDownloadingComponent implements OnInit, OnDestroy {
   protected percentage$ = new BehaviorSubject<number>(0);

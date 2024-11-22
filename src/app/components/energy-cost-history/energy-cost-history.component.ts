@@ -36,19 +36,18 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
   x.valueChanges.pipe(startWith(x.value), filter(nonNullOrUndefined));
 
 @Component({
-  selector: 'app-energy-cost-history',
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatDatepickerModule,
-    ReactiveFormsModule,
-    MatTableModule,
-    MatSortModule,
-  ],
-  templateUrl: './energy-cost-history.component.html',
-  styleUrl: './energy-cost-history.component.scss',
+    selector: 'app-energy-cost-history',
+    imports: [
+        CommonModule,
+        MatButtonModule,
+        MatFormFieldModule,
+        MatDatepickerModule,
+        ReactiveFormsModule,
+        MatTableModule,
+        MatSortModule,
+    ],
+    templateUrl: './energy-cost-history.component.html',
+    styleUrl: './energy-cost-history.component.scss'
 })
 export class EnergyCostHistoryComponent implements AfterViewInit, OnDestroy {
   @Input() public title?: string;

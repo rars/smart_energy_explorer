@@ -20,22 +20,21 @@ import { CanComponentDeactivate } from '../../unsaved-changes.guard';
 import { ApiKeyFormComponent } from '../api-key-form/api-key-form.component';
 
 @Component({
-  selector: 'app-settings',
-  standalone: true,
-  imports: [
-    ApiKeyFormComponent,
-    CommonModule,
-    MatButtonModule,
-    MatCardModule,
-    MatDatepickerModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSlideToggleModule,
-    MatTooltipModule,
-    ReactiveFormsModule,
-  ],
-  templateUrl: './settings.component.html',
-  styleUrl: './settings.component.scss',
+    selector: 'app-settings',
+    imports: [
+        ApiKeyFormComponent,
+        CommonModule,
+        MatButtonModule,
+        MatCardModule,
+        MatDatepickerModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSlideToggleModule,
+        MatTooltipModule,
+        ReactiveFormsModule,
+    ],
+    templateUrl: './settings.component.html',
+    styleUrl: './settings.component.scss'
 })
 export class SettingsComponent implements OnInit, CanComponentDeactivate {
   public form: FormGroup;

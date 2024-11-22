@@ -17,11 +17,10 @@ export interface UnitPrice {
 }
 
 @Component({
-  selector: 'app-electricity-tariff-history',
-  standalone: true,
-  imports: [CommonModule, MatTableModule],
-  templateUrl: './electricity-tariff-history.component.html',
-  styleUrl: './electricity-tariff-history.component.scss',
+    selector: 'app-electricity-tariff-history',
+    imports: [CommonModule, MatTableModule],
+    templateUrl: './electricity-tariff-history.component.html',
+    styleUrl: './electricity-tariff-history.component.scss'
 })
 export class ElectricityTariffHistoryComponent implements OnInit {
   public readonly displayedStandingChargeColumns = [
