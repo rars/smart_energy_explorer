@@ -12,9 +12,6 @@
 $scale: -1;
 
 html {
-  @include mat.elevation-classes();
-  @include mat.app-background();
-
   color-scheme: light;
   @include mat.theme(
     (
