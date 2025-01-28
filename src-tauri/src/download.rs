@@ -9,8 +9,8 @@ use chrono::{Datelike, Duration, Local, NaiveDate, NaiveDateTime};
 use diesel::SqliteConnection;
 use log::{debug, error, info};
 use n3rgy_consumer_api_client::{
-    AuthorizationProvider, ConsumerApiClient, ElectricityConsumption, ElectricityTariff,
-    GasConsumption, GasTariff, N3rgyClientError, StaticAuthorizationProvider,
+    AuthorizationProvider, ConsumerApiClient, ElectricityTariff, GasTariff, N3rgyClientError,
+    StaticAuthorizationProvider,
 };
 use serde::Serialize;
 use tauri::{async_runtime, AppHandle};
@@ -18,8 +18,8 @@ use tauri::{async_runtime, AppHandle};
 use crate::{
     data::{
         consumption::{
-            ConsumptionRepository, SqliteElectricityConsumptionRepository,
-            SqliteGasConsumptionRepository,
+            ConsumptionRepository, ElectricityConsumptionValue, GasConsumptionValue,
+            SqliteElectricityConsumptionRepository, SqliteGasConsumptionRepository,
         },
         energy_profile::{EnergyProfileRepository, SqliteEnergyProfileRepository},
         tariff::{SqliteElectricityTariffRepository, SqliteGasTariffRepository, TariffRepository},
@@ -58,7 +58,7 @@ where
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
-impl<T> DataLoader<ElectricityConsumption> for ElectricityConsumptionDataLoader<T>
+impl<T> DataLoader<ElectricityConsumptionValue> for ElectricityConsumptionDataLoader<T>
 where
     T: AuthorizationProvider,
 {
@@ -69,11 +69,21 @@ where
         &self,
         start: NaiveDate,
         end: NaiveDate,
-    ) -> Result<Vec<ElectricityConsumption>, Self::LoadError> {
-        Ok(self.client.get_electricity_consumption(start, end).await?)
+    ) -> Result<Vec<ElectricityConsumptionValue>, Self::LoadError> {
+        let values = self.client.get_electricity_consumption(start, end).await?;
+
+        let mapped_values: Vec<_> = values
+            .iter()
+            .map(|v| ElectricityConsumptionValue {
+                timestamp: v.timestamp,
+                value: v.value,
+            })
+            .collect();
+
+        Ok(mapped_values)
     }
 
-    fn insert_data(&self, data: Vec<ElectricityConsumption>) -> Result<(), Self::InsertError> {
+    fn insert_data(&self, data: Vec<ElectricityConsumptionValue>) -> Result<(), Self::InsertError> {
         SqliteElectricityConsumptionRepository::new(self.connection.clone()).insert(data)?;
 
         Ok(())
@@ -120,7 +130,7 @@ where
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
-impl<T> DataLoader<GasConsumption> for GasConsumptionDataLoader<T>
+impl<T> DataLoader<GasConsumptionValue> for GasConsumptionDataLoader<T>
 where
     T: AuthorizationProvider,
 {
@@ -131,11 +141,21 @@ where
         &self,
         start: NaiveDate,
         end: NaiveDate,
-    ) -> Result<Vec<GasConsumption>, Self::LoadError> {
-        Ok(self.client.get_gas_consumption(start, end).await?)
+    ) -> Result<Vec<GasConsumptionValue>, Self::LoadError> {
+        let values = self.client.get_gas_consumption(start, end).await?;
+
+        let mapped_values: Vec<_> = values
+            .iter()
+            .map(|v| GasConsumptionValue {
+                timestamp: v.timestamp,
+                value: v.value,
+            })
+            .collect();
+
+        Ok(mapped_values)
     }
 
-    fn insert_data(&self, data: Vec<GasConsumption>) -> Result<(), Self::InsertError> {
+    fn insert_data(&self, data: Vec<GasConsumptionValue>) -> Result<(), Self::InsertError> {
         SqliteGasConsumptionRepository::new(self.connection.clone()).insert(data)?;
 
         Ok(())

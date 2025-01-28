@@ -7,13 +7,22 @@ use diesel::sql_types::{Date, Double};
 use diesel::SqliteConnection;
 use diesel::{prelude::*, upsert::excluded};
 use log::error;
-use n3rgy_consumer_api_client::{ElectricityConsumption, GasConsumption};
 
 use crate::schema::{electricity_consumption, gas_consumption};
 
 use super::RepositoryError;
 
 const ENERGY_CONSUMPTION_M3_ERROR_CODE: f64 = 16777.215f64;
+
+pub struct ElectricityConsumptionValue {
+    pub timestamp: NaiveDateTime,
+    pub value: f64,
+}
+
+pub struct GasConsumptionValue {
+    pub timestamp: NaiveDateTime,
+    pub value: f64,
+}
 
 #[derive(Insertable)]
 #[diesel(table_name = electricity_consumption)]
@@ -79,10 +88,10 @@ impl SqliteElectricityConsumptionRepository {
     }
 }
 
-impl ConsumptionRepository<ElectricityConsumption, ElectricityConsumptionRecord>
+impl ConsumptionRepository<ElectricityConsumptionValue, ElectricityConsumptionRecord>
     for SqliteElectricityConsumptionRepository
 {
-    fn insert(&self, records: Vec<ElectricityConsumption>) -> RepositoryResult<()> {
+    fn insert(&self, records: Vec<ElectricityConsumptionValue>) -> RepositoryResult<()> {
         let new_records: Vec<_> = records
             .into_iter()
             .map(|x| NewElectricityConsumption {
@@ -185,10 +194,10 @@ impl SqliteGasConsumptionRepository {
     }
 }
 
-impl ConsumptionRepository<GasConsumption, GasConsumptionRecord>
+impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
     for SqliteGasConsumptionRepository
 {
-    fn insert(&self, records: Vec<GasConsumption>) -> RepositoryResult<()> {
+    fn insert(&self, records: Vec<GasConsumptionValue>) -> RepositoryResult<()> {
         let new_records: Vec<_> = records
             .into_iter()
             .map(|x| NewGasConsumption {
