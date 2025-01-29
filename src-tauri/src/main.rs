@@ -12,6 +12,7 @@ use tauri::Window;
 use tauri::{async_runtime, Manager};
 use tauri_plugin_log::{Target, TargetKind};
 use tauri_plugin_store::StoreExt;
+use utils::get_glowmarkt_data_provider;
 use utils::{get_consumer_api_client, switch_splashscreen_to_main};
 
 use commands::app::*;
@@ -21,6 +22,7 @@ use commands::n3rgy::*;
 use commands::profiles::*;
 
 mod app_settings;
+mod clients;
 mod commands;
 mod data;
 mod db;
@@ -118,10 +120,15 @@ fn main() {
                         *client_available = true;
                     }
 
-                    if let Err(e) =
-                        download::spawn_download_tasks(app_handle_clone, app_state_clone, client)
-                    {
-                        error!("Failed to spawn download tasks: {}", e);
+                    if let Ok(Some(data_provider)) = get_glowmarkt_data_provider().await {
+                        if let Err(e) = download::spawn_download_tasks(
+                            app_handle_clone,
+                            app_state_clone,
+                            client,
+                            data_provider,
+                        ) {
+                            error!("Failed to spawn download tasks: {}", e);
+                        }
                     }
                 }
             });

@@ -22,7 +22,7 @@ git-version = "0.3.9"
 glowmarkt = "0.5.2"
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 log = "^0.4"
-n3rgy_consumer_api_client = "0.1"
+n3rgy_consumer_api_client = { path = "../../n3rgy_consumer_api_client" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri = { version = "2.0.0", features = ["unstable"] }
@@ -31,6 +31,7 @@ tauri-plugin-log = "2.0.0"
 tauri-plugin-store = "2.0.0"
 tauri-plugin-shell = "2.0.0"
 thiserror = "1.0"
+time = "0.3.37"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

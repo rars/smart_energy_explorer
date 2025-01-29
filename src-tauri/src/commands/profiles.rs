@@ -6,7 +6,7 @@ use crate::{
     data::energy_profile::{EnergyProfile, EnergyProfileRepository, SqliteEnergyProfileRepository},
     download::spawn_download_tasks,
     get_consumer_api_client,
-    utils::parse_iso_string_to_naive_date,
+    utils::{get_glowmarkt_data_provider, parse_iso_string_to_naive_date},
     AppState,
 };
 
@@ -64,8 +64,13 @@ pub async fn update_energy_profile_settings(
         .await
         .map_err(|e| ApiError::Custom(format!("{}", e)))?
     {
-        spawn_download_tasks(app_handle, app_state_clone, client)
-            .map_err(|e| ApiError::Custom(e.to_string()))?;
+        if let Some(data_provider) = get_glowmarkt_data_provider()
+            .await
+            .map_err(|e| ApiError::Custom(e.to_string()))?
+        {
+            spawn_download_tasks(app_handle, app_state_clone, client, data_provider)
+                .map_err(|e| ApiError::Custom(e.to_string()))?;
+        }
     }
 
     Ok(())

@@ -8,6 +8,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::{
+    clients::glowmarkt::GlowmarktDataProvider,
     commands::ApiError,
     data::energy_profile::{EnergyProfile, EnergyProfileRepository, SqliteEnergyProfileRepository},
     AppError, APP_SERVICE_NAME,
@@ -65,6 +66,14 @@ pub async fn get_consumer_api_client(
     }
 
     Ok(None)
+}
+
+pub async fn get_glowmarkt_data_provider() -> Result<Option<GlowmarktDataProvider>, AppError> {
+    let data_provider = GlowmarktDataProvider::new("username", "password")
+        .await
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    Ok(Some(data_provider))
 }
 
 pub fn get_api_key_opt() -> Result<Option<String>, AppError> {

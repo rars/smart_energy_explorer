@@ -2738,14 +2738,12 @@ dependencies = [
 [[package]]
 name = "n3rgy_consumer_api_client"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb1481a7d9789540b2f9953295d883ac716a0cd1a0bf4acf596a5c5c843c658e"
 dependencies = [
  "chrono",
  "reqwest 0.12.12",
  "serde",
  "serde_json",
- "thiserror 1.0.69",
+ "thiserror 2.0.11",
  "url",
 ]
 
@@ -4593,6 +4591,7 @@ dependencies = [
  "tauri-plugin-sql",
  "tauri-plugin-store",
  "thiserror 1.0.69",
+ "time",
 ]
 
 [[package]]

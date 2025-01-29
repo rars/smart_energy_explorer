@@ -25,6 +25,21 @@ export class ApiKeyService {
     }
   }
 
+  public async saveBrightCredentials(
+    username: string,
+    password: string,
+  ): Promise<void> {
+    try {
+      await invoke('store_bright_credentials', { username, password });
+    } catch (error) {
+      this.errorService.showError(
+        `${error}`,
+        'Error storing Bright credentials',
+      );
+      console.error(error);
+    }
+  }
+
   public async testConnection(): Promise<{ active: boolean }> {
     return invoke<{ active: boolean }>('test_connection', {});
   }

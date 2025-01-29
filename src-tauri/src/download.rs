@@ -16,6 +16,7 @@ use serde::Serialize;
 use tauri::{async_runtime, AppHandle};
 
 use crate::{
+    clients::{data_provider::EnergyDataProvider, n3rgy::N3rgyEnergyDataProvider},
     data::{
         consumption::{
             ConsumptionRepository, ElectricityConsumptionValue, GasConsumptionValue,
@@ -52,17 +53,17 @@ pub trait DataLoader<T> {
 #[derive(Clone)]
 struct ElectricityConsumptionDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    client: Arc<ConsumerApiClient<T>>,
+    client: Arc<T>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
 impl<T> DataLoader<ElectricityConsumptionValue> for ElectricityConsumptionDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    type LoadError = N3rgyClientError;
+    type LoadError = T::Error;
     type InsertError = RepositoryError;
 
     async fn load(
@@ -71,16 +72,7 @@ where
         end: NaiveDate,
     ) -> Result<Vec<ElectricityConsumptionValue>, Self::LoadError> {
         let values = self.client.get_electricity_consumption(start, end).await?;
-
-        let mapped_values: Vec<_> = values
-            .iter()
-            .map(|v| ElectricityConsumptionValue {
-                timestamp: v.timestamp,
-                value: v.value,
-            })
-            .collect();
-
-        Ok(mapped_values)
+        Ok(values)
     }
 
     fn insert_data(&self, data: Vec<ElectricityConsumptionValue>) -> Result<(), Self::InsertError> {
@@ -124,17 +116,17 @@ where
 #[derive(Clone)]
 struct GasConsumptionDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    client: Arc<ConsumerApiClient<T>>,
+    client: Arc<T>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
 impl<T> DataLoader<GasConsumptionValue> for GasConsumptionDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    type LoadError = N3rgyClientError;
+    type LoadError = T::Error;
     type InsertError = RepositoryError;
 
     async fn load(
@@ -143,21 +135,11 @@ where
         end: NaiveDate,
     ) -> Result<Vec<GasConsumptionValue>, Self::LoadError> {
         let values = self.client.get_gas_consumption(start, end).await?;
-
-        let mapped_values: Vec<_> = values
-            .iter()
-            .map(|v| GasConsumptionValue {
-                timestamp: v.timestamp,
-                value: v.value,
-            })
-            .collect();
-
-        Ok(mapped_values)
+        Ok(values)
     }
 
     fn insert_data(&self, data: Vec<GasConsumptionValue>) -> Result<(), Self::InsertError> {
         SqliteGasConsumptionRepository::new(self.connection.clone()).insert(data)?;
-
         Ok(())
     }
 }
@@ -207,8 +189,8 @@ where
 
     let today = Local::now().naive_local().date();
     let mut end_date = today;
-    let mut start_of_period =
-        NaiveDate::from_ymd_opt(end_date.year(), end_date.month(), 1).unwrap();
+    let mut start_of_period = today - Duration::days(7);
+    // NaiveDate::from_ymd_opt(end_date.year(), end_date.month(), 1).unwrap();
 
     if start_of_period < until_date {
         start_of_period = until_date;
@@ -236,6 +218,8 @@ where
         }
 
         end_date = start_of_period;
+        start_of_period = start_of_period - Duration::days(7);
+        /*
         let end_of_previous_month =
             NaiveDate::from_ymd_opt(start_of_period.year(), start_of_period.month(), 1).unwrap()
                 - Duration::days(1);
@@ -244,7 +228,7 @@ where
             end_of_previous_month.month(),
             1,
         )
-        .unwrap();
+        .unwrap();*/
 
         if start_of_period < until_date {
             start_of_period = until_date;
@@ -276,13 +260,15 @@ where
     Ok(today)
 }
 
-pub async fn check_and_download_new_data<T>(
+pub async fn check_and_download_new_data<T, U>(
     app_handle: AppHandle,
     app_state: AppState,
     client: Arc<ConsumerApiClient<T>>,
+    data_provider: Arc<U>,
 ) -> Result<(), AppError>
 where
     T: AuthorizationProvider,
+    U: EnergyDataProvider,
 {
     {
         let mut downloading = app_state
@@ -306,7 +292,7 @@ where
     )?;
 
     let electricity_consumption_data_loader = ElectricityConsumptionDataLoader {
-        client: client.clone(),
+        client: data_provider.clone(),
         connection: app_state.db.clone(),
     };
 
@@ -343,7 +329,7 @@ where
     .await?;
 
     let gas_consumption_data_loader = GasConsumptionDataLoader {
-        client: client.clone(),
+        client: data_provider.clone(),
         connection: app_state.db.clone(),
     };
 
@@ -443,16 +429,23 @@ where
     Ok(())
 }
 
-pub fn spawn_download_tasks(
+pub fn spawn_download_tasks<T>(
     app_handle: AppHandle,
     app_state: AppState,
     client: ConsumerApiClient<StaticAuthorizationProvider>,
-) -> Result<(), AppError> {
+    data_provider: T,
+) -> Result<(), AppError>
+where
+    T: EnergyDataProvider + 'static,
+{
     info!("Spawning download tasks");
     let client = Arc::new(client);
+    let data_provider = Arc::new(data_provider);
+
+    // let n3rgy_client = N3rgyEnergyDataProvider::new(client.clone());
 
     async_runtime::spawn(async move {
-        match check_and_download_new_data(app_handle, app_state, client).await {
+        match check_and_download_new_data(app_handle, app_state, client, data_provider).await {
             Ok(_) => debug!("Data download tasks completed successfully"),
             Err(e) => {
                 error!("Data download tasks panicked: {:?}", e);

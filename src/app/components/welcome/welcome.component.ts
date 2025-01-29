@@ -72,6 +72,8 @@ export class WelcomeComponent {
       '',
       [Validators.required, noHyphenValidator(), exactLengthValidator(16)],
     ],
+    brightUsernameCtrl: ['', [Validators.required]],
+    brightPasswordCtrl: ['', [Validators.required]],
   });
 
   public constructor(
