@@ -3,10 +3,16 @@ use std::sync::Arc;
 use tauri::async_runtime::Mutex;
 
 use chrono::{Datelike, NaiveDate, NaiveDateTime};
-use glowmarkt::{GlowmarktApi, ReadingPeriod, Resource};
-use time::{error::ComponentRange, Date, OffsetDateTime, Time};
+use glowmarkt::{GlowmarktApi, ReadingPeriod};
+use time::{
+    error::ComponentRange, macros::date, macros::time, Date, OffsetDateTime, PrimitiveDateTime,
+    Time,
+};
 
-use crate::data::consumption::{ElectricityConsumptionValue, GasConsumptionValue};
+use crate::data::{
+    consumption::{ElectricityConsumptionValue, GasConsumptionValue},
+    tariff::TariffPlan,
+};
 
 use super::data_provider::EnergyDataProvider;
 
@@ -93,6 +99,23 @@ fn to_naive_date_time(offset_dt: OffsetDateTime) -> NaiveDateTime {
     )
 }
 
+fn primitive_to_naive_date_time(primitive_dt: PrimitiveDateTime) -> NaiveDateTime {
+    NaiveDateTime::new(
+        chrono::NaiveDate::from_ymd_opt(
+            primitive_dt.year(),
+            primitive_dt.month() as u32,
+            primitive_dt.day().into(),
+        )
+        .unwrap(),
+        chrono::NaiveTime::from_hms_opt(
+            primitive_dt.hour().into(),
+            primitive_dt.minute().into(),
+            primitive_dt.second().into(),
+        )
+        .unwrap(),
+    )
+}
+
 pub struct GlowmarktDataProvider {
     api: Arc<Mutex<GlowmarktApi>>,
     resource_ids: ResourceIds,
@@ -174,8 +197,6 @@ impl EnergyDataProvider for GlowmarktDataProvider {
         start: NaiveDate,
         end: NaiveDate,
     ) -> Result<Vec<ElectricityConsumptionValue>, Self::Error> {
-        info!("ELECTRICITY FETCH: {} -> {}", start, end);
-
         if let Some(resource_id) = &self.resource_ids.electricity_consumption {
             let offset_date_range = self.get_range(start, end)?;
 
@@ -207,16 +228,43 @@ impl EnergyDataProvider for GlowmarktDataProvider {
         ))
     }
 
+    async fn get_electricity_tariff_history(
+        &self,
+    ) -> Result<Vec<crate::data::tariff::TariffPlan>, Self::Error> {
+        if let Some(resource_id) = &self.resource_ids.electricity_cost {
+            let tariff_list_data = {
+                let api = self.api.lock().await;
+                api.tariff_list(resource_id).await
+            }
+            .map_err(|e| GlowmarktDataProviderError::GlowmarktApiError(e.to_string()))?;
+
+            let consumption_values: Vec<_> = tariff_list_data
+                .into_iter()
+                .map(|v| TariffPlan {
+                    tariff_id: v.id,
+                    plan: serde_json::to_string(&v.plan).unwrap(),
+                    effective_date: primitive_to_naive_date_time(
+                        v.effective_date
+                            .or(v.from)
+                            .unwrap_or(PrimitiveDateTime::new(date!(1900 - 01 - 01), time!(0:00))),
+                    ),
+                    display_name: v.display_name.unwrap_or("<unknown>".into()),
+                })
+                .collect();
+
+            return Ok(consumption_values);
+        }
+
+        Err(GlowmarktDataProviderError::MissingResource(
+            "electricity cost".to_string(),
+        ))
+    }
+
     async fn get_gas_consumption(
         &self,
         start: NaiveDate,
         end: NaiveDate,
     ) -> Result<Vec<GasConsumptionValue>, Self::Error> {
-        info!(
-            "~~~~~~~~~~~~~~~ GAS CONSUMPTION FETCH: {} -> {} ~~~~~~~~~~~~~~~~~~`",
-            start, end
-        );
-
         if let Some(resource_id) = &self.resource_ids.gas_consumption {
             let offset_date_range = self.get_range(start, end)?;
 
@@ -245,6 +293,38 @@ impl EnergyDataProvider for GlowmarktDataProvider {
 
         Err(GlowmarktDataProviderError::MissingResource(
             "gas consumption".to_string(),
+        ))
+    }
+
+    async fn get_gas_tariff_history(
+        &self,
+    ) -> Result<Vec<crate::data::tariff::TariffPlan>, Self::Error> {
+        if let Some(resource_id) = &self.resource_ids.gas_cost {
+            let tariff_list_data = {
+                let api = self.api.lock().await;
+                api.tariff_list(resource_id).await
+            }
+            .map_err(|e| GlowmarktDataProviderError::GlowmarktApiError(e.to_string()))?;
+
+            let consumption_values: Vec<_> = tariff_list_data
+                .into_iter()
+                .map(|v| TariffPlan {
+                    tariff_id: v.id,
+                    plan: serde_json::to_string(&v.plan).unwrap(),
+                    effective_date: primitive_to_naive_date_time(
+                        v.effective_date
+                            .or(v.from)
+                            .unwrap_or(PrimitiveDateTime::new(date!(1900 - 01 - 01), time!(0:00))),
+                    ),
+                    display_name: v.display_name.unwrap_or("<unknown>".into()),
+                })
+                .collect();
+
+            return Ok(consumption_values);
+        }
+
+        Err(GlowmarktDataProviderError::MissingResource(
+            "gas cost".to_string(),
         ))
     }
 }

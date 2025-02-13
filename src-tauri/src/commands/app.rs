@@ -9,7 +9,6 @@ use tauri::{async_runtime, AppHandle, State};
 use crate::{
     db::{self, revert_all_migrations},
     download::check_and_download_new_data,
-    get_consumer_api_client,
     utils::{
         get_glowmarkt_data_provider, switch_main_to_splashscreen, switch_splashscreen_to_main,
     },
@@ -129,36 +128,24 @@ pub async fn fetch_data(
     app_handle: AppHandle,
     app_state: State<'_, AppState>,
 ) -> Result<(), ApiError> {
-    if let Some(client) = get_consumer_api_client()
+    let app_state_clone = (*app_state).clone();
+
+    if let Some(data_provider) = get_glowmarkt_data_provider()
         .await
-        .map_err(|e| ApiError::Custom(format!("{}", e)))?
+        .map_err(|e| ApiError::Custom(e.to_string()))?
     {
-        let app_state_clone = (*app_state).clone();
+        async_runtime::spawn(async move {
+            let arc_data_provider = Arc::new(data_provider);
 
-        if let Some(data_provider) = get_glowmarkt_data_provider()
-            .await
-            .map_err(|e| ApiError::Custom(e.to_string()))?
-        {
-            async_runtime::spawn(async move {
-                let arc_client = Arc::new(client);
-                let arc_data_provider = Arc::new(data_provider);
-
-                match check_and_download_new_data(
-                    app_handle,
-                    app_state_clone,
-                    arc_client.clone(),
-                    arc_data_provider,
-                )
-                .await
-                {
-                    Ok(_) => debug!("Data download tasks completed successfully"),
-                    Err(e) => {
-                        error!("Data download tasks panicked: {:?}", e);
-                        // Handle the panic (e.g., restart the task, log the error, etc.)
-                    }
+            match check_and_download_new_data(app_handle, app_state_clone, arc_data_provider).await
+            {
+                Ok(_) => debug!("Data download tasks completed successfully"),
+                Err(e) => {
+                    error!("Data download tasks panicked: {:?}", e);
+                    // Handle the panic (e.g., restart the task, log the error, etc.)
                 }
-            });
-        }
+            }
+        });
     }
 
     Ok(())

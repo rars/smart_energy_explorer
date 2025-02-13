@@ -6,9 +6,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 import { ErrorService } from '../error/error.service';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class ApiKeyService {
   public constructor(private readonly errorService: ErrorService) {}
 
@@ -25,16 +23,28 @@ export class ApiKeyService {
     }
   }
 
-  public async saveBrightCredentials(
+  public getGlowmarktCredentials(): Observable<{
+    username: string;
+    password: string;
+  }> {
+    return from(
+      invoke<{ username: string; password: string }>(
+        'get_glowmarkt_credentials',
+        {},
+      ),
+    );
+  }
+
+  public async saveGlowmarktCredentials(
     username: string,
     password: string,
   ): Promise<void> {
     try {
-      await invoke('store_bright_credentials', { username, password });
+      await invoke('store_glowmarkt_credentials', { username, password });
     } catch (error) {
       this.errorService.showError(
         `${error}`,
-        'Error storing Bright credentials',
+        'Error storing Glowmarkt credentials',
       );
       console.error(error);
     }
@@ -42,6 +52,10 @@ export class ApiKeyService {
 
   public async testConnection(): Promise<{ active: boolean }> {
     return invoke<{ active: boolean }>('test_connection', {});
+  }
+
+  public async testGlowmarktConnection(): Promise<{ active: boolean }> {
+    return invoke<{ active: boolean }>('test_glowmarkt_connection', {});
   }
 
   public closeWelcomeScreen(): Promise<void> {

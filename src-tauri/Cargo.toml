@@ -19,7 +19,7 @@ chrono = { version = "0.4", features = ["serde"] }
 diesel = { version = "2.0.0", features = ["sqlite", "chrono"] }
 diesel_migrations = "2.0"
 git-version = "0.3.9"
-glowmarkt = "0.5.2"
+glowmarkt = { git = "https://github.com/Mossop/glowmarkt-rs.git" }
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 log = "^0.4"
 n3rgy_consumer_api_client = { path = "../../n3rgy_consumer_api_client" }

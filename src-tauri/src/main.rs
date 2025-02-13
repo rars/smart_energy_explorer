@@ -2,6 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use app_settings::{AppSettings, SETTINGS_FILE};
+use commands::glowmarkt::get_glowmarkt_credentials;
+use commands::glowmarkt::store_glowmarkt_credentials;
+use commands::glowmarkt::test_glowmarkt_connection;
 use diesel::SqliteConnection;
 use log::{debug, error};
 use n3rgy_consumer_api_client::N3rgyClientError;
@@ -114,21 +117,18 @@ fn main() {
             }
 
             async_runtime::spawn(async move {
-                if let Ok(Some(client)) = get_consumer_api_client().await {
+                if let Ok(Some(data_provider)) = get_glowmarkt_data_provider().await {
                     {
                         let mut client_available = app_state_clone.client_available.lock().unwrap();
                         *client_available = true;
                     }
 
-                    if let Ok(Some(data_provider)) = get_glowmarkt_data_provider().await {
-                        if let Err(e) = download::spawn_download_tasks(
-                            app_handle_clone,
-                            app_state_clone,
-                            client,
-                            data_provider,
-                        ) {
-                            error!("Failed to spawn download tasks: {}", e);
-                        }
+                    if let Err(e) = download::spawn_download_tasks(
+                        app_handle_clone,
+                        app_state_clone,
+                        data_provider,
+                    ) {
+                        error!("Failed to spawn download tasks: {}", e);
                     }
                 }
             });
@@ -168,13 +168,16 @@ fn main() {
             get_energy_profiles,
             get_gas_cost_history,
             get_gas_tariff_history,
+            get_glowmarkt_credentials,
             get_monthly_electricity_consumption,
             get_monthly_gas_consumption,
             get_raw_electricity_consumption,
             get_raw_gas_consumption,
             reset,
             store_api_key,
+            store_glowmarkt_credentials,
             test_connection,
+            test_glowmarkt_connection,
             update_energy_profile_settings
         ])
         .run(tauri::generate_context!())

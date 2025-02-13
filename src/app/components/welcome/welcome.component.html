@@ -40,69 +40,52 @@
       <form [formGroup]="secondFormGroup">
         <ng-template matStepLabel>Grant access to your data</ng-template>
         <p>
-          This app uses
+          This app uses the
           <a
-            href="https://www.n3rgy.com/"
+            href="https://glowmarkt.com/login"
             target="_blank"
-            (click)="shellService.openLink('https://www.n3rgy.com/')"
-            >n3rgy</a
+            (click)="shellService.openLink('https://glowmarkt.com/login')"
+            >Glowmarkt API</a
           >, a third-party service, to retrieve your smart meter data. To
           proceed, you need to:
         </p>
         <ol>
           <li>
             <a
-              href="https://data.n3rgy.com/consumer-sign-up"
+              href="https://glowmarkt.com/register/personal"
               target="_blank"
               (click)="
-                shellService.openLink('https://data.n3rgy.com/consumer-sign-up')
+                shellService.openLink('https://glowmarkt.com/register/personal')
               "
             >
-              Enroll with n3rgy as a consumer
+              Sign up to Glow
               <mat-icon class="text-xs">open_in_new</mat-icon>
             </a>
             (if you haven't already),
           </li>
-          <li>Provide your In-Home Display (IHD) MAC address below:</li>
+          <li>Provide your Bright account credentials below:</li>
         </ol>
 
-        <mat-form-field class="w-1/2" subscriptSizing="dynamic">
-          <mat-label>IHD MAC Address</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="apiKeyCtrl"
-            placeholder="Enter IHD MAC address"
-            required
-          />
-          @if (secondFormGroup.get('apiKeyCtrl')?.errors?.['noHyphen']) {
-            <mat-error>Hyphens should be omitted from this field.</mat-error>
-          }
-          @if (secondFormGroup.get('apiKeyCtrl')?.errors?.['exactLength']) {
-            <mat-error
-              >This field must be exactly 16 characters long.</mat-error
-            >
-          }
-        </mat-form-field>
+        <div class="flex flex-col gap-4">
+          <mat-form-field class="w-1/2" subscriptSizing="dynamic">
+            <mat-label>Bright Username</mat-label>
+            <input
+              matInput
+              formControlName="glowmarktUsernameCtrl"
+              placeholder="Enter Bright username"
+            />
+          </mat-form-field>
 
-        <mat-form-field class="w-1/2" subscriptSizing="dynamic">
-          <mat-label>Bright Username</mat-label>
-          <input
-            matInput
-            formControlName="brightUsernameCtrl"
-            placeholder="Enter Bright username"
-          />
-        </mat-form-field>
-
-        <mat-form-field class="w-1/2" subscriptSizing="dynamic">
-          <mat-label>Bright Password</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="brightPasswordCtrl"
-            placeholder="Enter Bright password"
-          />
-        </mat-form-field>
+          <mat-form-field class="w-1/2" subscriptSizing="dynamic">
+            <mat-label>Bright Password</mat-label>
+            <input
+              matInput
+              type="password"
+              formControlName="glowmarktPasswordCtrl"
+              placeholder="Enter Bright password"
+            />
+          </mat-form-field>
+        </div>
 
         <div>
           <p>
@@ -112,7 +95,8 @@
         </div>
 
         <p class="text-xs">
-          Note: This app is not affiliated with or endorsed by n3rgy.
+          Note: This app is not affiliated with or endorsed by Bright, Glowmarkt
+          or Hildebrand Technology Limited.
         </p>
         <div>
           <button mat-button matStepperPrevious>Back</button>

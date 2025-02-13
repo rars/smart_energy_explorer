@@ -15,6 +15,7 @@ pub struct EnergyProfile {
     pub is_active: bool,
     pub start_date: NaiveDateTime,
     pub last_date_retrieved: Option<NaiveDateTime>,
+    pub base_unit: String,
 }
 
 #[derive(Insertable)]
@@ -23,12 +24,13 @@ struct NewEnergyProfile<'a> {
     name: &'a str,
     is_active: bool,
     start_date: NaiveDateTime,
+    base_unit: &'a str,
 }
 
 pub trait EnergyProfileRepository {
     fn get_energy_profile(&self, name: &str) -> QueryResult<EnergyProfile>;
     fn get_all_energy_profiles(&self) -> QueryResult<Vec<EnergyProfile>>;
-    fn create_energy_profile(&self, name: &str) -> QueryResult<EnergyProfile>;
+    fn create_energy_profile(&self, name: &str, base_unit: &str) -> QueryResult<EnergyProfile>;
     fn update_energy_profile(
         &self,
         energy_profile_id_param: i32,
@@ -74,7 +76,7 @@ impl EnergyProfileRepository for SqliteEnergyProfileRepository {
         energy_profile::table.load::<EnergyProfile>(&mut *conn)
     }
 
-    fn create_energy_profile(&self, name: &str) -> QueryResult<EnergyProfile> {
+    fn create_energy_profile(&self, name: &str, base_unit: &str) -> QueryResult<EnergyProfile> {
         let start_of_current_month = Local::now().date_naive().with_day(1).unwrap();
         let end_of_previous_month = start_of_current_month.pred_opt().unwrap();
 
@@ -84,6 +86,7 @@ impl EnergyProfileRepository for SqliteEnergyProfileRepository {
             name: name,
             is_active: true,
             start_date,
+            base_unit,
         };
 
         let mut conn = self.connection();

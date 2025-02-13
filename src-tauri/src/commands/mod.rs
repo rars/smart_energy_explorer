@@ -5,6 +5,7 @@ use crate::data::RepositoryError;
 pub mod app;
 pub mod electricity;
 pub mod gas;
+pub mod glowmarkt;
 pub mod n3rgy;
 pub mod profiles;
 pub mod tariff;

@@ -2,7 +2,6 @@ use keyring::Entry;
 use tauri::{AppHandle, State};
 
 use crate::{
-    clients::n3rgy::N3rgyEnergyDataProvider,
     download::spawn_download_tasks,
     get_consumer_api_client,
     utils::{get_api_key_opt, get_glowmarkt_data_provider},
@@ -26,17 +25,12 @@ pub async fn store_api_key(
         .set_password(&api_key)
         .map_err(|e| ApiError::Custom(e.to_string()))?;
 
-    if let Some(client) = get_consumer_api_client()
+    if let Some(data_provider) = get_glowmarkt_data_provider()
         .await
-        .map_err(|e| ApiError::Custom(format!("{}", e)))?
+        .map_err(|e| ApiError::Custom(e.to_string()))?
     {
-        if let Some(data_provider) = get_glowmarkt_data_provider()
-            .await
-            .map_err(|e| ApiError::Custom(e.to_string()))?
-        {
-            spawn_download_tasks(app_handle, (*app_state).clone(), client, data_provider)
-                .map_err(|e| ApiError::Custom(e.to_string()))?;
-        }
+        spawn_download_tasks(app_handle, (*app_state).clone(), data_provider)
+            .map_err(|e| ApiError::Custom(e.to_string()))?;
     }
 
     Ok(())

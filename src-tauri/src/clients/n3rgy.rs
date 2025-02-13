@@ -58,6 +58,12 @@ where
         Ok(consumption_values)
     }
 
+    async fn get_electricity_tariff_history(
+        &self,
+    ) -> Result<Vec<crate::data::tariff::TariffPlan>, Self::Error> {
+        Ok(vec![])
+    }
+
     async fn get_gas_consumption(
         &self,
         start: NaiveDate,
@@ -78,5 +84,11 @@ where
             .collect();
 
         Ok(consumption_values)
+    }
+
+    async fn get_gas_tariff_history(
+        &self,
+    ) -> Result<Vec<crate::data::tariff::TariffPlan>, Self::Error> {
+        Ok(vec![])
     }
 }

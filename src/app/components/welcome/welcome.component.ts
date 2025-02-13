@@ -1,7 +1,6 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { Component, ViewChild, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormsModule,
@@ -19,10 +18,6 @@ import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 
 import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
 
-import {
-  exactLengthValidator,
-  noHyphenValidator,
-} from '../../common/validators';
 import { ApiKeyService } from '../../services/api-key/api-key.service';
 import { ShellService } from '../../services/shell/shell.service';
 import { LicenseDialogComponent } from '../license-dialog/license-dialog.component';
@@ -68,12 +63,8 @@ export class WelcomeComponent {
     agreement: [false, Validators.requiredTrue],
   });
   protected readonly secondFormGroup = this.formBuilder.group({
-    apiKeyCtrl: [
-      '',
-      [Validators.required, noHyphenValidator(), exactLengthValidator(16)],
-    ],
-    brightUsernameCtrl: ['', [Validators.required]],
-    brightPasswordCtrl: ['', [Validators.required]],
+    glowmarktUsernameCtrl: ['', [Validators.required]],
+    glowmarktPasswordCtrl: ['', [Validators.required]],
   });
 
   public constructor(
@@ -83,13 +74,6 @@ export class WelcomeComponent {
   ) {
     this.active$ = this.isActiveSubject.asObservable();
     this.isTestingConnection$ = this.isTestingConnectionSubject.asObservable();
-
-    this.apiKeyService
-      .getApiKey()
-      .pipe(takeUntilDestroyed())
-      .subscribe((apiKey) => {
-        this.secondFormGroup.get('apiKeyCtrl')?.setValue(apiKey);
-      });
 
     setTimeout(() => (this.showElement = true), 100);
   }
@@ -125,11 +109,17 @@ export class WelcomeComponent {
   }
 
   public async saveApiKey(): Promise<void> {
-    const apiKey = this.secondFormGroup.get('apiKeyCtrl')?.value || '';
-    await this.apiKeyService.saveApiKey(apiKey);
+    const glowmarktUsername =
+      this.secondFormGroup.get('glowmarktUsernameCtrl')?.value || '';
+    const glowmarktPassword =
+      this.secondFormGroup.get('glowmarktPasswordCtrl')?.value || '';
+    await this.apiKeyService.saveGlowmarktCredentials(
+      glowmarktUsername,
+      glowmarktPassword,
+    );
 
     this.isTestingConnectionSubject.next(true);
-    const testResponse = await this.apiKeyService.testConnection();
+    const testResponse = await this.apiKeyService.testGlowmarktConnection();
     this.isActiveSubject.next(testResponse.active);
     this.isTestingConnectionSubject.next(false);
   }
