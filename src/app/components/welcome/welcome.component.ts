@@ -109,18 +109,21 @@ export class WelcomeComponent {
   }
 
   public async saveApiKey(): Promise<void> {
+    this.isTestingConnectionSubject.next(true);
+
     const glowmarktUsername =
       this.secondFormGroup.get('glowmarktUsernameCtrl')?.value || '';
     const glowmarktPassword =
       this.secondFormGroup.get('glowmarktPasswordCtrl')?.value || '';
+
     await this.apiKeyService.saveGlowmarktCredentials(
       glowmarktUsername,
       glowmarktPassword,
     );
 
-    this.isTestingConnectionSubject.next(true);
     const testResponse = await this.apiKeyService.testGlowmarktConnection();
     this.isActiveSubject.next(testResponse.active);
+
     this.isTestingConnectionSubject.next(false);
   }
 

@@ -1,17 +1,16 @@
 use std::sync::{Arc, Mutex};
 
-use chrono::{Days, Local, NaiveDate};
+use chrono::NaiveDate;
 use diesel::SqliteConnection;
 use keyring::Entry;
-use n3rgy_consumer_api_client::{ConsumerApiClient, StaticAuthorizationProvider};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::{
     clients::glowmarkt::GlowmarktDataProvider,
-    commands::ApiError,
+    commands::{ApiError, APP_SERVICE_NAME},
     data::energy_profile::{EnergyProfile, EnergyProfileRepository, SqliteEnergyProfileRepository},
-    AppError, APP_SERVICE_NAME,
+    AppError,
 };
 
 pub fn parse_iso_string_to_naive_date(iso_date_str: &str) -> Result<NaiveDate, ApiError> {
@@ -48,27 +47,6 @@ pub fn get_or_create_energy_profile(
     })
 }
 
-pub async fn get_consumer_api_client(
-) -> Result<Option<ConsumerApiClient<StaticAuthorizationProvider>>, AppError> {
-    if let Some(api_key) = get_api_key_opt()? {
-        let ap = StaticAuthorizationProvider::new(api_key);
-        let client = ConsumerApiClient::new(ap, None);
-
-        let today = Local::now().date_naive();
-        let tomorrow = today.checked_add_days(Days::new(1)).unwrap();
-
-        if let Ok(_) = client.get_electricity_tariff(today, tomorrow).await {
-            return Ok(Some(client));
-        }
-
-        if let Ok(_) = client.get_gas_tariff(today, tomorrow).await {
-            return Ok(Some(client));
-        }
-    }
-
-    Ok(None)
-}
-
 pub async fn get_glowmarkt_data_provider() -> Result<Option<GlowmarktDataProvider>, AppError> {
     if let Some(GlowmarktCredentials { username, password }) = get_glowmarkt_credentials_opt()? {
         let data_provider = GlowmarktDataProvider::new(&username, &password)
@@ -100,13 +78,6 @@ pub fn get_glowmarkt_credentials_opt() -> Result<Option<GlowmarktCredentials>, A
         (Some(username), Some(password)) => Ok(Some(GlowmarktCredentials { username, password })),
         _ => Ok(None),
     }
-}
-
-pub fn get_api_key_opt() -> Result<Option<String>, AppError> {
-    let entry = Entry::new(APP_SERVICE_NAME, "api_key")
-        .map_err(|e| AppError::CustomError(e.to_string()))?;
-
-    get_entry_password(&entry)
 }
 
 fn get_entry_password(entry: &Entry) -> Result<Option<String>, AppError> {

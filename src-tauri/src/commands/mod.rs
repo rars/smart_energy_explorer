@@ -1,14 +1,13 @@
-use n3rgy_consumer_api_client::N3rgyClientError;
-
-use crate::data::RepositoryError;
+use crate::{clients::glowmarkt::GlowmarktDataProviderError, data::RepositoryError};
 
 pub mod app;
 pub mod electricity;
 pub mod gas;
 pub mod glowmarkt;
-pub mod n3rgy;
 pub mod profiles;
 pub mod tariff;
+
+pub(crate) const APP_SERVICE_NAME: &str = "io.github.rars.smart_energy_explorer";
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
@@ -20,8 +19,8 @@ pub enum ApiError {
     ChronoParseError(#[from] chrono::ParseError),
     #[error("Repository error: {0}")]
     RepositoryError(#[from] RepositoryError),
-    #[error("Failed request to n3rgy API: {0}")]
-    N3rgyClientError(#[from] N3rgyClientError),
+    #[error("Failed interaction with Glowmarkt API: {0}")]
+    GlowmarktApiError(#[from] GlowmarktDataProviderError),
     #[error("Mutex '{name}' is poisoned")]
     MutexPoisonedError { name: String },
 }

@@ -5,8 +5,10 @@ use crate::{
     commands::ApiError,
     download::spawn_download_tasks,
     utils::{get_glowmarkt_credentials_opt, get_glowmarkt_data_provider},
-    AppState, APP_SERVICE_NAME,
+    AppState,
 };
+
+use super::APP_SERVICE_NAME;
 
 #[tauri::command]
 pub async fn store_glowmarkt_credentials(

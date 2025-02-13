@@ -12,10 +12,10 @@ use crate::{
     utils::{
         get_glowmarkt_data_provider, switch_main_to_splashscreen, switch_splashscreen_to_main,
     },
-    AppState, APP_SERVICE_NAME,
+    AppState,
 };
 
-use super::ApiError;
+use super::{ApiError, APP_SERVICE_NAME};
 
 const GIT_VERSION: &str = git_version!();
 
@@ -97,18 +97,23 @@ pub fn reset(app_handle: AppHandle, app_state: State<'_, AppState>) -> Result<()
         .safe_set("termsAccepted", false)
         .map_err(|e| ApiError::Custom(format!("{}", e)))?;
 
+    delete_credential("glowmarkt_username")?;
+    delete_credential("glowmarkt_password")?;
+
+    switch_main_to_splashscreen(&app_handle);
+
+    Ok(())
+}
+
+fn delete_credential(key_name: &str) -> Result<(), ApiError> {
     let entry =
-        Entry::new(APP_SERVICE_NAME, "api_key").map_err(|e| ApiError::Custom(e.to_string()))?;
+        Entry::new(APP_SERVICE_NAME, key_name).map_err(|e| ApiError::Custom(e.to_string()))?;
 
     match entry.delete_credential() {
         Ok(()) => Ok(()),
         Err(keyring::Error::NoEntry) => Ok(()),
         Err(e) => Err(ApiError::Custom(e.to_string())),
-    }?;
-
-    switch_main_to_splashscreen(&app_handle);
-
-    Ok(())
+    }
 }
 
 fn reset_database(app_state: &AppState) -> Result<(), ApiError> {

@@ -10,19 +10,6 @@ import { ErrorService } from '../error/error.service';
 export class ApiKeyService {
   public constructor(private readonly errorService: ErrorService) {}
 
-  public getApiKey(): Observable<string> {
-    return from(invoke<string>('get_api_key', {}));
-  }
-
-  public async saveApiKey(apiKey: string): Promise<void> {
-    try {
-      await invoke('store_api_key', { apiKey });
-    } catch (error) {
-      this.errorService.showError(`${error}`, 'Error storing API key');
-      console.error(error);
-    }
-  }
-
   public getGlowmarktCredentials(): Observable<{
     username: string;
     password: string;
@@ -48,10 +35,6 @@ export class ApiKeyService {
       );
       console.error(error);
     }
-  }
-
-  public async testConnection(): Promise<{ active: boolean }> {
-    return invoke<{ active: boolean }>('test_connection', {});
   }
 
   public async testGlowmarktConnection(): Promise<{ active: boolean }> {

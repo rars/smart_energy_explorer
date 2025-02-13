@@ -22,7 +22,6 @@ git-version = "0.3.9"
 glowmarkt = { git = "https://github.com/Mossop/glowmarkt-rs.git" }
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 log = "^0.4"
-n3rgy_consumer_api_client = { path = "../../n3rgy_consumer_api_client" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri = { version = "2.0.0", features = ["unstable"] }
