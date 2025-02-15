@@ -1,16 +1,16 @@
 use std::sync::{Arc, Mutex};
 
-use chrono::{Days, Local, NaiveDate};
+use chrono::NaiveDate;
 use diesel::SqliteConnection;
 use keyring::Entry;
-use n3rgy_consumer_api_client::{ConsumerApiClient, StaticAuthorizationProvider};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::{
-    commands::ApiError,
+    clients::glowmarkt::GlowmarktDataProvider,
+    commands::{ApiError, APP_SERVICE_NAME},
     data::energy_profile::{EnergyProfile, EnergyProfileRepository, SqliteEnergyProfileRepository},
-    AppError, APP_SERVICE_NAME,
+    AppError,
 };
 
 pub fn parse_iso_string_to_naive_date(iso_date_str: &str) -> Result<NaiveDate, ApiError> {
@@ -31,12 +31,13 @@ where
 pub fn get_or_create_energy_profile(
     connection: Arc<Mutex<SqliteConnection>>,
     name: &str,
+    base_unit: &str,
 ) -> Result<EnergyProfile, AppError> {
     let repository = SqliteEnergyProfileRepository::new(connection);
 
     repository.get_energy_profile(name).or_else(|get_error| {
         repository
-            .create_energy_profile(name)
+            .create_energy_profile(name, base_unit)
             .map_err(|create_error| {
                 AppError::CustomError(format!(
                     "Failed to fetch profile {}, get error: {}, create error: {}",
@@ -46,39 +47,46 @@ pub fn get_or_create_energy_profile(
     })
 }
 
-pub async fn get_consumer_api_client(
-) -> Result<Option<ConsumerApiClient<StaticAuthorizationProvider>>, AppError> {
-    if let Some(api_key) = get_api_key_opt()? {
-        let ap = StaticAuthorizationProvider::new(api_key);
-        let client = ConsumerApiClient::new(ap, None);
+pub async fn get_glowmarkt_data_provider() -> Result<Option<GlowmarktDataProvider>, AppError> {
+    if let Some(GlowmarktCredentials { username, password }) = get_glowmarkt_credentials_opt()? {
+        let data_provider = GlowmarktDataProvider::new(&username, &password)
+            .await
+            .map_err(|e| AppError::CustomError(e.to_string()))?;
 
-        let today = Local::now().date_naive();
-        let tomorrow = today.checked_add_days(Days::new(1)).unwrap();
-
-        if let Ok(_) = client.get_electricity_tariff(today, tomorrow).await {
-            return Ok(Some(client));
-        }
-
-        if let Ok(_) = client.get_gas_tariff(today, tomorrow).await {
-            return Ok(Some(client));
-        }
+        return Ok(Some(data_provider));
     }
 
     Ok(None)
 }
 
-pub fn get_api_key_opt() -> Result<Option<String>, AppError> {
-    let entry = Entry::new(APP_SERVICE_NAME, "api_key")
+pub struct GlowmarktCredentials {
+    pub username: String,
+    pub password: String,
+}
+
+pub fn get_glowmarkt_credentials_opt() -> Result<Option<GlowmarktCredentials>, AppError> {
+    let username_entry = Entry::new(APP_SERVICE_NAME, "glowmarkt_username")
         .map_err(|e| AppError::CustomError(e.to_string()))?;
 
+    let password_entry = Entry::new(APP_SERVICE_NAME, "glowmarkt_password")
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    let username = get_entry_password(&username_entry)?;
+    let password = get_entry_password(&password_entry)?;
+
+    match (username, password) {
+        (Some(username), Some(password)) => Ok(Some(GlowmarktCredentials { username, password })),
+        _ => Ok(None),
+    }
+}
+
+fn get_entry_password(entry: &Entry) -> Result<Option<String>, AppError> {
     match entry.get_password() {
-        Ok(password) => return Ok(Some(password)),
-        Err(e) => {
-            return match e {
-                keyring::Error::NoEntry => Ok(None),
-                _ => Err(AppError::CustomError(e.to_string())),
-            }
-        }
+        Ok(password) => Ok(Some(password)),
+        Err(e) => match e {
+            keyring::Error::NoEntry => Ok(None),
+            _ => Err(AppError::CustomError(e.to_string())),
+        },
     }
 }
 

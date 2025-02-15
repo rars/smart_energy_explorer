@@ -5,24 +5,24 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use chrono::{Datelike, Duration, Local, NaiveDate, NaiveDateTime};
+use chrono::{Duration, Local, NaiveDate, NaiveDateTime};
 use diesel::SqliteConnection;
 use log::{debug, error, info};
-use n3rgy_consumer_api_client::{
-    AuthorizationProvider, ConsumerApiClient, ElectricityConsumption, ElectricityTariff,
-    GasConsumption, GasTariff, N3rgyClientError, StaticAuthorizationProvider,
-};
 use serde::Serialize;
 use tauri::{async_runtime, AppHandle};
 
 use crate::{
+    clients::data_provider::EnergyDataProvider,
     data::{
         consumption::{
-            ConsumptionRepository, SqliteElectricityConsumptionRepository,
-            SqliteGasConsumptionRepository,
+            ConsumptionRepository, ElectricityConsumptionValue, GasConsumptionValue,
+            SqliteElectricityConsumptionRepository, SqliteGasConsumptionRepository,
         },
         energy_profile::{EnergyProfileRepository, SqliteEnergyProfileRepository},
-        tariff::{SqliteElectricityTariffRepository, SqliteGasTariffRepository, TariffRepository},
+        tariff::{
+            NewElectricityTariffPlan, NewGasTariffPlan, SqliteElectricityTariffRepository,
+            SqliteGasTariffRepository, TariffPlan, TariffRepository,
+        },
         RepositoryError,
     },
     utils::{emit_event, get_or_create_energy_profile},
@@ -52,28 +52,32 @@ pub trait DataLoader<T> {
 #[derive(Clone)]
 struct ElectricityConsumptionDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    client: Arc<ConsumerApiClient<T>>,
+    data_provider: Arc<T>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
-impl<T> DataLoader<ElectricityConsumption> for ElectricityConsumptionDataLoader<T>
+impl<T> DataLoader<ElectricityConsumptionValue> for ElectricityConsumptionDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    type LoadError = N3rgyClientError;
+    type LoadError = T::Error;
     type InsertError = RepositoryError;
 
     async fn load(
         &self,
         start: NaiveDate,
         end: NaiveDate,
-    ) -> Result<Vec<ElectricityConsumption>, Self::LoadError> {
-        Ok(self.client.get_electricity_consumption(start, end).await?)
+    ) -> Result<Vec<ElectricityConsumptionValue>, Self::LoadError> {
+        let values = self
+            .data_provider
+            .get_electricity_consumption(start, end)
+            .await?;
+        Ok(values)
     }
 
-    fn insert_data(&self, data: Vec<ElectricityConsumption>) -> Result<(), Self::InsertError> {
+    fn insert_data(&self, data: Vec<ElectricityConsumptionValue>) -> Result<(), Self::InsertError> {
         SqliteElectricityConsumptionRepository::new(self.connection.clone()).insert(data)?;
 
         Ok(())
@@ -83,29 +87,39 @@ where
 #[derive(Clone)]
 struct ElectricityTariffDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    client: Arc<ConsumerApiClient<T>>,
+    data_provider: Arc<T>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
-impl<T> DataLoader<ElectricityTariff> for ElectricityTariffDataLoader<T>
+impl<T> DataLoader<TariffPlan> for ElectricityTariffDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    type LoadError = N3rgyClientError;
+    type LoadError = T::Error;
     type InsertError = RepositoryError;
 
     async fn load(
         &self,
-        start: NaiveDate,
-        end: NaiveDate,
-    ) -> Result<Vec<ElectricityTariff>, Self::LoadError> {
-        Ok(self.client.get_electricity_tariff(start, end).await?)
+        _start: NaiveDate,
+        _end: NaiveDate,
+    ) -> Result<Vec<TariffPlan>, Self::LoadError> {
+        Ok(self.data_provider.get_electricity_tariff_history().await?)
     }
 
-    fn insert_data(&self, data: Vec<ElectricityTariff>) -> Result<(), Self::InsertError> {
-        SqliteElectricityTariffRepository::new(self.connection.clone()).insert(data)?;
+    fn insert_data(&self, data: Vec<TariffPlan>) -> Result<(), Self::InsertError> {
+        let tps: Vec<_> = data
+            .into_iter()
+            .map(|tp| NewElectricityTariffPlan {
+                tariff_id: tp.tariff_id,
+                plan: tp.plan,
+                effective_date: tp.effective_date,
+                display_name: tp.display_name,
+            })
+            .collect();
+
+        SqliteElectricityTariffRepository::new(self.connection.clone()).insert(tps)?;
 
         Ok(())
     }
@@ -114,30 +128,30 @@ where
 #[derive(Clone)]
 struct GasConsumptionDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    client: Arc<ConsumerApiClient<T>>,
+    data_provider: Arc<T>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
-impl<T> DataLoader<GasConsumption> for GasConsumptionDataLoader<T>
+impl<T> DataLoader<GasConsumptionValue> for GasConsumptionDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    type LoadError = N3rgyClientError;
+    type LoadError = T::Error;
     type InsertError = RepositoryError;
 
     async fn load(
         &self,
         start: NaiveDate,
         end: NaiveDate,
-    ) -> Result<Vec<GasConsumption>, Self::LoadError> {
-        Ok(self.client.get_gas_consumption(start, end).await?)
+    ) -> Result<Vec<GasConsumptionValue>, Self::LoadError> {
+        let values = self.data_provider.get_gas_consumption(start, end).await?;
+        Ok(values)
     }
 
-    fn insert_data(&self, data: Vec<GasConsumption>) -> Result<(), Self::InsertError> {
+    fn insert_data(&self, data: Vec<GasConsumptionValue>) -> Result<(), Self::InsertError> {
         SqliteGasConsumptionRepository::new(self.connection.clone()).insert(data)?;
-
         Ok(())
     }
 }
@@ -145,29 +159,39 @@ where
 #[derive(Clone)]
 struct GasTariffDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    client: Arc<ConsumerApiClient<T>>,
+    data_provider: Arc<T>,
     connection: Arc<Mutex<SqliteConnection>>,
 }
 
-impl<T> DataLoader<GasTariff> for GasTariffDataLoader<T>
+impl<T> DataLoader<TariffPlan> for GasTariffDataLoader<T>
 where
-    T: AuthorizationProvider,
+    T: EnergyDataProvider,
 {
-    type LoadError = N3rgyClientError;
+    type LoadError = T::Error;
     type InsertError = RepositoryError;
 
     async fn load(
         &self,
-        start: NaiveDate,
-        end: NaiveDate,
-    ) -> Result<Vec<GasTariff>, Self::LoadError> {
-        Ok(self.client.get_gas_tariff(start, end).await?)
+        _start: NaiveDate,
+        _end: NaiveDate,
+    ) -> Result<Vec<TariffPlan>, Self::LoadError> {
+        Ok(self.data_provider.get_gas_tariff_history().await?)
     }
 
-    fn insert_data(&self, data: Vec<GasTariff>) -> Result<(), Self::InsertError> {
-        SqliteGasTariffRepository::new(self.connection.clone()).insert(data)?;
+    fn insert_data(&self, data: Vec<TariffPlan>) -> Result<(), Self::InsertError> {
+        let tps: Vec<_> = data
+            .into_iter()
+            .map(|tp| NewGasTariffPlan {
+                tariff_id: tp.tariff_id,
+                plan: tp.plan,
+                effective_date: tp.effective_date,
+                display_name: tp.display_name,
+            })
+            .collect();
+
+        SqliteGasTariffRepository::new(self.connection.clone()).insert(tps)?;
 
         Ok(())
     }
@@ -187,8 +211,7 @@ where
 
     let today = Local::now().naive_local().date();
     let mut end_date = today;
-    let mut start_of_period =
-        NaiveDate::from_ymd_opt(end_date.year(), end_date.month(), 1).unwrap();
+    let mut start_of_period = today - Duration::days(7);
 
     if start_of_period < until_date {
         start_of_period = until_date;
@@ -216,15 +239,8 @@ where
         }
 
         end_date = start_of_period;
-        let end_of_previous_month =
-            NaiveDate::from_ymd_opt(start_of_period.year(), start_of_period.month(), 1).unwrap()
-                - Duration::days(1);
-        start_of_period = NaiveDate::from_ymd_opt(
-            end_of_previous_month.year(),
-            end_of_previous_month.month(),
-            1,
-        )
-        .unwrap();
+        // For Glowmarkt API on 30 minute intervals, you can request max 10 days of data at a time.
+        start_of_period = start_of_period - Duration::days(7);
 
         if start_of_period < until_date {
             start_of_period = until_date;
@@ -256,13 +272,13 @@ where
     Ok(today)
 }
 
-pub async fn check_and_download_new_data<T>(
+pub async fn check_and_download_new_data<U>(
     app_handle: AppHandle,
     app_state: AppState,
-    client: Arc<ConsumerApiClient<T>>,
+    data_provider: Arc<U>,
 ) -> Result<(), AppError>
 where
-    T: AuthorizationProvider,
+    U: EnergyDataProvider,
 {
     {
         let mut downloading = app_state
@@ -286,12 +302,12 @@ where
     )?;
 
     let electricity_consumption_data_loader = ElectricityConsumptionDataLoader {
-        client: client.clone(),
+        data_provider: data_provider.clone(),
         connection: app_state.db.clone(),
     };
 
     let electricity_tariff_data_loader = ElectricityTariffDataLoader {
-        client: client.clone(),
+        data_provider: data_provider.clone(),
         connection: app_state.db.clone(),
     };
 
@@ -300,6 +316,7 @@ where
     check_for_new_data(
         app_state.db.clone(),
         "electricity",
+        "kWh",
         move |until_date_time| async move {
             let date_one = download_history(
                 app_handle_clone.clone(),
@@ -323,12 +340,12 @@ where
     .await?;
 
     let gas_consumption_data_loader = GasConsumptionDataLoader {
-        client: client.clone(),
+        data_provider: data_provider.clone(),
         connection: app_state.db.clone(),
     };
 
     let gas_tariff_data_loader = GasTariffDataLoader {
-        client: client.clone(),
+        data_provider: data_provider.clone(),
         connection: app_state.db.clone(),
     };
 
@@ -337,6 +354,7 @@ where
     check_for_new_data(
         app_state.db.clone(),
         "gas",
+        "kWh",
         move |until_date_time| async move {
             let date_one = download_history(
                 app_handle_clone.clone(),
@@ -382,13 +400,14 @@ where
 async fn check_for_new_data<F, Fut>(
     connection: Arc<Mutex<SqliteConnection>>,
     profile_name: &str,
+    base_unit: &str,
     download_action: F,
 ) -> Result<(), AppError>
 where
     F: FnOnce(NaiveDateTime) -> Fut,
     Fut: Future<Output = Result<NaiveDate, AppError>>,
 {
-    let profile = get_or_create_energy_profile(connection.clone(), profile_name)?;
+    let profile = get_or_create_energy_profile(connection.clone(), profile_name, base_unit)?;
 
     if !profile.is_active {
         info!(
@@ -423,16 +442,19 @@ where
     Ok(())
 }
 
-pub fn spawn_download_tasks(
+pub fn spawn_download_tasks<T>(
     app_handle: AppHandle,
     app_state: AppState,
-    client: ConsumerApiClient<StaticAuthorizationProvider>,
-) -> Result<(), AppError> {
+    data_provider: T,
+) -> Result<(), AppError>
+where
+    T: EnergyDataProvider + 'static,
+{
     info!("Spawning download tasks");
-    let client = Arc::new(client);
+    let data_provider = Arc::new(data_provider);
 
     async_runtime::spawn(async move {
-        match check_and_download_new_data(app_handle, app_state, client).await {
+        match check_and_download_new_data(app_handle, app_state, data_provider).await {
             Ok(_) => debug!("Data download tasks completed successfully"),
             Err(e) => {
                 error!("Data download tasks panicked: {:?}", e);

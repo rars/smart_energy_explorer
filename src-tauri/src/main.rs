@@ -2,9 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use app_settings::{AppSettings, SETTINGS_FILE};
+use clients::glowmarkt::GlowmarktDataProviderError;
 use diesel::SqliteConnection;
 use log::{debug, error};
-use n3rgy_consumer_api_client::N3rgyClientError;
 use std::env;
 use std::fs;
 use std::sync::{Arc, Mutex};
@@ -12,15 +12,16 @@ use tauri::Window;
 use tauri::{async_runtime, Manager};
 use tauri_plugin_log::{Target, TargetKind};
 use tauri_plugin_store::StoreExt;
-use utils::{get_consumer_api_client, switch_splashscreen_to_main};
+use utils::{get_glowmarkt_data_provider, switch_splashscreen_to_main};
 
 use commands::app::*;
 use commands::electricity::*;
 use commands::gas::*;
-use commands::n3rgy::*;
+use commands::glowmarkt::*;
 use commands::profiles::*;
 
 mod app_settings;
+mod clients;
 mod commands;
 mod data;
 mod db;
@@ -48,8 +49,8 @@ impl Clone for AppState {
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
-    #[error("Failed request to n3rgy API: {0}")]
-    N3rgyClientError(#[from] N3rgyClientError),
+    #[error("Failed interaction with Glowmarkt API: {0}")]
+    GlowmarktApiError(#[from] GlowmarktDataProviderError),
     #[error("Error: {0}")]
     CustomError(String),
 }
@@ -112,15 +113,17 @@ fn main() {
             }
 
             async_runtime::spawn(async move {
-                if let Ok(Some(client)) = get_consumer_api_client().await {
+                if let Ok(Some(data_provider)) = get_glowmarkt_data_provider().await {
                     {
                         let mut client_available = app_state_clone.client_available.lock().unwrap();
                         *client_available = true;
                     }
 
-                    if let Err(e) =
-                        download::spawn_download_tasks(app_handle_clone, app_state_clone, client)
-                    {
+                    if let Err(e) = download::spawn_download_tasks(
+                        app_handle_clone,
+                        app_state_clone,
+                        data_provider,
+                    ) {
                         error!("Failed to spawn download tasks: {}", e);
                     }
                 }
@@ -151,7 +154,6 @@ fn main() {
             clear_all_data,
             close_welcome_screen,
             fetch_data,
-            get_api_key,
             get_app_status,
             get_app_version,
             get_daily_electricity_consumption,
@@ -161,13 +163,14 @@ fn main() {
             get_energy_profiles,
             get_gas_cost_history,
             get_gas_tariff_history,
+            get_glowmarkt_credentials,
             get_monthly_electricity_consumption,
             get_monthly_gas_consumption,
             get_raw_electricity_consumption,
             get_raw_gas_consumption,
             reset,
-            store_api_key,
-            test_connection,
+            store_glowmarkt_credentials,
+            test_glowmarkt_connection,
             update_energy_profile_settings
         ])
         .run(tauri::generate_context!())

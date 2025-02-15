@@ -1,13 +1,13 @@
 [package]
 name = "smart_energy_explorer"
-version = "0.2.0"
+version = "0.3.0"
 description = "A dashboard for exploring home energy usage"
 authors = ["Richard Russell"]
 license = "AGPL-3.0-or-later"
 repository = ""
 default-run = "smart_energy_explorer"
 edition = "2021"
-rust-version = "1.81"
+rust-version = "1.84"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -19,9 +19,9 @@ chrono = { version = "0.4", features = ["serde"] }
 diesel = { version = "2.0.0", features = ["sqlite", "chrono"] }
 diesel_migrations = "2.0"
 git-version = "0.3.9"
+glowmarkt = { version = "0.5.3" }
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 log = "^0.4"
-n3rgy_consumer_api_client = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri = { version = "2.0.0", features = ["unstable"] }
@@ -30,6 +30,7 @@ tauri-plugin-log = "2.0.0"
 tauri-plugin-store = "2.0.0"
 tauri-plugin-shell = "2.0.0"
 thiserror = "1.0"
+time = "0.3.37"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
@@ -40,4 +41,4 @@ custom-protocol = [ "tauri/custom-protocol" ]
 
 [dependencies.tauri-plugin-sql]
 features = ["sqlite"] # or "postgres", or "mysql"
-version = "2.0.0-rc"
+version = "2.0.0"

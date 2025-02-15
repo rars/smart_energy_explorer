@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 
 use chrono::{NaiveDate, NaiveDateTime};
 use log::{debug, warn};
-use n3rgy_consumer_api_client::GasConsumption;
 use serde::Serialize;
 use tauri::{async_runtime, State};
 
@@ -16,6 +15,12 @@ use crate::{
     utils::parse_iso_string_to_naive_date,
     AppState,
 };
+
+#[derive(Serialize, PartialEq, Debug)]
+pub struct GasConsumption {
+    pub timestamp: NaiveDateTime,
+    pub value: f64,
+}
 
 #[derive(Serialize, Debug)]
 pub struct DailyGasConsumption {

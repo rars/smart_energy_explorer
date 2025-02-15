@@ -21,3 +21,17 @@ CREATE TABLE IF NOT EXISTS gas_unit_price (
     price_effective_time DATETIME NOT NULL UNIQUE,
     unit_price_pence DOUBLE NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS electricity_tariff_plan (
+    tariff_id TEXT NOT NULL PRIMARY KEY,
+    plan TEXT NOT NULL,
+    effective_date DATETIME NOT NULL UNIQUE,
+    display_name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS gas_tariff_plan (
+    tariff_id TEXT NOT NULL PRIMARY KEY,
+    plan TEXT NOT NULL,
+    effective_date DATETIME NOT NULL UNIQUE,
+    display_name TEXT NOT NULL
+);

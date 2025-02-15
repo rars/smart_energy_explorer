@@ -3,5 +3,6 @@ CREATE TABLE IF NOT EXISTS energy_profile (
     name VARCHAR(100) NOT NULL UNIQUE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     start_date DATETIME NOT NULL,
-    last_date_retrieved DATETIME NULL
+    last_date_retrieved DATETIME NULL,
+    base_unit VARCHAR(100) NOT NULL
 );

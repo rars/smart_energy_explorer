@@ -9,12 +9,13 @@ use tauri::{async_runtime, AppHandle, State};
 use crate::{
     db::{self, revert_all_migrations},
     download::check_and_download_new_data,
-    get_consumer_api_client,
-    utils::{switch_main_to_splashscreen, switch_splashscreen_to_main},
-    AppState, APP_SERVICE_NAME,
+    utils::{
+        get_glowmarkt_data_provider, switch_main_to_splashscreen, switch_splashscreen_to_main,
+    },
+    AppState,
 };
 
-use super::ApiError;
+use super::{ApiError, APP_SERVICE_NAME};
 
 const GIT_VERSION: &str = git_version!();
 
@@ -96,18 +97,23 @@ pub fn reset(app_handle: AppHandle, app_state: State<'_, AppState>) -> Result<()
         .safe_set("termsAccepted", false)
         .map_err(|e| ApiError::Custom(format!("{}", e)))?;
 
+    delete_credential("glowmarkt_username")?;
+    delete_credential("glowmarkt_password")?;
+
+    switch_main_to_splashscreen(&app_handle);
+
+    Ok(())
+}
+
+fn delete_credential(key_name: &str) -> Result<(), ApiError> {
     let entry =
-        Entry::new(APP_SERVICE_NAME, "api_key").map_err(|e| ApiError::Custom(e.to_string()))?;
+        Entry::new(APP_SERVICE_NAME, key_name).map_err(|e| ApiError::Custom(e.to_string()))?;
 
     match entry.delete_credential() {
         Ok(()) => Ok(()),
         Err(keyring::Error::NoEntry) => Ok(()),
         Err(e) => Err(ApiError::Custom(e.to_string())),
-    }?;
-
-    switch_main_to_splashscreen(&app_handle);
-
-    Ok(())
+    }
 }
 
 fn reset_database(app_state: &AppState) -> Result<(), ApiError> {
@@ -127,14 +133,17 @@ pub async fn fetch_data(
     app_handle: AppHandle,
     app_state: State<'_, AppState>,
 ) -> Result<(), ApiError> {
-    if let Some(client) = get_consumer_api_client()
-        .await
-        .map_err(|e| ApiError::Custom(format!("{}", e)))?
-    {
-        let app_state_clone = (*app_state).clone();
+    let app_state_clone = (*app_state).clone();
 
+    if let Some(data_provider) = get_glowmarkt_data_provider()
+        .await
+        .map_err(|e| ApiError::Custom(e.to_string()))?
+    {
         async_runtime::spawn(async move {
-            match check_and_download_new_data(app_handle, app_state_clone, Arc::new(client)).await {
+            let arc_data_provider = Arc::new(data_provider);
+
+            match check_and_download_new_data(app_handle, app_state_clone, arc_data_provider).await
+            {
                 Ok(_) => debug!("Data download tasks completed successfully"),
                 Err(e) => {
                     error!("Data download tasks panicked: {:?}", e);
