@@ -1073,7 +1073,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 <ISC> ISC License
 Used by:
-* <https://github.com/briansmith/ring> ring 0.17.8
+* <https://github.com/briansmith/ring> ring 0.17.9
 
    Copyright 2015-2016 Brian Smith.
 
@@ -1093,7 +1093,7 @@ Used by:
 
 <ISC> ISC License
 Used by:
-* <https://github.com/briansmith/ring> ring 0.17.8
+* <https://github.com/briansmith/ring> ring 0.17.9
 
 /* Copyright (c) 2015, Google Inc.
  *
@@ -1490,7 +1490,7 @@ DEALINGS IN THE SOFTWARE.
 <MIT> MIT License
 Used by:
 * <https://github.com/rust-lang/backtrace-rs> backtrace 0.3.74
-* <https://github.com/rust-lang/cc-rs> cc 1.2.13
+* <https://github.com/rust-lang/cc-rs> cc 1.2.14
 * <https://github.com/alexcrichton/cfg-if> cfg-if 1.0.0
 * <https://github.com/rust-lang/flate2-rs> flate2 1.0.35
 * <https://github.com/rustwasm/wasm-bindgen/tree/master/crates/js-sys> js-sys 0.3.77
@@ -2295,7 +2295,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 <MIT> MIT License
 Used by:
-* <https://github.com/briansmith/ring> ring 0.17.8
+* <https://github.com/briansmith/ring> ring 0.17.9
 
 Copyright (c) 2015-2016 the fiat-crypto authors (see
 https://github.com/mit-plv/fiat-crypto/blob/master/AUTHORS).
@@ -2886,7 +2886,7 @@ DEALINGS IN THE SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/cuviper/equivalent> equivalent 1.0.1
+* <https://github.com/indexmap-rs/equivalent> equivalent 1.0.2
 
 Copyright (c) 2016--2023
 
@@ -3584,7 +3584,7 @@ DEALINGS IN THE SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/servo/rust-smallvec> smallvec 1.13.2
+* <https://github.com/servo/rust-smallvec> smallvec 1.14.0
 
 Copyright (c) 2018 The Servo Project Developers
 
@@ -8510,7 +8510,7 @@ one at http://mozilla.org/MPL/2.0/.
 
 <OpenSSL> OpenSSL License
 Used by:
-* <https://github.com/briansmith/ring> ring 0.17.8
+* <https://github.com/briansmith/ring> ring 0.17.9
 
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
