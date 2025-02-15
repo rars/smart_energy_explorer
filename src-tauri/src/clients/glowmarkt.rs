@@ -1,4 +1,3 @@
-use log::info;
 use std::sync::Arc;
 use tauri::async_runtime::Mutex;
 
@@ -128,8 +127,6 @@ impl GlowmarktDataProvider {
             .map_err(|e| GlowmarktDataProviderError::GlowmarktApiError(e.to_string()))?;
 
         let resource_ids = get_resource_ids(&api).await?;
-
-        info!("~~~~~~~~~~~~~~ Created Glowmarkt Data Provider!!! ~~~~~~~~~~~~~~~~~");
 
         Ok(Self {
             api: Arc::new(Mutex::new(api)),

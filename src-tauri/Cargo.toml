@@ -1,13 +1,13 @@
 [package]
 name = "smart_energy_explorer"
-version = "0.2.0"
+version = "0.3.0"
 description = "A dashboard for exploring home energy usage"
 authors = ["Richard Russell"]
 license = "AGPL-3.0-or-later"
 repository = ""
 default-run = "smart_energy_explorer"
 edition = "2021"
-rust-version = "1.81"
+rust-version = "1.84"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -19,7 +19,7 @@ chrono = { version = "0.4", features = ["serde"] }
 diesel = { version = "2.0.0", features = ["sqlite", "chrono"] }
 diesel_migrations = "2.0"
 git-version = "0.3.9"
-glowmarkt = { git = "https://github.com/Mossop/glowmarkt-rs.git" }
+glowmarkt = { version = "0.5.3" }
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 log = "^0.4"
 serde = { version = "1.0", features = ["derive"] }
@@ -41,4 +41,4 @@ custom-protocol = [ "tauri/custom-protocol" ]
 
 [dependencies.tauri-plugin-sql]
 features = ["sqlite"] # or "postgres", or "mysql"
-version = "2.0.0-rc"
+version = "2.0.0"
