@@ -14,6 +14,9 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+    strategy:
+      matrix:
+        target: [aarch64-apple-darwin, x86_64-apple-darwin]
     runs-on: 'macos-latest'
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +44,7 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
+          targets: ${{ matrix.target }}
 
       - name: install frontend dependencies
         run: npm ci
@@ -65,7 +68,7 @@ jobs:
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: false
-          args: '--target aarch64-apple-darwin --target x86_64-apple-darwin'
+          args: --target ${{ matrix.target }}
 
       - name: Git describe after
         run: |
@@ -80,6 +83,9 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
+    strategy:
+      matrix:
+        target: [aarch64-apple-darwin, x86_64-apple-darwin]
     runs-on: 'macos-latest'
     steps:
       - uses: actions/checkout@v4
@@ -107,7 +113,7 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
+          targets: ${{ matrix.target }}
 
       - name: install frontend dependencies
         run: npm ci
@@ -133,7 +139,7 @@ jobs:
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: false
-          args: '--target aarch64-apple-darwin --target x86_64-apple-darwin'
+          args: --target ${{ matrix.target }}
 
       - name: Git describe after
         run: |
