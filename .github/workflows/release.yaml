@@ -8,75 +8,6 @@ on:
 # This workflow will trigger on each push of vx.y.z tags, e.g. v0.1.2 to create or update a GitHub release, build your app, and upload the artifacts to the release.
 
 jobs:
-  publish-tauri-mac-app-store:
-    name: Build macOS App Store
-    environment: macos-sign
-    timeout-minutes: 15
-    permissions:
-      contents: write
-    strategy:
-      matrix:
-        target: [aarch64-apple-darwin, x86_64-apple-darwin]
-    runs-on: 'macos-latest'
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Fetch tags # necessary because actions/checkout appears to clobber annotated tags with lightweight tags: https://github.com/actions/checkout/issues/882
-        run: git fetch --force --tags
-
-      - name: Debug information
-        run: |
-          echo "Current working directory: $(pwd)"
-          echo "Git ref: ${{ github.ref }}"
-          echo "Git sha: ${{ github.sha }}"
-          env
-
-      - name: List tags
-        run: git tag -l
-
-      - name: setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: install frontend dependencies
-        run: npm ci
-
-      - name: Git describe before
-        run: |
-          git describe --always --tags --dirty=-modified
-          git describe --always --dirty=-modified
-          git status
-
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_DISTRIBUTION_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        with:
-          tagName: v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'Smart Energy Explorer v__VERSION__ (macOS App Store Distribution)'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
-          args: --target ${{ matrix.target }}
-
-      - name: Git describe after
-        run: |
-          git describe --always --tags --dirty=-modified
-          git describe --always --dirty=-modified
-          git status
-          git diff .
-
   publish-tauri-mac-outside:
     name: Build macOS Outside Store
     environment: macos-sign
@@ -135,7 +66,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'Smart Energy Explorer v__VERSION__ (macOS - Distribution Outside App Store)'
+          releaseName: 'Smart Energy Explorer v__VERSION__'
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: false
@@ -201,7 +132,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'Smart Energy Explorer v__VERSION__ (Linux)'
+          releaseName: 'Smart Energy Explorer v__VERSION__'
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: false
@@ -260,7 +191,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'Smart Energy Explorer v__VERSION__ (Windows)'
+          releaseName: 'Smart Energy Explorer v__VERSION__'
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: false
