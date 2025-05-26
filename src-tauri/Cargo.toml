@@ -29,6 +29,7 @@ tauri-plugin-dialog = "2.0.0"
 tauri-plugin-log = "2.0.0"
 tauri-plugin-store = "2.0.0"
 tauri-plugin-shell = "2.0.0"
+tauri-plugin-fs = "2.0.0"
 thiserror = "2.0"
 time = "0.3.37"
 

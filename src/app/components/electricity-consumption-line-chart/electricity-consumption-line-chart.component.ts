@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 
@@ -24,6 +25,7 @@ import {
 // When using the Tauri API npm package:
 import { invoke } from '@tauri-apps/api/core';
 
+import { CsvExportService } from '../../services/csv-export/csv-export.service';
 import { DateService } from '../../services/date/date.service';
 import { FormControlService } from '../../services/form-control/form-control.service';
 import { ChartComponent } from '../chart/chart.component';
@@ -36,18 +38,19 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
   x.valueChanges.pipe(startWith(x.value), filter(nonNullOrUndefined));
 
 @Component({
-    selector: 'app-electricity-consumption-line-chart',
-    imports: [
-        ReactiveFormsModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatDatepickerModule,
-        MatProgressBarModule,
-        MatSelectModule,
-        ChartComponent,
-    ],
-    templateUrl: './electricity-consumption-line-chart.component.html',
-    styleUrl: './electricity-consumption-line-chart.component.scss'
+  selector: 'app-electricity-consumption-line-chart',
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatDatepickerModule,
+    MatProgressBarModule,
+    MatSelectModule,
+    MatIconModule,
+    ChartComponent,
+  ],
+  templateUrl: './electricity-consumption-line-chart.component.html',
+  styleUrl: './electricity-consumption-line-chart.component.scss',
 })
 export class ElectricityConsumptionLineChartComponent
   implements OnInit, OnDestroy
@@ -63,6 +66,7 @@ export class ElectricityConsumptionLineChartComponent
   public constructor(
     private readonly dateService: DateService,
     private readonly formControlService: FormControlService,
+    private readonly csvExportService: CsvExportService,
   ) {
     this.startDateControl = new FormControl<Date>(
       this.dateService.addDays(this.dateService.startOfToday(), -7),
@@ -252,6 +256,12 @@ export class ElectricityConsumptionLineChartComponent
     const endDate = this.dateService.endOfMonth(startOfLastMonth);
 
     this.setDateRange(startOfLastMonth, endDate);
+  }
+
+  public exportAsCsv(): void {
+    if (this.values) {
+      this.csvExportService.exportToCSV(this.values as any[], 'data.csv');
+    }
   }
 
   private setDateRange(startDate: Date, endDate: Date): void {

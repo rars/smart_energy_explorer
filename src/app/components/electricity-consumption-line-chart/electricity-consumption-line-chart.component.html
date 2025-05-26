@@ -44,6 +44,9 @@
     <button mat-button type="button" (click)="showPreviousMonth()">
       Previous month
     </button>
+    <button mat-button type="button" (click)="exportAsCsv()">
+      <mat-icon>download</mat-icon> CSV
+    </button>
   </div>
 
   @if (loading) {
