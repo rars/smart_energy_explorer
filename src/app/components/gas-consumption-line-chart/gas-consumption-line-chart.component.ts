@@ -23,12 +23,11 @@ import {
 
 import { invoke } from '@tauri-apps/api/core';
 
+import { Aggregation } from '../../common/settings';
 import { CsvExportService } from '../../services/csv-export/csv-export.service';
 import { DateService } from '../../services/date/date.service';
 import { FormControlService } from '../../services/form-control/form-control.service';
 import { ChartComponent } from '../chart/chart.component';
-
-type Aggregation = 'raw' | 'daily' | 'monthly';
 
 const nonNullOrUndefined = <T>(x: T | null | undefined): x is T => !!x;
 
@@ -77,6 +76,13 @@ export class GasConsumptionLineChartComponent implements OnInit, OnDestroy {
       .subscribe(([startDate, endDate]) => {
         this.startDateControl.setValue(startDate);
         this.endDateControl.setValue(endDate);
+      });
+
+    this.formControlService
+      .getAggregationLevel()
+      .pipe(take(1))
+      .subscribe((aggregation) => {
+        this.aggregationControl.setValue(aggregation);
       });
 
     combineLatest([
@@ -217,6 +223,12 @@ export class GasConsumptionLineChartComponent implements OnInit, OnDestroy {
       this.formControlService.setDateRange(
         this.startDateControl.value,
         this.endDateControl.value,
+      );
+    }
+
+    if (this.aggregationControl.value) {
+      this.formControlService.setAggregationLevel(
+        this.aggregationControl.value,
       );
     }
   }
