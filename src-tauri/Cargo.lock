@@ -4332,7 +4332,7 @@ dependencies = [
 
 [[package]]
 name = "smart_energy_explorer"
-version = "0.3.3"
+version = "1.0.0"
 dependencies = [
  "chrono",
  "diesel",
