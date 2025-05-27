@@ -1,6 +1,6 @@
 [package]
 name = "smart_energy_explorer"
-version = "1.0.0"
+version = "1.0.1"
 description = "A dashboard for exploring home energy usage"
 authors = ["Richard Russell"]
 license = "AGPL-3.0-or-later"
