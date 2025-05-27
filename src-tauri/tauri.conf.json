@@ -7,7 +7,7 @@
   },
   "bundle": {
     "active": true,
-    "category": "DeveloperTool",
+    "category": "Utilities",
     "copyright": "",
     "targets": "all",
     "externalBin": [],
@@ -29,7 +29,10 @@
       "exceptionDomain": "",
       "frameworks": [],
       "providerShortName": null,
-      "signingIdentity": null
+      "signingIdentity": null,
+      "files": {
+        "embedded.provisionprofile": null
+      }
     },
     "resources": [],
     "shortDescription": "",
