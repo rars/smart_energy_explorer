@@ -30,9 +30,7 @@
       "frameworks": [],
       "providerShortName": null,
       "signingIdentity": null,
-      "files": {
-        "embedded.provisionprofile": null
-      }
+      "files": {}
     },
     "resources": [],
     "shortDescription": "",
