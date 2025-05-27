@@ -1,0 +1,1 @@
+jq '.bundle.macOS.entitlements = "./Entitlements.plist" | .bundle.macOS.files["embedded.provisionprofile"] = "./Smart_Energy_Explorer_Provision_Profile.provisionprofile"' tauri.conf.json > tauri.conf.tmp.json && mv tauri.conf.tmp.json tauri.conf.json
