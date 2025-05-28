@@ -39,9 +39,10 @@
         "depends": []
       }
     },
-    "createUpdaterArtifacts": false
+    "createUpdaterArtifacts": false,
+    "publisher": "Richard Russell"
   },
-  "productName": "smart-energy-explorer",
+  "productName": "Smart Energy Explorer",
   "version": "../package.json",
   "identifier": "io.github.rars.smart-energy-explorer",
   "plugins": {},
