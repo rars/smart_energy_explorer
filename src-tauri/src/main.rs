@@ -5,6 +5,7 @@ use app_settings::{AppSettings, SETTINGS_FILE};
 use clients::glowmarkt::GlowmarktDataProviderError;
 use diesel::SqliteConnection;
 use log::{debug, error};
+use sqlx::SqlitePool;
 use std::env;
 use std::fs;
 use std::sync::{Arc, Mutex};
@@ -15,6 +16,7 @@ use tauri_plugin_store::StoreExt;
 use utils::{get_glowmarkt_data_provider, switch_splashscreen_to_main};
 
 use commands::app::*;
+use commands::assistant::*;
 use commands::electricity::*;
 use commands::gas::*;
 use commands::glowmarkt::*;
@@ -31,6 +33,7 @@ mod utils;
 
 struct AppState {
     db: Arc<Mutex<SqliteConnection>>,
+    sqlite_pool: SqlitePool,
     downloading: Arc<Mutex<bool>>,
     client_available: Arc<Mutex<bool>>,
     app_settings: Arc<Mutex<AppSettings>>,
@@ -40,6 +43,7 @@ impl Clone for AppState {
     fn clone(&self) -> Self {
         Self {
             db: self.db.clone(),
+            sqlite_pool: self.sqlite_pool.clone(),
             downloading: self.downloading.clone(),
             client_available: self.client_available.clone(),
             app_settings: self.app_settings.clone(),
@@ -84,9 +88,16 @@ fn main() {
 
             let db_path = app_data_dir.join("db.sqlite");
 
-            let mut connection =
-                db::establish_connection(db_path.to_str().expect("db path needed"));
+            let db_path_string = db_path.to_str().expect("db path needed").to_string();
+
+            let mut connection = db::establish_connection(&db_path_string);
             db::run_migrations(&mut connection);
+
+            let sqlite_pool = tauri::async_runtime::block_on(async {
+                SqlitePool::connect(&format!("sqlite:{}", db_path_string))
+                    .await
+                    .expect("Failed to connect to database")
+            });
 
             let store = app.store(SETTINGS_FILE)?;
 
@@ -94,6 +105,7 @@ fn main() {
 
             let app_state = AppState {
                 db: Arc::new(Mutex::new(connection)),
+                sqlite_pool: sqlite_pool,
                 downloading: Arc::new(Mutex::new(false)),
                 client_available: Arc::new(Mutex::new(false)),
                 app_settings: Arc::new(Mutex::new(app_settings)),
@@ -155,6 +167,7 @@ fn main() {
             clear_all_data,
             close_welcome_screen,
             fetch_data,
+            ask_assistant,
             get_app_status,
             get_app_version,
             get_daily_electricity_consumption,

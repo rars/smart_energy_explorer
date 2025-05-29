@@ -1,6 +1,9 @@
+use ollama_rs::error::OllamaError;
+
 use crate::{clients::glowmarkt::GlowmarktDataProviderError, data::RepositoryError};
 
 pub mod app;
+pub mod assistant;
 pub mod electricity;
 pub mod gas;
 pub mod glowmarkt;
@@ -23,6 +26,8 @@ pub enum ApiError {
     GlowmarktApiError(#[from] GlowmarktDataProviderError),
     #[error("Mutex '{name}' is poisoned")]
     MutexPoisonedError { name: String },
+    #[error("Failed interaction with ollama: {0}")]
+    OllamaError(#[from] OllamaError),
 }
 
 impl serde::Serialize for ApiError {
