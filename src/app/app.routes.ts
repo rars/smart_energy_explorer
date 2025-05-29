@@ -1,15 +1,18 @@
 import { Routes } from '@angular/router';
-import { ElectricityConsumptionLineChartComponent } from './components/electricity-consumption-line-chart/electricity-consumption-line-chart.component';
-import { GasConsumptionLineChartComponent } from './components/gas-consumption-line-chart/gas-consumption-line-chart.component';
-import { SettingsComponent } from './components/settings/settings.component';
-import { unsavedChangesGuard } from './unsaved-changes.guard';
-import { ElectricityTariffHistoryComponent } from './components/electricity-tariff-history/electricity-tariff-history.component';
-import { GasTariffHistoryComponent } from './components/gas-tariff-history/gas-tariff-history.component';
-import { EnergyCostHistoryComponent } from './components/energy-cost-history/energy-cost-history.component';
-import { WelcomeComponent } from './components/welcome/welcome.component';
+
 import { AboutComponent } from './components/about/about.component';
+import { AssistantComponent } from './components/assistant/assistant.component';
+import { ElectricityConsumptionLineChartComponent } from './components/electricity-consumption-line-chart/electricity-consumption-line-chart.component';
+import { ElectricityTariffHistoryComponent } from './components/electricity-tariff-history/electricity-tariff-history.component';
+import { EnergyCostHistoryComponent } from './components/energy-cost-history/energy-cost-history.component';
+import { GasConsumptionLineChartComponent } from './components/gas-consumption-line-chart/gas-consumption-line-chart.component';
+import { GasTariffHistoryComponent } from './components/gas-tariff-history/gas-tariff-history.component';
+import { SettingsComponent } from './components/settings/settings.component';
+import { WelcomeComponent } from './components/welcome/welcome.component';
+import { unsavedChangesGuard } from './unsaved-changes.guard';
 
 export const routes: Routes = [
+  { path: 'assistant', component: AssistantComponent },
   { path: 'about', component: AboutComponent },
   { path: 'welcome', component: WelcomeComponent },
   { path: 'electricity', component: ElectricityConsumptionLineChartComponent },

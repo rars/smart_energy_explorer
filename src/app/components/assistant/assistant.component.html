@@ -1,0 +1,24 @@
+<mat-card>
+  <mat-card-content>
+    <div class="flex flex-col">
+      @for (message of messages; track message) {
+        <div>
+          <strong>{{ message.user }}:</strong>
+          <pre>{{ message.text }}</pre>
+        </div>
+      }
+    </div>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Message</mat-label>
+      <input matInput [(ngModel)]="messageText" (keyup.enter)="sendMessage()" />
+    </mat-form-field>
+    <br />
+
+    <textarea
+      [(ngModel)]="prePromptText"
+      style="width: 300px; height: 150px"
+    ></textarea>
+
+    <button mat-raised-button (click)="sendMessage()">Send</button>
+  </mat-card-content>
+</mat-card>
