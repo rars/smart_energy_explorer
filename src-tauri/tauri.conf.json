@@ -54,14 +54,14 @@
         "height": 768,
         "resizable": true,
         "title": "Smart Energy Explorer",
-        "width": 1024,
+        "width": 1040,
         "visible": false
       },
       {
         "label": "splashscreen",
         "url": "/welcome",
         "title": "Smart Energy Explorer",
-        "width": 1024,
+        "width": 1040,
         "height": 768
       }
     ],
