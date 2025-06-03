@@ -1,0 +1,1 @@
+ALTER TABLE gas_consumption RENAME COLUMN energy_consumption_kwh TO energy_consumption_m3;

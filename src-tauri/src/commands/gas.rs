@@ -60,7 +60,7 @@ pub async fn get_raw_gas_consumption(
         .iter()
         .map(|x| GasConsumption {
             timestamp: x.timestamp,
-            value: x.energy_consumption_m3,
+            value: x.energy_consumption_kwh,
         })
         .collect())
 }
