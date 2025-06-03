@@ -207,9 +207,9 @@ export class ElectricityConsumptionLineChartComponent
                 time: {
                   unit,
                   displayFormats: {
-                    minute: 'dd MMM hh:mm',
+                    minute: 'dd MMM HH:mm',
                   },
-                  tooltipFormat: 'hh:mm:ss dd MMM yyyy',
+                  tooltipFormat: 'HH:mm:ss dd MMM yyyy',
                 },
                 title: {
                   display: true,
