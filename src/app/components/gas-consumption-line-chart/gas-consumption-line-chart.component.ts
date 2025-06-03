@@ -100,7 +100,7 @@ export class GasConsumptionLineChartComponent implements OnInit, OnDestroy {
           this.loading = true;
 
           let data: Observable<
-            { timestamp: string; energyConsumptionM3: number }[]
+            { timestamp: string; energyConsumptionKwh: number }[]
           > = of([]);
 
           switch (aggregation) {
@@ -114,7 +114,7 @@ export class GasConsumptionLineChartComponent implements OnInit, OnDestroy {
                 map((x) =>
                   x.map(({ timestamp, value }) => ({
                     timestamp,
-                    energyConsumptionM3: value,
+                    energyConsumptionKwh: value,
                   })),
                 ),
               );
@@ -131,7 +131,7 @@ export class GasConsumptionLineChartComponent implements OnInit, OnDestroy {
                 map((x) =>
                   x.map(({ timestamp, value }) => ({
                     timestamp,
-                    energyConsumptionM3: value,
+                    energyConsumptionKwh: value,
                   })),
                 ),
               );
@@ -149,7 +149,7 @@ export class GasConsumptionLineChartComponent implements OnInit, OnDestroy {
                 map((x) =>
                   x.map(({ timestamp, value }) => ({
                     timestamp,
-                    energyConsumptionM3: value,
+                    energyConsumptionKwh: value,
                   })),
                 ),
               );
@@ -181,7 +181,7 @@ export class GasConsumptionLineChartComponent implements OnInit, OnDestroy {
                   x: x.timestamp
                     ? new Date(Date.parse(x.timestamp))
                     : undefined,
-                  y: x.energyConsumptionM3,
+                  y: x.energyConsumptionKwh,
                 })),
               },
             ],

@@ -48,7 +48,7 @@ diesel::table! {
     gas_consumption (gas_consumption_id) {
         gas_consumption_id -> Integer,
         timestamp -> Timestamp,
-        energy_consumption_m3 -> Double,
+        energy_consumption_kwh -> Double,
     }
 }
 

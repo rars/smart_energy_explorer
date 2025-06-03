@@ -12,7 +12,7 @@ use crate::schema::{electricity_consumption, gas_consumption};
 
 use super::RepositoryError;
 
-const ENERGY_CONSUMPTION_M3_ERROR_CODE: f64 = 16777.215f64;
+const ENERGY_CONSUMPTION_KWH_ERROR_CODE: f64 = 16777.215f64;
 
 pub struct ElectricityConsumptionValue {
     pub timestamp: NaiveDateTime,
@@ -35,7 +35,7 @@ struct NewElectricityConsumption {
 #[diesel(table_name = gas_consumption)]
 struct NewGasConsumption {
     timestamp: NaiveDateTime,
-    energy_consumption_m3: f64,
+    energy_consumption_kwh: f64,
 }
 
 #[derive(Queryable)]
@@ -49,7 +49,7 @@ pub struct ElectricityConsumptionRecord {
 pub struct GasConsumptionRecord {
     pub gas_consumption_id: i32,
     pub timestamp: NaiveDateTime,
-    pub energy_consumption_m3: f64,
+    pub energy_consumption_kwh: f64,
 }
 
 type RepositoryResult<T> = Result<T, RepositoryError>;
@@ -202,7 +202,7 @@ impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
             .into_iter()
             .map(|x| NewGasConsumption {
                 timestamp: x.timestamp,
-                energy_consumption_m3: x.value,
+                energy_consumption_kwh: x.value,
             })
             .collect();
 
@@ -214,8 +214,8 @@ impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
                         .on_conflict(gas_consumption::timestamp)
                         .do_update()
                         .set(
-                            gas_consumption::energy_consumption_m3
-                                .eq(excluded(gas_consumption::energy_consumption_m3)),
+                            gas_consumption::energy_consumption_kwh
+                                .eq(excluded(gas_consumption::energy_consumption_kwh)),
                         )
                         .execute(conn)
                         .map_err(|e| {
@@ -242,7 +242,7 @@ impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
         Ok(gas_consumption
             .filter(timestamp.ge(NaiveDateTime::from(start)))
             .filter(timestamp.lt(NaiveDateTime::from(end)))
-            .filter(energy_consumption_m3.ne(ENERGY_CONSUMPTION_M3_ERROR_CODE))
+            .filter(energy_consumption_kwh.ne(ENERGY_CONSUMPTION_KWH_ERROR_CODE))
             .load::<GasConsumptionRecord>(&mut *conn)?)
     }
 
@@ -258,10 +258,10 @@ impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
         Ok(gas_consumption
             .filter(timestamp.ge(NaiveDateTime::from(start)))
             .filter(timestamp.lt(NaiveDateTime::from(end)))
-            .filter(energy_consumption_m3.ne(ENERGY_CONSUMPTION_M3_ERROR_CODE))
+            .filter(energy_consumption_kwh.ne(ENERGY_CONSUMPTION_KWH_ERROR_CODE))
             .select((
                 sql::<Date>("DATE(timestamp)"),
-                sql::<Double>("COALESCE(SUM(energy_consumption_m3), 0.0)"),
+                sql::<Double>("COALESCE(SUM(energy_consumption_kwh), 0.0)"),
             ))
             .group_by(sql::<Date>("DATE(timestamp)"))
             .order(sql::<Date>("DATE(timestamp)"))
@@ -280,10 +280,10 @@ impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
         Ok(gas_consumption
             .filter(timestamp.ge(NaiveDateTime::from(start)))
             .filter(timestamp.lt(NaiveDateTime::from(end)))
-            .filter(energy_consumption_m3.ne(ENERGY_CONSUMPTION_M3_ERROR_CODE))
+            .filter(energy_consumption_kwh.ne(ENERGY_CONSUMPTION_KWH_ERROR_CODE))
             .select((
                 sql::<Date>("DATE(timestamp, 'start of month')"),
-                sql::<Double>("COALESCE(SUM(energy_consumption_m3), 0.0)"),
+                sql::<Double>("COALESCE(SUM(energy_consumption_kwh), 0.0)"),
             ))
             .group_by(sql::<Date>("DATE(timestamp, 'start of month')"))
             .order(sql::<Date>("DATE(timestamp, 'start of month')"))
