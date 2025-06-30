@@ -3,68 +3,69 @@
     <form [formGroup]="form" (ngSubmit)="update()">
       <h3>Profile Settings</h3>
       <div formArrayName="profiles" class="flex flex-row space-x-2 pl-1">
-        <mat-card
-          *ngFor="let profile of profiles.controls; let i = index"
-          [formGroupName]="i"
-        >
-          <mat-card-header>
-            <mat-card-title class="mat-body-medium">{{
-              data[i].name | titlecase
-            }}</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="flex flex-col space-y-4 p-2">
-              <mat-form-field>
-                <mat-label>Start date</mat-label>
-                <input
-                  matInput
-                  [matDatepicker]="picker"
-                  formControlName="startDate"
-                  matTooltip="How far back to retrieve data for."
-                />
-                <mat-hint>DD/MM/YYYY</mat-hint>
-                <mat-datepicker-toggle
-                  matIconSuffix
-                  [for]="picker"
-                ></mat-datepicker-toggle>
-                <mat-datepicker #picker></mat-datepicker>
-              </mat-form-field>
-              <mat-slide-toggle
-                formControlName="isActive"
-                matTooltip="Control whether data is downloaded for this energy profile."
-                >Active</mat-slide-toggle
-              >
-            </div>
-          </mat-card-content>
-        </mat-card>
-      </div>
+        @for (profile of profiles.controls; track profile; let i = $index) {
+          <mat-card
+            [formGroupName]="i"
+            >
+            <mat-card-header>
+              <mat-card-title class="mat-body-medium">{{
+                data[i].name | titlecase
+              }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="flex flex-col space-y-4 p-2">
+                <mat-form-field>
+                  <mat-label>Start date</mat-label>
+                  <input
+                    matInput
+                    [matDatepicker]="picker"
+                    formControlName="startDate"
+                    matTooltip="How far back to retrieve data for."
+                    />
+                  <mat-hint>DD/MM/YYYY</mat-hint>
+                  <mat-datepicker-toggle
+                    matIconSuffix
+                    [for]="picker"
+                  ></mat-datepicker-toggle>
+                  <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+                <mat-slide-toggle
+                  formControlName="isActive"
+                  matTooltip="Control whether data is downloaded for this energy profile."
+                  >Active</mat-slide-toggle
+                  >
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+        <div class="mt-4">
+          <button mat-raised-button type="submit" [disabled]="!form.dirty">
+            Save Profile Changes
+          </button>
+        </div>
+      </form>
       <div class="mt-4">
-        <button mat-raised-button type="submit" [disabled]="!form.dirty">
-          Save Profile Changes
-        </button>
+        <h3>Bright Credentials</h3>
+        <app-bright-credentials-form></app-bright-credentials-form>
       </div>
-    </form>
-    <div class="mt-4">
-      <h3>Bright Credentials</h3>
-      <app-bright-credentials-form></app-bright-credentials-form>
-    </div>
-    <div class="mt-4 pb-8">
-      <h3>Data Management</h3>
-      <div>
-        <button mat-button type="button" (click)="clearAllData()">
-          Clear All Data
-        </button>
-      </div>
-      <div>
-        <button mat-button type="button" (click)="fetchData()">
-          Check For New Data
-        </button>
-      </div>
-      <div>
-        <button mat-button type="button" (click)="reset()">
-          Factory Reset
-        </button>
+      <div class="mt-4 pb-8">
+        <h3>Data Management</h3>
+        <div>
+          <button mat-button type="button" (click)="clearAllData()">
+            Clear All Data
+          </button>
+        </div>
+        <div>
+          <button mat-button type="button" (click)="fetchData()">
+            Check For New Data
+          </button>
+        </div>
+        <div>
+          <button mat-button type="button" (click)="reset()">
+            Factory Reset
+          </button>
+        </div>
       </div>
     </div>
   </div>
-</div>
