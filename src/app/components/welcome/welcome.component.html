@@ -1,145 +1,141 @@
-<div *ngIf="showElement" @fadeIn class="w-full h-full overflow-auto">
-  <h1 class="mat-headline-small mt-0">Smart Energy Explorer</h1>
-  <p>Welcome to Smart Energy Explorer: your personal energy usage dashboard.</p>
-
-  <mat-stepper orientation="vertical" [linear]="true" #stepper>
-    <mat-step [stepControl]="firstFormGroup">
-      <form [formGroup]="firstFormGroup">
-        <ng-template matStepLabel
-          >Review licensing and usage guidance</ng-template
-        >
-        <p>
-          Before proceeding, please review and accept the licensing terms and
-          review the usage guidance.
-        </p>
-        <div class="flex gap-4">
-          <button mat-raised-button type="button" (click)="showLicensing()">
-            View Licensing
-          </button>
-
-          <button mat-raised-button type="button" (click)="showUsageGuidance()">
-            View Usage Guidance
-          </button>
-        </div>
-        <mat-checkbox formControlName="agreement"
-          >I have read and agree to the application's licensing
-          terms.</mat-checkbox
-        >
-        <div>
-          <button
-            mat-flat-button
-            matStepperNext
-            [disabled]="firstFormGroup.invalid"
-          >
-            Next
-          </button>
-        </div>
-      </form>
-    </mat-step>
-    <mat-step [stepControl]="secondFormGroup">
-      <form [formGroup]="secondFormGroup">
-        <ng-template matStepLabel>Grant access to your data</ng-template>
-        <p>
-          This app uses the
-          <a
-            href="https://glowmarkt.com/login"
-            target="_blank"
-            (click)="shellService.openLink('https://glowmarkt.com/login')"
-            >Glowmarkt API</a
-          >, a third-party service, to retrieve your smart meter data. To
-          proceed, you need to:
-        </p>
-        <ol>
-          <li>
-            <a
-              href="https://glowmarkt.com/register/personal"
-              target="_blank"
+@if (showElement) {
+  <div @fadeIn class="w-full h-full overflow-auto">
+    <h1 class="mat-headline-small mt-0">Smart Energy Explorer</h1>
+    <p>Welcome to Smart Energy Explorer: your personal energy usage dashboard.</p>
+    <mat-stepper orientation="vertical" [linear]="true" #stepper>
+      <mat-step [stepControl]="firstFormGroup">
+        <form [formGroup]="firstFormGroup">
+          <ng-template matStepLabel
+            >Review licensing and usage guidance</ng-template
+            >
+            <p>
+              Before proceeding, please review and accept the licensing terms and
+              review the usage guidance.
+            </p>
+            <div class="flex gap-4">
+              <button mat-raised-button type="button" (click)="showLicensing()">
+                View Licensing
+              </button>
+              <button mat-raised-button type="button" (click)="showUsageGuidance()">
+                View Usage Guidance
+              </button>
+            </div>
+            <mat-checkbox formControlName="agreement"
+              >I have read and agree to the application's licensing
+              terms.</mat-checkbox
+              >
+              <div>
+                <button
+                  mat-flat-button
+                  matStepperNext
+                  [disabled]="firstFormGroup.invalid"
+                  >
+                  Next
+                </button>
+              </div>
+            </form>
+          </mat-step>
+          <mat-step [stepControl]="secondFormGroup">
+            <form [formGroup]="secondFormGroup">
+              <ng-template matStepLabel>Grant access to your data</ng-template>
+              <p>
+                This app uses the
+                <a
+                  href="https://glowmarkt.com/login"
+                  target="_blank"
+                  (click)="shellService.openLink('https://glowmarkt.com/login')"
+                  >Glowmarkt API</a
+                  >, a third-party service, to retrieve your smart meter data. To
+                  proceed, you need to:
+                </p>
+                <ol>
+                  <li>
+                    <a
+                      href="https://glowmarkt.com/register/personal"
+                      target="_blank"
               (click)="
                 shellService.openLink('https://glowmarkt.com/register/personal')
               "
-            >
-              Sign up to Glow
-              <mat-icon class="text-xs">open_in_new</mat-icon>
-            </a>
-            (if you haven't already),
-          </li>
-          <li>Provide your Bright account credentials below:</li>
-        </ol>
-
-        <div class="flex flex-col gap-4">
-          <mat-form-field class="w-1/2" subscriptSizing="dynamic">
-            <mat-label>Bright Username</mat-label>
-            <input
-              matInput
-              formControlName="glowmarktUsernameCtrl"
-              placeholder="Enter Bright username"
-            />
-          </mat-form-field>
-
-          <mat-form-field class="w-1/2" subscriptSizing="dynamic">
-            <mat-label>Bright Password</mat-label>
-            <input
-              matInput
-              type="password"
-              formControlName="glowmarktPasswordCtrl"
-              placeholder="Enter Bright password"
-            />
-          </mat-form-field>
+                      >
+                      Sign up to Glow
+                      <mat-icon class="text-xs">open_in_new</mat-icon>
+                    </a>
+                    (if you haven't already),
+                  </li>
+                  <li>Provide your Bright account credentials below:</li>
+                </ol>
+                <div class="flex flex-col gap-4">
+                  <mat-form-field class="w-1/2" subscriptSizing="dynamic">
+                    <mat-label>Bright Username</mat-label>
+                    <input
+                      matInput
+                      formControlName="glowmarktUsernameCtrl"
+                      placeholder="Enter Bright username"
+                      />
+                  </mat-form-field>
+                  <mat-form-field class="w-1/2" subscriptSizing="dynamic">
+                    <mat-label>Bright Password</mat-label>
+                    <input
+                      matInput
+                      type="password"
+                      formControlName="glowmarktPasswordCtrl"
+                      placeholder="Enter Bright password"
+                      />
+                  </mat-form-field>
+                </div>
+                <div>
+                  <p>
+                    Once provided, your smart meter data will be downloaded and stored
+                    locally on this device.
+                  </p>
+                </div>
+                <p class="text-xs">
+                  Note: This app is not affiliated with or endorsed by Bright, Glowmarkt
+                  or Hildebrand Technology Limited.
+                </p>
+                <div>
+                  <button mat-button matStepperPrevious>Back</button>
+                  <button
+                    mat-flat-button
+                    matStepperNext
+                    [disabled]="secondFormGroup.invalid"
+                    (click)="saveApiKey()"
+                    >
+                    Next
+                  </button>
+                </div>
+              </form>
+            </mat-step>
+            <mat-step>
+              <ng-template matStepLabel>Done</ng-template>
+              @if (isTestingConnection$ | async) {
+                <div class="flex flex-row items-center">
+                  <div>
+                    <mat-progress-spinner
+                      [diameter]="15"
+                      mode="indeterminate"
+                    ></mat-progress-spinner>
+                  </div>
+                  <div class="ml-4"><p>Testing connection...</p></div>
+                </div>
+              } @else {
+                @if (active$ | async) {
+                  <p>You're all set.</p>
+                  <button mat-flat-button (click)="complete()">Start</button>
+                  <button mat-button matStepperPrevious>Back</button>
+                  <button mat-button (click)="stepper.reset()">Reset</button>
+                } @else {
+                  <p>
+                    Authorisation not correctly configured, please review your IHD MAC
+                    address.
+                  </p>
+                  <div>
+                    <button mat-flat-button matStepperPrevious>Back</button>
+                    <button mat-button (click)="stepper.reset()">Reset</button>
+                  </div>
+                }
+              }
+            </mat-step>
+          </mat-stepper>
         </div>
-
-        <div>
-          <p>
-            Once provided, your smart meter data will be downloaded and stored
-            locally on this device.
-          </p>
-        </div>
-
-        <p class="text-xs">
-          Note: This app is not affiliated with or endorsed by Bright, Glowmarkt
-          or Hildebrand Technology Limited.
-        </p>
-        <div>
-          <button mat-button matStepperPrevious>Back</button>
-          <button
-            mat-flat-button
-            matStepperNext
-            [disabled]="secondFormGroup.invalid"
-            (click)="saveApiKey()"
-          >
-            Next
-          </button>
-        </div>
-      </form>
-    </mat-step>
-    <mat-step>
-      <ng-template matStepLabel>Done</ng-template>
-      @if (isTestingConnection$ | async) {
-        <div class="flex flex-row items-center">
-          <div>
-            <mat-progress-spinner
-              [diameter]="15"
-              mode="indeterminate"
-            ></mat-progress-spinner>
-          </div>
-          <div class="ml-4"><p>Testing connection...</p></div>
-        </div>
-      } @else {
-        @if (active$ | async) {
-          <p>You're all set.</p>
-          <button mat-flat-button (click)="complete()">Start</button>
-          <button mat-button matStepperPrevious>Back</button>
-          <button mat-button (click)="stepper.reset()">Reset</button>
-        } @else {
-          <p>
-            Authorisation not correctly configured, please review your IHD MAC
-            address.
-          </p>
-          <div>
-            <button mat-flat-button matStepperPrevious>Back</button>
-            <button mat-button (click)="stepper.reset()">Reset</button>
-          </div>
-        }
       }
-    </mat-step>
-  </mat-stepper>
-</div>
