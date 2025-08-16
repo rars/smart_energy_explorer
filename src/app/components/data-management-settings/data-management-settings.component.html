@@ -1,0 +1,21 @@
+<header class="flex items-center">
+  <button mat-icon-button type="button" routerLink="/settings">
+    <mat-icon>settings</mat-icon>
+  </button>
+  <mat-icon class="mx-1">chevron_right</mat-icon>
+  <h3>Data Management</h3>
+</header>
+
+<div>
+  <button mat-button type="button" (click)="clearAllData()">
+    Clear All Data
+  </button>
+</div>
+<div>
+  <button mat-button type="button" (click)="fetchData()">
+    Check For New Data
+  </button>
+</div>
+<div>
+  <button mat-button type="button" (click)="reset()">Factory Reset</button>
+</div>

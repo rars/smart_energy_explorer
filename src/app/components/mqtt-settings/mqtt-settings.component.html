@@ -1,0 +1,78 @@
+<div class="flex flex-col w-full h-full">
+  <div class="flex-1 overflow-auto">
+    <header class="flex items-center mb-4">
+      <button mat-icon-button type="button" routerLink="/settings">
+        <mat-icon>settings</mat-icon>
+      </button>
+      <mat-icon class="mx-1">chevron_right</mat-icon>
+      <h3>MQTT Settings</h3>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="update()">
+      <div class="flex flex-col gap-4">
+        <mat-form-field appearance="outline">
+          <mat-label>Hostname</mat-label>
+          <input matInput formControlName="hostname" required />
+          @if (form.get('h  ostname')?.hasError('required')) {
+            <mat-error> Hostname is required </mat-error>
+          }
+          @if (form.get('topic')?.hasError('leadingOrTrailingWhitespace')) {
+            <mat-error>
+              Hostname must not contain leading or trailing whitespace
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Electricity Sensor Topic</mat-label>
+          <input matInput formControlName="topic" required />
+          @if (form.get('topic')?.hasError('required')) {
+            <mat-error> Topic is required </mat-error>
+          }
+          @if (form.get('topic')?.hasError('leadingOrTrailingWhitespace')) {
+            <mat-error>
+              Topic must not contain leading or trailing whitespace
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="username" required />
+          @if (form.get('username')?.hasError('required')) {
+            <mat-error> Username is required </mat-error>
+          }
+          @if (form.get('username')?.hasError('leadingOrTrailingWhitespace')) {
+            <mat-error>
+              Username must not contain leading or trailing whitespace
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" required />
+          @if (form.get('password')?.hasError('required')) {
+            <mat-error> Password is required </mat-error>
+          }
+          @if (form.get('password')?.hasError('leadingOrTrailingWhitespace')) {
+            <mat-error>
+              Password must not contain leading or trailing whitespace
+            </mat-error>
+          }
+        </mat-form-field>
+      </div>
+      <div class="mt-4 space-x-4">
+        <button
+          mat-raised-button
+          type="submit"
+          [disabled]="form.invalid || !form.dirty"
+        >
+          Save Changes
+        </button>
+
+        <button mat-raised-button type="button" (click)="clear()">Clear</button>
+      </div>
+    </form>
+  </div>
+</div>

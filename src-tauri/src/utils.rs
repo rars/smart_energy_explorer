@@ -7,10 +7,11 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::{
+    app_settings::AppSettings,
     clients::glowmarkt::GlowmarktDataProvider,
     commands::{ApiError, APP_SERVICE_NAME},
     data::energy_profile::{EnergyProfile, EnergyProfileRepository, SqliteEnergyProfileRepository},
-    AppError,
+    AppError, AppState, MqttMessage,
 };
 
 pub fn parse_iso_string_to_naive_date(iso_date_str: &str) -> Result<NaiveDate, ApiError> {
@@ -80,6 +81,77 @@ pub fn get_glowmarkt_credentials_opt() -> Result<Option<GlowmarktCredentials>, A
     }
 }
 
+pub struct MqttCredentials {
+    pub username: String,
+    pub password: String,
+}
+
+pub fn get_mqtt_credentials_opt() -> Result<Option<MqttCredentials>, AppError> {
+    let username_entry = Entry::new(APP_SERVICE_NAME, "mqtt_username")
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    let password_entry = Entry::new(APP_SERVICE_NAME, "mqtt_password")
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    let username = get_entry_password(&username_entry)?;
+    let password = get_entry_password(&password_entry)?;
+
+    match (username, password) {
+        (Some(username), Some(password)) => Ok(Some(MqttCredentials { username, password })),
+        _ => Ok(None),
+    }
+}
+
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MqttSettings {
+    pub hostname: String,
+    pub topic: String,
+    pub username: String,
+    pub password: String,
+}
+
+impl MqttSettings {
+    pub fn is_complete(&self) -> bool {
+        self.hostname.len() > 0
+            && self.topic.len() > 0
+            && self.username.len() > 0
+            && self.password.len() > 0
+    }
+}
+
+pub fn get_mqtt_settings_opt(app_settings: &AppSettings) -> Result<Option<MqttSettings>, AppError> {
+    let hostname = app_settings
+        .get::<String>("mqttHostname")
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    let topic = app_settings
+        .get::<String>("mqttTopic")
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    if let Some(credentials) =
+        get_mqtt_credentials_opt().map_err(|e| AppError::CustomError(e.to_string()))?
+    {
+        return Ok(Some(MqttSettings {
+            hostname: hostname.unwrap_or("".to_string()),
+            topic: topic.unwrap_or("".to_string()),
+            username: credentials.username,
+            password: credentials.password,
+        }));
+    }
+
+    if hostname.is_none() && topic.is_none() {
+        return Ok(None);
+    }
+
+    Ok(Some(MqttSettings {
+        hostname: hostname.unwrap_or("".to_string()),
+        topic: topic.unwrap_or("".to_string()),
+        username: "".to_string(),
+        password: "".to_string(),
+    }))
+}
+
 fn get_entry_password(entry: &Entry) -> Result<Option<String>, AppError> {
     match entry.get_password() {
         Ok(password) => Ok(Some(password)),
@@ -104,4 +176,63 @@ pub fn switch_main_to_splashscreen(app_handle: &AppHandle) {
     main_window.hide().unwrap();
     splash_window.show().unwrap();
     splash_window.eval("window.location.reload()").unwrap();
+}
+
+pub fn delete_credential(key_name: &str) -> Result<(), AppError> {
+    let entry =
+        Entry::new(APP_SERVICE_NAME, key_name).map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    match entry.delete_credential() {
+        Ok(()) => Ok(()),
+        Err(keyring::Error::NoEntry) => Ok(()),
+        Err(e) => Err(AppError::CustomError(e.to_string())),
+    }
+}
+
+pub async fn reset_mqtt_settings(app_handle: &AppHandle) -> Result<(), AppError> {
+    let app_state = app_handle.state::<AppState>();
+
+    {
+        let app_settings =
+            app_state
+                .app_settings
+                .lock()
+                .map_err(|_| AppError::MutexPoisonedError {
+                    name: "app_settings".into(),
+                })?;
+
+        app_settings
+            .safe_set("mqttHostname", "")
+            .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+        app_settings
+            .safe_set("mqttTopic", "")
+            .map_err(|e| AppError::CustomError(e.to_string()))?;
+    }
+
+    let credentials = ["mqtt_username", "mqtt_password"];
+
+    for c in credentials {
+        delete_credential(c)?;
+    }
+
+    {
+        let mut mqtt_settings =
+            app_state
+                .mqtt_settings
+                .lock()
+                .map_err(|_| AppError::MutexPoisonedError {
+                    name: "mqtt_settings".into(),
+                })?;
+
+        *mqtt_settings = None;
+    }
+
+    app_state
+        .mqtt_message_sender
+        .send(MqttMessage::SettingsUpdated)
+        .await
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    Ok(())
 }

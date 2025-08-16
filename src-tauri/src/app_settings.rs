@@ -35,9 +35,9 @@ impl AppSettings {
 
     pub fn safe_set<R: Serialize>(&self, key: &str, value: R) -> Result<(), AppError>
     where
-        R: Display + Copy,
+        R: Display,
     {
-        let json_value = to_value(value).map_err(|e| {
+        let json_value = to_value(&value).map_err(|e| {
             AppError::CustomError(format!(
                 "Failed to convert '{}' to JSON value: {}",
                 value, e
