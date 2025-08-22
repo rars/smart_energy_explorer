@@ -1,9 +1,10 @@
-use crate::{clients::glowmarkt::GlowmarktDataProviderError, data::RepositoryError};
+use crate::{clients::glowmarkt::GlowmarktDataProviderError, data::RepositoryError, AppError};
 
 pub mod app;
 pub mod electricity;
 pub mod gas;
 pub mod glowmarkt;
+pub mod mqtt;
 pub mod profiles;
 pub mod tariff;
 
@@ -31,5 +32,15 @@ impl serde::Serialize for ApiError {
         S: serde::ser::Serializer,
     {
         serializer.serialize_str(self.to_string().as_ref())
+    }
+}
+
+impl From<AppError> for ApiError {
+    fn from(error: AppError) -> Self {
+        match error {
+            AppError::GlowmarktApiError(e) => ApiError::GlowmarktApiError(e),
+            AppError::CustomError(s) => ApiError::Custom(s),
+            AppError::MutexPoisonedError { name } => ApiError::MutexPoisonedError { name },
+        }
     }
 }

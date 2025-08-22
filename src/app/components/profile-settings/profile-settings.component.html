@@ -1,0 +1,54 @@
+<div class="flex flex-col w-full h-full">
+  <div class="flex-1 overflow-auto">
+    <form [formGroup]="form" (ngSubmit)="update()">
+      <header class="flex items-center">
+        <button mat-icon-button type="button" routerLink="/settings">
+          <mat-icon>settings</mat-icon>
+        </button>
+        <mat-icon class="mx-1">chevron_right</mat-icon>
+        <h3>Profile Settings</h3>
+      </header>
+
+      <div formArrayName="profiles" class="flex flex-row space-x-2 pl-1">
+        @for (profile of profiles.controls; track profile; let i = $index) {
+          <mat-card [formGroupName]="i">
+            <mat-card-header>
+              <mat-card-title class="mat-body-medium">{{
+                data[i].name | titlecase
+              }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="flex flex-col space-y-4 p-2">
+                <mat-form-field>
+                  <mat-label>Start date</mat-label>
+                  <input
+                    matInput
+                    [matDatepicker]="picker"
+                    formControlName="startDate"
+                    matTooltip="How far back to retrieve data for."
+                  />
+                  <mat-hint>DD/MM/YYYY</mat-hint>
+                  <mat-datepicker-toggle
+                    matIconSuffix
+                    [for]="picker"
+                  ></mat-datepicker-toggle>
+                  <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+                <mat-slide-toggle
+                  formControlName="isActive"
+                  matTooltip="Control whether data is downloaded for this energy profile."
+                  >Active</mat-slide-toggle
+                >
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+      <div class="mt-4">
+        <button mat-raised-button type="submit" [disabled]="!form.dirty">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use git_version::git_version;
-use keyring::Entry;
 use log::{debug, error};
 use serde::Serialize;
 use tauri::{async_runtime, AppHandle, State};
@@ -10,12 +9,13 @@ use crate::{
     db::{self, revert_all_migrations},
     download::check_and_download_new_data,
     utils::{
-        get_glowmarkt_data_provider, switch_main_to_splashscreen, switch_splashscreen_to_main,
+        delete_credential, get_glowmarkt_data_provider, reset_mqtt_settings,
+        switch_main_to_splashscreen, switch_splashscreen_to_main,
     },
-    AppState,
+    AppState, MqttMessage,
 };
 
-use super::{ApiError, APP_SERVICE_NAME};
+use super::ApiError;
 
 const GIT_VERSION: &str = git_version!();
 
@@ -83,37 +83,40 @@ pub fn clear_all_data(app_state: State<'_, AppState>) -> Result<(), ApiError> {
 }
 
 #[tauri::command]
-pub fn reset(app_handle: AppHandle, app_state: State<'_, AppState>) -> Result<(), ApiError> {
+pub async fn reset(app_handle: AppHandle, app_state: State<'_, AppState>) -> Result<(), ApiError> {
     reset_database(app_state.inner())?;
 
-    let app_settings = app_state
-        .app_settings
-        .lock()
-        .map_err(|_| ApiError::MutexPoisonedError {
-            name: "app_settings".into(),
-        })?;
+    {
+        let app_settings =
+            app_state
+                .app_settings
+                .lock()
+                .map_err(|_| ApiError::MutexPoisonedError {
+                    name: "app_settings".into(),
+                })?;
 
-    app_settings
-        .safe_set("termsAccepted", false)
-        .map_err(|e| ApiError::Custom(format!("{}", e)))?;
+        app_settings
+            .safe_set("termsAccepted", false)
+            .map_err(|e| ApiError::Custom(format!("{}", e)))?;
+    }
 
-    delete_credential("glowmarkt_username")?;
-    delete_credential("glowmarkt_password")?;
+    let credentials = ["glowmarkt_username", "glowmarkt_password"];
+
+    for c in credentials {
+        delete_credential(c)?;
+    }
+
+    reset_mqtt_settings(&app_handle).await?;
+
+    app_state
+        .mqtt_message_sender
+        .send(MqttMessage::SettingsUpdated)
+        .await
+        .map_err(|e| ApiError::Custom(e.to_string()))?;
 
     switch_main_to_splashscreen(&app_handle);
 
     Ok(())
-}
-
-fn delete_credential(key_name: &str) -> Result<(), ApiError> {
-    let entry =
-        Entry::new(APP_SERVICE_NAME, key_name).map_err(|e| ApiError::Custom(e.to_string()))?;
-
-    match entry.delete_credential() {
-        Ok(()) => Ok(()),
-        Err(keyring::Error::NoEntry) => Ok(()),
-        Err(e) => Err(ApiError::Custom(e.to_string())),
-    }
 }
 
 fn reset_database(app_state: &AppState) -> Result<(), ApiError> {

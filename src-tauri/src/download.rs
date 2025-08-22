@@ -70,15 +70,22 @@ where
         start: NaiveDate,
         end: NaiveDate,
     ) -> Result<Vec<ElectricityConsumptionValue>, Self::LoadError> {
+        if !self.data_provider.has_electricity_consumption() {
+            return Ok(vec![]);
+        }
+
         let values = self
             .data_provider
             .get_electricity_consumption(start, end)
             .await?;
+
         Ok(values)
     }
 
     fn insert_data(&self, data: Vec<ElectricityConsumptionValue>) -> Result<(), Self::InsertError> {
-        SqliteElectricityConsumptionRepository::new(self.connection.clone()).insert(data)?;
+        if data.len() > 0 {
+            SqliteElectricityConsumptionRepository::new(self.connection.clone()).insert(data)?;
+        }
 
         Ok(())
     }
@@ -105,10 +112,18 @@ where
         _start: NaiveDate,
         _end: NaiveDate,
     ) -> Result<Vec<TariffPlan>, Self::LoadError> {
+        if !self.data_provider.has_electricity_tariff_history() {
+            return Ok(vec![]);
+        }
+
         Ok(self.data_provider.get_electricity_tariff_history().await?)
     }
 
     fn insert_data(&self, data: Vec<TariffPlan>) -> Result<(), Self::InsertError> {
+        if data.len() == 0 {
+            return Ok(());
+        }
+
         let tps: Vec<_> = data
             .into_iter()
             .map(|tp| NewElectricityTariffPlan {
@@ -146,12 +161,19 @@ where
         start: NaiveDate,
         end: NaiveDate,
     ) -> Result<Vec<GasConsumptionValue>, Self::LoadError> {
+        if !self.data_provider.has_gas_consumption() {
+            return Ok(vec![]);
+        }
+
         let values = self.data_provider.get_gas_consumption(start, end).await?;
         Ok(values)
     }
 
     fn insert_data(&self, data: Vec<GasConsumptionValue>) -> Result<(), Self::InsertError> {
-        SqliteGasConsumptionRepository::new(self.connection.clone()).insert(data)?;
+        if data.len() > 0 {
+            SqliteGasConsumptionRepository::new(self.connection.clone()).insert(data)?;
+        }
+
         Ok(())
     }
 }
@@ -177,10 +199,18 @@ where
         _start: NaiveDate,
         _end: NaiveDate,
     ) -> Result<Vec<TariffPlan>, Self::LoadError> {
-        Ok(self.data_provider.get_gas_tariff_history().await?)
+        if self.data_provider.has_gas_tariff_history() {
+            return Ok(self.data_provider.get_gas_tariff_history().await?);
+        }
+
+        Ok(vec![])
     }
 
     fn insert_data(&self, data: Vec<TariffPlan>) -> Result<(), Self::InsertError> {
+        if data.len() == 0 {
+            return Ok(());
+        }
+
         let tps: Vec<_> = data
             .into_iter()
             .map(|tp| NewGasTariffPlan {
@@ -293,6 +323,8 @@ where
         *downloading = true;
     }
 
+    debug!("is_downloading = true event emitted");
+
     emit_event(
         &app_handle,
         "appStatusUpdate",
@@ -317,7 +349,7 @@ where
         app_state.db.clone(),
         "electricity",
         "kWh",
-        move |until_date_time| async move {
+        |until_date_time| async move {
             let date_one = download_history(
                 app_handle_clone.clone(),
                 electricity_consumption_data_loader,
@@ -355,7 +387,7 @@ where
         app_state.db.clone(),
         "gas",
         "kWh",
-        move |until_date_time| async move {
+        |until_date_time| async move {
             let date_one = download_history(
                 app_handle_clone.clone(),
                 gas_consumption_data_loader,
@@ -385,6 +417,8 @@ where
 
         *downloading = false;
     }
+
+    debug!("is_downloading = false event emitted");
 
     emit_event(
         &app_handle,

@@ -16,3 +16,12 @@ export const noHyphenValidator = (): ValidatorFn => {
     return forbidden ? { noHyphen: { value: control.value } } : null;
   };
 };
+
+export const noLeadingOrTrailingWhitespaceValidator = (): ValidatorFn => {
+  return (control: AbstractControl): { [key: string]: any } | null => {
+    const isTrimmable =
+      (control.value || '').trim().length !== (control.value || '').length;
+    const isValid = !isTrimmable;
+    return isValid ? null : { leadingOrTrailingWhitespace: true };
+  };
+};

@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -44,16 +44,57 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
+      - name: Install Homebrew for Intel (macOS only)
+        if: matrix.platform == 'macos-latest' && matrix.args == '--target x86_64-apple-darwin'
+        run: |
+          # Check if the Intel Homebrew directory exists. If not, install it.
+          if [ ! -d "/usr/local/Homebrew" ]; then
+            echo "Installing Homebrew for x86_64..."
+            arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          fi
+
+      - name: Install OpenSSL (macOS only)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          # Install ARM version (native for the runner)
+          brew install openssl@3
+          if [ -d "/usr/local/Homebrew" ]; then
+            # Install x86_64 version
+            arch -x86_64 /usr/local/bin/brew install openssl@3
+          fi
+
+      - name: Install vcpkg dependencies (Windows only)
+        if: matrix.platform == 'windows-latest'
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg.exe install openssl:x64-windows
+
       - name: Install frontend dependencies
         run: npm ci
 
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli@latest
 
-      - name: Build Tauri app
+      - name: Build Tauri app (non-MacOS)
+        if: matrix.platform != 'macos-latest'
         uses: tauri-apps/tauri-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Set VCPKG env vars for Windows builds
+          VCPKG_ROOT: "${{ github.workspace }}\\vcpkg"
+          VCPKGRS_DYNAMIC: 1
+        with:
+          args: ${{ matrix.args }}
+          tauriScript: tauri
+
+      - name: Build Tauri app (MacOS)
+        if: matrix.platform == 'macos-latest'
+        uses: tauri-apps/tauri-action@v0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # openssl Intel is installed in /usr/local/opt/openssl, ARM version in /opt/homebrew/opt/openssl
+          OPENSSL_DIR: ${{ (contains(matrix.args, 'aarch64') && '/opt/homebrew/opt/openssl@3' || '/usr/local/opt/openssl@3') || '' }}
         with:
           args: ${{ matrix.args }}
           tauriScript: tauri

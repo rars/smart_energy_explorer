@@ -189,6 +189,10 @@ impl GlowmarktDataProvider {
 impl EnergyDataProvider for GlowmarktDataProvider {
     type Error = GlowmarktDataProviderError;
 
+    fn has_electricity_consumption(&self) -> bool {
+        self.resource_ids.electricity_consumption.is_some()
+    }
+
     async fn get_electricity_consumption(
         &self,
         start: NaiveDate,
@@ -225,6 +229,10 @@ impl EnergyDataProvider for GlowmarktDataProvider {
         ))
     }
 
+    fn has_electricity_tariff_history(&self) -> bool {
+        self.resource_ids.electricity_cost.is_some()
+    }
+
     async fn get_electricity_tariff_history(
         &self,
     ) -> Result<Vec<crate::data::tariff::TariffPlan>, Self::Error> {
@@ -255,6 +263,10 @@ impl EnergyDataProvider for GlowmarktDataProvider {
         Err(GlowmarktDataProviderError::MissingResource(
             "electricity cost".to_string(),
         ))
+    }
+
+    fn has_gas_consumption(&self) -> bool {
+        self.resource_ids.gas_consumption.is_some()
     }
 
     async fn get_gas_consumption(
@@ -291,6 +303,10 @@ impl EnergyDataProvider for GlowmarktDataProvider {
         Err(GlowmarktDataProviderError::MissingResource(
             "gas consumption".to_string(),
         ))
+    }
+
+    fn has_gas_tariff_history(&self) -> bool {
+        self.resource_ids.gas_cost.is_some()
     }
 
     async fn get_gas_tariff_history(

@@ -46,6 +46,24 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Install Homebrew for Intel (macOS only)
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: |
+          # Check if the Intel Homebrew directory exists. If not, install it.
+          if [ ! -d "/usr/local/Homebrew" ]; then
+            echo "Installing Homebrew for x86_64..."
+            arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          fi
+
+      - name: Install OpenSSL (macOS only)
+        run: |
+          # Install ARM version (native for the runner)
+          brew install openssl@3
+          if [ -d "/usr/local/Homebrew" ]; then
+            # Install x86_64 version
+            arch -x86_64 /usr/local/bin/brew install openssl@3
+          fi
+
       - name: install frontend dependencies
         run: npm ci
 
@@ -55,9 +73,11 @@ jobs:
           git describe --always --dirty=-modified
           git status
 
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # openssl Intel is installed in /usr/local/opt/openssl, ARM version in /opt/homebrew/opt/openssl
+          OPENSSL_DIR: ${{ (contains(matrix.args, 'aarch64') && '/opt/homebrew/opt/openssl@3' || '/usr/local/opt/openssl@3') || '' }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
@@ -127,7 +147,7 @@ jobs:
           git describe --always --dirty=-modified
           git status
 
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -177,6 +197,13 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install vcpkg dependencies (Windows only)
+        if: matrix.platform == 'windows-latest'
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg.exe install openssl:x64-windows
+
       - name: install frontend dependencies
         run: npm ci
 
@@ -186,9 +213,11 @@ jobs:
           git describe --always --dirty=-modified
           git status
 
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VCPKG_ROOT: "${{ github.workspace }}\\vcpkg"
+          VCPKGRS_DYNAMIC: 1
         with:
           tagName: v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
           releaseName: 'Smart Energy Explorer v__VERSION__'
