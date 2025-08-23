@@ -10,7 +10,8 @@ accepted = [
     "Unicode-DFS-2016",
     "Apache-2.0 WITH LLVM-exception",
     "AGPL-3.0",
-    "Zlib"
+    "Zlib",
+    "EPL-2.0"
 ]
 
 workarounds = [
