@@ -3438,7 +3438,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4d3094e35ab92c9ffa90775d8faad0e8ecac0a0ed4c409c3e683cbf84f784287"
 dependencies = [
  "cmake",
- "openssl-sys",
 ]
 
 [[package]]
