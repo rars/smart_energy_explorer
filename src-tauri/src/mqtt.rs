@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
+use uuid::Uuid;
 
 use crate::{
     utils::{emit_event, MqttSettings},
@@ -66,8 +67,10 @@ pub struct ElectricityUpdate {
     message: ElectricityMeterMessage,
 }
 
-async fn create_mqtt_client(settings: &MqttSettings) -> Result<AsyncClient, paho_mqtt::Error> {
-    let client_id = "smart_energy_explorer";
+async fn create_mqtt_client(
+    client_id: String,
+    settings: &MqttSettings,
+) -> Result<AsyncClient, paho_mqtt::Error> {
     let qos = 1;
 
     let client_options = mqtt::CreateOptionsBuilder::new()
@@ -98,6 +101,10 @@ pub async fn start_mqtt_listener(
 ) {
     info!("Starting MQTT listener thread.");
 
+    let uuid_string = Uuid::new_v4().to_string();
+    let client_id = format!("smart-energy-explorer-{}", uuid_string);
+    info!("Generated Client ID: {}", client_id);
+
     let mut client_and_stream: Option<(AsyncClient, AsyncReceiver<Option<Message>>)> = None;
 
     loop {
@@ -113,7 +120,7 @@ pub async fn start_mqtt_listener(
                 if let Some(settings) = settings {
                     if settings.is_complete() {
                         info!("MQTT settings are complete but client is not yet created. Creating MQTT client...");
-                        match create_mqtt_client(&settings).await {
+                        match create_mqtt_client(client_id.clone(), &settings).await {
                             Ok(mut client) => {
                                 let stream = client.get_stream(None);
                                 info!("MQTT client and stream created");
