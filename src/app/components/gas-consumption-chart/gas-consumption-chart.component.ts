@@ -10,7 +10,6 @@ import { MatSelectModule } from '@angular/material/select';
 
 import {
   Observable,
-  catchError,
   combineLatest,
   filter,
   forkJoin,
@@ -22,7 +21,6 @@ import {
   take,
 } from 'rxjs';
 
-// When using the Tauri API npm package:
 import { invoke } from '@tauri-apps/api/core';
 
 import { Aggregation } from '../../common/settings';
@@ -37,23 +35,21 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
   x.valueChanges.pipe(startWith(x.value), filter(nonNullOrUndefined));
 
 @Component({
-  selector: 'app-electricity-consumption-line-chart',
+  selector: 'app-gas-consumption-chart',
   imports: [
-    ReactiveFormsModule,
+    ChartComponent,
     MatButtonModule,
-    MatFormFieldModule,
     MatDatepickerModule,
+    MatFormFieldModule,
+    MatIconModule,
     MatProgressBarModule,
     MatSelectModule,
-    MatIconModule,
-    ChartComponent,
+    ReactiveFormsModule,
   ],
-  templateUrl: './electricity-consumption-line-chart.component.html',
-  styleUrl: './electricity-consumption-line-chart.component.scss',
+  templateUrl: './gas-consumption-chart.component.html',
+  styleUrl: './gas-consumption-chart.component.scss',
 })
-export class ElectricityConsumptionLineChartComponent
-  implements OnInit, OnDestroy
-{
+export class GasConsumptionChartComponent implements OnInit, OnDestroy {
   public readonly startDateControl: FormControl<Date | null>;
   public readonly endDateControl: FormControl<Date | null>;
   public readonly aggregationControl = new FormControl<Aggregation>('raw');
@@ -108,10 +104,10 @@ export class ElectricityConsumptionLineChartComponent
           > = of([]);
 
           switch (aggregation) {
-            case 'daily': {
+            case 'monthly': {
               data = from(
                 invoke<{ timestamp: string; value: number }[]>(
-                  'get_daily_electricity_consumption',
+                  'get_monthly_gas_consumption',
                   { startDate, endDate },
                 ),
               ).pipe(
@@ -125,10 +121,10 @@ export class ElectricityConsumptionLineChartComponent
 
               break;
             }
-            case 'monthly': {
+            case 'daily': {
               data = from(
                 invoke<{ timestamp: string; value: number }[]>(
-                  'get_monthly_electricity_consumption',
+                  'get_daily_gas_consumption',
                   { startDate, endDate },
                 ),
               ).pipe(
@@ -139,13 +135,14 @@ export class ElectricityConsumptionLineChartComponent
                   })),
                 ),
               );
+
               break;
             }
             case 'raw':
             default: {
               data = from(
                 invoke<{ timestamp: string; value: number }[]>(
-                  'get_raw_electricity_consumption',
+                  'get_raw_gas_consumption',
                   { startDate, endDate },
                 ),
               ).pipe(
@@ -162,21 +159,12 @@ export class ElectricityConsumptionLineChartComponent
           return forkJoin([data, of(aggregation)]);
         }),
         takeUntilDestroyed(),
-        catchError((err) => {
-          window.alert(`Error: ${err}`);
-          return of([undefined, undefined]);
-        }),
       )
       .subscribe(([values, aggregation]) => {
         this.loading = false;
-
-        if (values === undefined || aggregation === undefined) {
-          return;
-        }
-
         this.values = values;
 
-        let unit =
+        const unit =
           aggregation === 'raw'
             ? 'minute'
             : aggregation === 'daily'
@@ -184,11 +172,11 @@ export class ElectricityConsumptionLineChartComponent
               : 'month';
 
         this.chartConfiguration = {
-          type: 'line',
+          type: 'bar',
           data: {
             datasets: [
               {
-                label: 'Electricity',
+                label: 'Gas',
                 data: values.map((x) => ({
                   x: x.timestamp
                     ? new Date(Date.parse(x.timestamp))
@@ -228,7 +216,7 @@ export class ElectricityConsumptionLineChartComponent
       });
   }
 
-  public ngOnInit(): void {}
+  public ngOnInit() {}
 
   public ngOnDestroy(): void {
     if (this.startDateControl.value && this.endDateControl.value) {
