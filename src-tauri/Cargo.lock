@@ -4723,6 +4723,7 @@ dependencies = [
  "time",
  "tokio",
  "tokio-stream",
+ "uuid",
 ]
 
 [[package]]
