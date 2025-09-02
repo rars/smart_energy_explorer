@@ -828,7 +828,7 @@ END OF TERMS AND CONDITIONS
 <Apache-2.0> Apache License 2.0
 Used by:
 * <https://github.com/rust-windowing/winit> dpi 0.1.2
-* <https://github.com/tauri-apps/tao> tao 0.34.2
+* <https://github.com/tauri-apps/tao> tao 0.34.3
 
 Apache License
                            Version 2.0, January 2004
@@ -1874,7 +1874,7 @@ DEALINGS IN THE SOFTWARE.
 Used by:
 * <https://github.com/servo/rust-url/> idna 1.1.0
 * <https://github.com/servo/rust-url/> percent-encoding 2.3.2
-* <https://github.com/servo/rust-url> url 2.5.5
+* <https://github.com/servo/rust-url> url 2.5.7
 
 Copyright (c) 2013-2025 The rust-url developers
 
@@ -1908,9 +1908,10 @@ DEALINGS IN THE SOFTWARE.
 <MIT> MIT License
 Used by:
 * <https://github.com/rust-lang/backtrace-rs> backtrace 0.3.75
-* <https://github.com/rust-lang/cc-rs> cc 1.2.33
+* <https://github.com/rust-lang/cc-rs> cc 1.2.35
 * <https://github.com/rust-lang/cfg-if> cfg-if 1.0.3
 * <https://github.com/rust-lang/cmake-rs> cmake 0.1.54
+* <https://github.com/rust-lang/cc-rs> find-msvc-tools 0.1.0
 * <https://github.com/async-rs/futures-timer> futures-timer 3.0.3
 * <https://github.com/rustwasm/wasm-bindgen/tree/master/crates/js-sys> js-sys 0.3.77
 * <https://github.com/alexcrichton/openssl-probe> openssl-probe 0.1.6
@@ -2047,19 +2048,13 @@ THE SOFTWARE.
 <MIT> MIT License
 Used by:
 * <https://github.com/bitflags/bitflags> bitflags 1.3.2
-* <https://github.com/bitflags/bitflags> bitflags 2.9.2
+* <https://github.com/bitflags/bitflags> bitflags 2.9.4
 * <https://github.com/rust-lang/glob> glob 0.3.3
 * <https://github.com/rust-lang/log> log 0.4.27
-* <https://github.com/rust-num/num-bigint> num-bigint 0.4.6
-* <https://github.com/rust-num/num-complex> num-complex 0.4.6
-* <https://github.com/rust-num/num-integer> num-integer 0.1.46
-* <https://github.com/rust-num/num-iter> num-iter 0.1.45
-* <https://github.com/rust-num/num-rational> num-rational 0.4.2
 * <https://github.com/rust-num/num-traits> num-traits 0.2.19
-* <https://github.com/rust-num/num> num 0.4.3
-* <https://github.com/rust-lang/regex/tree/master/regex-automata> regex-automata 0.4.9
-* <https://github.com/rust-lang/regex/tree/master/regex-syntax> regex-syntax 0.8.5
-* <https://github.com/rust-lang/regex> regex 1.11.1
+* <https://github.com/rust-lang/regex> regex-automata 0.4.10
+* <https://github.com/rust-lang/regex> regex-syntax 0.8.6
+* <https://github.com/rust-lang/regex> regex 1.11.2
 
 Copyright (c) 2014 The Rust Project Developers
 
@@ -2092,7 +2087,7 @@ DEALINGS IN THE SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/uuid-rs/uuid> uuid 1.18.0
+* <https://github.com/uuid-rs/uuid> uuid 1.18.1
 
 Copyright (c) 2014 The Rust Project Developers
 Copyright (c) 2018 Ashley Mannix, Christopher Armstrong, Dylan DPC, Hunar Roop Kahlon
@@ -2242,8 +2237,8 @@ DEALINGS IN THE SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/diwic/dbus-rs> dbus 0.9.7
-* <https://github.com/diwic/dbus-rs> libdbus-sys 0.2.5
+* <https://github.com/diwic/dbus-rs> dbus 0.9.9
+* <https://github.com/diwic/dbus-rs> libdbus-sys 0.2.6
 
 Copyright (c) 2014-2018 David Henningsson <diwic@ubuntu.com> and other contributors
 
@@ -3122,7 +3117,7 @@ DEALINGS IN THE SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/brotskydotcom/dbus-secret-service.git> dbus-secret-service 4.0.3
+* <https://github.com/brotskydotcom/dbus-secret-service.git> dbus-secret-service 4.1.0
 
 Copyright (c) 2016 secret-service Developers
 
@@ -3156,7 +3151,7 @@ DEALINGS IN THE SOFTWARE.
 <MIT> MIT License
 Used by:
 * <https://github.com/bluss/indexmap> indexmap 1.9.3
-* <https://github.com/indexmap-rs/indexmap> indexmap 2.10.0
+* <https://github.com/indexmap-rs/indexmap> indexmap 2.11.0
 
 Copyright (c) 2016--2017
 
@@ -4802,7 +4797,7 @@ THE SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/jhpratt/deranged> deranged 0.4.0
+* <https://github.com/jhpratt/deranged> deranged 0.5.3
 
 Copyright (c) 2024 Jacob Pratt et al.
 
@@ -4868,8 +4863,8 @@ Used by:
 * <https://github.com/rust-cli/anstyle.git> anstyle-query 1.1.4
 * <https://github.com/rust-cli/anstyle.git> anstyle-wincon 3.0.10
 * <https://github.com/rust-cli/anstyle.git> anstyle 1.0.11
-* <https://github.com/clap-rs/clap> clap 4.5.45
-* <https://github.com/clap-rs/clap> clap_builder 4.5.44
+* <https://github.com/clap-rs/clap> clap 4.5.46
+* <https://github.com/clap-rs/clap> clap_builder 4.5.46
 * <https://github.com/clap-rs/clap> clap_derive 4.5.45
 * <https://github.com/clap-rs/clap> clap_lex 0.7.5
 * <https://github.com/rust-cli/anstyle.git> colorchoice 1.0.4
@@ -4911,9 +4906,9 @@ SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/time-rs/time> time-core 0.1.4
-* <https://github.com/time-rs/time> time-macros 0.2.22
-* <https://github.com/time-rs/time> time 0.3.41
+* <https://github.com/time-rs/time> time-core 0.1.5
+* <https://github.com/time-rs/time> time-macros 0.2.23
+* <https://github.com/time-rs/time> time 0.3.42
 
 Copyright (c) Jacob Pratt et al.
 
@@ -5874,6 +5869,35 @@ SOFTWARE.
 
 <MIT> MIT License
 Used by:
+* <https://github.com/RustCrypto/utils/tree/master/zeroize/derive> zeroize_derive 1.4.2
+
+MIT License
+
+Copyright (c) 2019-2023 The RustCrypto Project Developers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+-----------------------------------------------------------------------------------------------------------------------
+
+
+<MIT> MIT License
+Used by:
 * <https://github.com/katharostech/cfg_aliases> cfg_aliases 0.2.1
 
 MIT License
@@ -6007,7 +6031,7 @@ SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/tauri-apps/wry> wry 0.53.1
+* <https://github.com/tauri-apps/wry> wry 0.53.3
 
 MIT License
 
@@ -6347,19 +6371,19 @@ Used by:
 * <https://github.com/jedisct1/rust-siphash> siphasher 0.3.11
 * <https://github.com/jedisct1/rust-siphash> siphasher 1.0.1
 * <https://github.com/tauri-apps/tao> tao-macros 0.1.3
-* <https://github.com/tauri-apps/tauri> tauri-build 2.4.0
+* <https://github.com/tauri-apps/tauri> tauri-build 2.4.1
 * <https://github.com/tauri-apps/tauri> tauri-codegen 2.4.0
 * <https://github.com/tauri-apps/tauri> tauri-macros 2.4.0
 * <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-dialog 2.3.3
 * <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-fs 2.4.2
-* <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-shell 2.3.0
+* <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-shell 2.3.1
 * <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-sql 2.3.0
 * <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-store 2.4.0
 * <https://github.com/tauri-apps/tauri> tauri-plugin 2.4.0
-* <https://github.com/tauri-apps/tauri> tauri-runtime-wry 2.8.0
+* <https://github.com/tauri-apps/tauri> tauri-runtime-wry 2.8.1
 * <https://github.com/tauri-apps/tauri> tauri-runtime 2.8.0
 * <https://github.com/tauri-apps/tauri> tauri-utils 2.7.0
-* <https://github.com/tauri-apps/tauri> tauri 2.8.2
+* <https://github.com/tauri-apps/tauri> tauri 2.8.5
 * <https://github.com/open-i18n/rust-unic/> unic-char-property 0.9.0
 * <https://github.com/open-i18n/rust-unic/> unic-char-range 0.9.0
 * <https://github.com/open-i18n/rust-unic/> unic-common 0.9.0
@@ -6370,7 +6394,6 @@ Used by:
 * <https://github.com/wravery/webview2-rs> webview2-com 0.38.0
 * <https://github.com/retep998/winapi-rs> winapi-i686-pc-windows-gnu 0.4.0
 * <https://github.com/retep998/winapi-rs> winapi-x86_64-pc-windows-gnu 0.4.0
-* <https://github.com/bytecodealliance/wit-bindgen> wit-bindgen-rt 0.39.0
 
 MIT License
 
@@ -6610,7 +6633,7 @@ SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/tokio-rs/io-uring> io-uring 0.7.9
+* <https://github.com/tokio-rs/io-uring> io-uring 0.7.10
 
 MIT License
 Copyright (c) 2019 quininer@live.com
@@ -6668,7 +6691,7 @@ Used by:
 * <https://github.com/dtolnay/anyhow> anyhow 1.0.99
 * <https://github.com/smol-rs/async-channel> async-channel 1.9.0
 * <https://github.com/smol-rs/atomic-waker> atomic-waker 1.1.2
-* <https://github.com/camino-rs/camino> camino 1.1.11
+* <https://github.com/camino-rs/camino> camino 1.1.12
 * <https://github.com/rust-lang/cargo> cargo-platform 0.1.9
 * <https://github.com/oli-obk/cargo_metadata> cargo_metadata 0.19.2
 * <https://github.com/smol-rs/concurrent-queue> concurrent-queue 2.5.0
@@ -6713,9 +6736,10 @@ Used by:
 * <https://github.com/dtolnay/unicode-ident> unicode-ident 1.0.18
 * <https://github.com/SimonSapin/rust-utf8> utf-8 0.7.6
 * <https://github.com/bytecodealliance/wasi> wasi 0.11.1+wasi-snapshot-preview1
-* <https://github.com/bytecodealliance/wasi-rs> wasi 0.14.2+wasi-0.2.4
+* <https://github.com/bytecodealliance/wasi-rs> wasi 0.14.3+wasi-0.2.4
 * <https://github.com/bytecodealliance/wasi> wasi 0.9.0+wasi-snapshot-preview1
 * <https://github.com/MattiasBuelens/wasm-streams/> wasm-streams 0.4.2
+* <https://github.com/bytecodealliance/wit-bindgen> wit-bindgen 0.45.0
 * <https://github.com/AltF02/x11-rs.git> x11-dl 2.21.0
 * <https://github.com/AltF02/x11-rs.git> x11 2.21.0
 
@@ -6780,7 +6804,7 @@ DEALINGS IN THE SOFTWARE.
 <MIT> MIT License
 Used by:
 * <https://github.com/winnow-rs/winnow> winnow 0.5.40
-* <https://github.com/winnow-rs/winnow> winnow 0.7.12
+* <https://github.com/winnow-rs/winnow> winnow 0.7.13
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -7687,7 +7711,7 @@ SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/tafia/quick-xml> quick-xml 0.38.2
+* <https://github.com/tafia/quick-xml> quick-xml 0.38.3
 
 The MIT License (MIT)
 
@@ -8919,7 +8943,6 @@ Used by:
 * <https://github.com/unicode-org/icu4x> icu_properties_data 2.0.1
 * <https://github.com/unicode-org/icu4x> icu_provider 2.0.0
 * <https://github.com/unicode-org/icu4x> litemap 0.8.0
-* <https://github.com/unicode-org/icu4x> potential_utf 0.1.2
 * <https://github.com/unicode-org/icu4x> tinystr 0.8.1
 * <https://github.com/dtolnay/unicode-ident> unicode-ident 1.0.18
 * <https://github.com/unicode-org/icu4x> writeable 0.6.1
@@ -8970,6 +8993,60 @@ Except as contained in this notice, the name of a copyright holder shall
 not be used in advertising or otherwise to promote the sale, use or other
 dealings in these Data Files or Software without prior written
 authorization of the copyright holder.
+
+-----------------------------------------------------------------------------------------------------------------------
+
+
+<Unicode-3.0> Unicode License v3
+Used by:
+* <https://github.com/unicode-org/icu4x> potential_utf 0.1.3
+
+UNICODE LICENSE V3
+
+COPYRIGHT AND PERMISSION NOTICE
+
+Copyright © 2020-2024 Unicode, Inc.
+
+NOTICE TO USER: Carefully read the following legal agreement. BY
+DOWNLOADING, INSTALLING, COPYING OR OTHERWISE USING DATA FILES, AND/OR
+SOFTWARE, YOU UNEQUIVOCALLY ACCEPT, AND AGREE TO BE BOUND BY, ALL OF THE
+TERMS AND CONDITIONS OF THIS AGREEMENT. IF YOU DO NOT AGREE, DO NOT
+DOWNLOAD, INSTALL, COPY, DISTRIBUTE OR USE THE DATA FILES OR SOFTWARE.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of data files and any associated documentation (the "Data Files") or
+software and any associated documentation (the "Software") to deal in the
+Data Files or Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, and/or sell
+copies of the Data Files or Software, and to permit persons to whom the
+Data Files or Software are furnished to do so, provided that either (a)
+this copyright and permission notice appear with all copies of the Data
+Files or Software, or (b) this copyright and permission notice appear in
+associated Documentation.
+
+THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF
+THIRD PARTY RIGHTS.
+
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE
+BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES,
+OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THE DATA
+FILES OR SOFTWARE.
+
+Except as contained in this notice, the name of a copyright holder shall
+not be used in advertising or otherwise to promote the sale, use or other
+dealings in these Data Files or Software without prior written
+authorization of the copyright holder.
+
+SPDX-License-Identifier: Unicode-3.0
+
+—
+
+Portions of ICU4X may have been adapted from ICU4C and/or ICU4J.
+ICU 1.8.1 to ICU 57.1 © 1995-2016 International Business Machines Corporation and others.
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -9198,6 +9275,32 @@ License: "MIT OR Apache-2.0"
 
 
 --------------------------------------------------------------------------------
+Package: date-fns
+License: "MIT"
+
+MIT License
+
+Copyright (c) 2021 Sasha Koss and Lesha Koss https://kossnocorp.mit-license.org
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
 Package: @kurkle/color
 License: "MIT"
 
@@ -9224,32 +9327,6 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
---------------------------------------------------------------------------------
-Package: date-fns
-License: "MIT"
-
-MIT License
-
-Copyright (c) 2021 Sasha Koss and Lesha Koss https://kossnocorp.mit-license.org
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 
 --------------------------------------------------------------------------------
 Package: @tauri-apps/plugin-fs
