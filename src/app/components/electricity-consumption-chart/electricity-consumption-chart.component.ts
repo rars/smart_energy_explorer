@@ -1,3 +1,5 @@
+import { parseISO } from 'date-fns';
+
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -188,9 +190,7 @@ export class ElectricityConsumptionChartComponent implements OnInit, OnDestroy {
               {
                 label: 'Electricity',
                 data: values.map((x) => ({
-                  x: x.timestamp
-                    ? new Date(Date.parse(x.timestamp))
-                    : undefined,
+                  x: x.timestamp ? new Date(parseISO(x.timestamp)) : undefined,
                   y: x.energyConsumptionKwh,
                 })),
               },
