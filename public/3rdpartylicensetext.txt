@@ -5,7 +5,7 @@ This page lists the licenses of the projects used in smart_energy_explorer (as g
 
 <AGPL-3.0> GNU Affero General Public License v3.0
 Used by:
-* <https://crates.io/crates/smart_energy_explorer> smart_energy_explorer 1.2.1
+* <https://crates.io/crates/smart_energy_explorer> smart_energy_explorer 1.2.2
 
 GNU AFFERO GENERAL PUBLIC LICENSE
 Version 3, 19 November 2007
