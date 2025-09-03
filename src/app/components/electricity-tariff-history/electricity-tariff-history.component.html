@@ -1,55 +1,102 @@
-<h2>Electricity Tariff</h2>
-@if (standingChargesDataSource) {
-  <div class="mb-4 w-full sm:w-1/2 xl:w-1/4">
-    <table mat-table [dataSource]="standingChargesDataSource">
-      <!--- Note that these columns can be defined in any order.
+<div class="w-full h-full flex flex-col overflow-hidden">
+  <h2>Electricity Tariff</h2>
+  <div
+    class="flex flex-col sm:flex-row gap-4 flex-1 items-stretch overflow-hidden"
+  >
+    @if (standingChargesDataSource) {
+      <div class="flex-1 overflow-auto">
+        <div class="w-full xl:w-1/2">
+          <table
+            mat-table
+            [dataSource]="standingChargesDataSource"
+            matSort
+            #standingChargesSort="matSort"
+          >
+            <!--- Note that these columns can be defined in any order.
           The actual rendered columns are set as a property on the row definition" -->
 
-      <ng-container matColumnDef="startDate">
-        <th mat-header-cell *matHeaderCellDef class="w-1/2">Start Date</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element.startDate | date: 'yyyy-MM-dd' }}
-        </td>
-      </ng-container>
+            <ng-container matColumnDef="startDate">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header
+                class="w-1/2"
+              >
+                Start Date
+              </th>
+              <td mat-cell *matCellDef="let element">
+                {{ element.startDate | date: 'yyyy-MM-dd' }}
+              </td>
+            </ng-container>
 
-      <ng-container matColumnDef="standingChargePence">
-        <th mat-header-cell *matHeaderCellDef>Standing Charge (p)</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element.standingChargePence }}
-        </td>
-      </ng-container>
+            <ng-container matColumnDef="standingChargePence">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Standing Charge (p)
+              </th>
+              <td mat-cell *matCellDef="let element">
+                {{ element.standingChargePence }}
+              </td>
+            </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedStandingChargeColumns"></tr>
-      <tr
-        mat-row
-        *matRowDef="let row; columns: displayedStandingChargeColumns"
-      ></tr>
-    </table>
-  </div>
-}
+            <tr
+              mat-header-row
+              *matHeaderRowDef="displayedStandingChargeColumns; sticky: true"
+            ></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedStandingChargeColumns"
+            ></tr>
+          </table>
+        </div>
+      </div>
+    }
 
-@if (unitPricesDataSource) {
-  <div class="w-full sm:w-1/2 xl:w-1/4">
-    <table mat-table [dataSource]="unitPricesDataSource">
-      <!--- Note that these columns can be defined in any order.
+    @if (unitPricesDataSource) {
+      <div class="flex-1 overflow-auto">
+        <div class="w-full xl:w-1/2">
+          <table
+            mat-table
+            [dataSource]="unitPricesDataSource"
+            matSort
+            #unitPricesSort="matSort"
+          >
+            <!--- Note that these columns can be defined in any order.
             The actual rendered columns are set as a property on the row definition" -->
 
-      <ng-container matColumnDef="priceEffectiveTime">
-        <th mat-header-cell *matHeaderCellDef class="w-1/2">Effective From</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element.priceEffectiveTime | date: 'yyyy-MM-dd' }}
-        </td>
-      </ng-container>
+            <ng-container matColumnDef="priceEffectiveTime">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header
+                class="w-1/2"
+              >
+                Effective From
+              </th>
+              <td mat-cell *matCellDef="let element">
+                {{ element.priceEffectiveTime | date: 'yyyy-MM-dd' }}
+              </td>
+            </ng-container>
 
-      <ng-container matColumnDef="unitPricePence">
-        <th mat-header-cell *matHeaderCellDef>Unit Price (p)</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element.unitPricePence }}
-        </td>
-      </ng-container>
+            <ng-container matColumnDef="unitPricePence">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Unit Price (p)
+              </th>
+              <td mat-cell *matCellDef="let element">
+                {{ element.unitPricePence }}
+              </td>
+            </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedUnitPriceColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedUnitPriceColumns"></tr>
-    </table>
+            <tr
+              mat-header-row
+              *matHeaderRowDef="displayedUnitPriceColumns; sticky: true"
+            ></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedUnitPriceColumns"
+            ></tr>
+          </table>
+        </div>
+      </div>
+    }
   </div>
-}
+</div>
