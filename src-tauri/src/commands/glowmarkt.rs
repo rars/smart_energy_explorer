@@ -1,14 +1,14 @@
-use keyring::Entry;
 use tauri::{AppHandle, State};
 
 use crate::{
     commands::ApiError,
     download::spawn_download_tasks,
-    utils::{get_glowmarkt_credentials_opt, get_glowmarkt_data_provider},
+    utils::{
+        get_glowmarkt_credentials_opt, get_glowmarkt_data_provider, save_glowmarkt_credentials,
+        GlowmarktCredentials,
+    },
     AppState,
 };
-
-use super::APP_SERVICE_NAME;
 
 #[tauri::command]
 pub async fn store_glowmarkt_credentials(
@@ -17,19 +17,9 @@ pub async fn store_glowmarkt_credentials(
     username: String,
     password: String,
 ) -> Result<(), ApiError> {
-    let username_entry = Entry::new(APP_SERVICE_NAME, "glowmarkt_username")
-        .map_err(|e| ApiError::Custom(e.to_string()))?;
+    let credentials = GlowmarktCredentials { username, password };
 
-    username_entry
-        .set_password(&username)
-        .map_err(|e| ApiError::Custom(e.to_string()))?;
-
-    let password_entry = Entry::new(APP_SERVICE_NAME, "glowmarkt_password")
-        .map_err(|e| ApiError::Custom(e.to_string()))?;
-
-    password_entry
-        .set_password(&password)
-        .map_err(|e| ApiError::Custom(e.to_string()))?;
+    save_glowmarkt_credentials(&credentials)?;
 
     if let Some(data_provider) = get_glowmarkt_data_provider()
         .await
@@ -51,9 +41,7 @@ pub struct GlowmarktCredentialsResponse {
 
 #[tauri::command]
 pub fn get_glowmarkt_credentials() -> Result<GlowmarktCredentialsResponse, ApiError> {
-    if let Some(credentials) =
-        get_glowmarkt_credentials_opt().map_err(|e| ApiError::Custom(e.to_string()))?
-    {
+    if let Some(credentials) = get_glowmarkt_credentials_opt()? {
         return Ok(GlowmarktCredentialsResponse {
             username: credentials.username,
             password: credentials.password,

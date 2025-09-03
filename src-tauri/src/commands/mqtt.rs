@@ -1,9 +1,8 @@
-use keyring::Entry;
 use tauri::{AppHandle, State};
 
 use crate::{
-    commands::{ApiError, APP_SERVICE_NAME},
-    utils::{get_mqtt_settings_opt, MqttSettings},
+    commands::ApiError,
+    utils::{get_mqtt_settings_opt, save_mqtt_credentials, MqttCredentials, MqttSettings},
     AppState, MqttMessage,
 };
 
@@ -31,19 +30,12 @@ pub async fn store_mqtt_settings(
     username: String,
     password: String,
 ) -> Result<(), ApiError> {
-    let username_entry = Entry::new(APP_SERVICE_NAME, "mqtt_username")
-        .map_err(|e| ApiError::Custom(e.to_string()))?;
+    let credentials = MqttCredentials {
+        username: username.trim().into(),
+        password: password.trim().into(),
+    };
 
-    username_entry
-        .set_password(username.trim())
-        .map_err(|e| ApiError::Custom(e.to_string()))?;
-
-    let password_entry = Entry::new(APP_SERVICE_NAME, "mqtt_password")
-        .map_err(|e| ApiError::Custom(e.to_string()))?;
-
-    password_entry
-        .set_password(password.trim())
-        .map_err(|e| ApiError::Custom(e.to_string()))?;
+    save_mqtt_credentials(&credentials)?;
 
     {
         let app_settings =

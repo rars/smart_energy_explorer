@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use chrono::NaiveDate;
 use diesel::SqliteConnection;
 use keyring::Entry;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::{
@@ -60,46 +60,160 @@ pub async fn get_glowmarkt_data_provider() -> Result<Option<GlowmarktDataProvide
     Ok(None)
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct GlowmarktCredentials {
     pub username: String,
     pub password: String,
 }
 
+pub fn save_glowmarkt_credentials(credentials: &GlowmarktCredentials) -> Result<(), AppError> {
+    let credentials_json = serde_json::to_string(credentials).map_err(|e| {
+        AppError::CustomError(format!("Failed to serialize glowmarkt credentials: {}", e))
+    })?;
+
+    let credentials_entry = Entry::new(APP_SERVICE_NAME, "glowmarkt_credentials")
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    credentials_entry
+        .set_password(&credentials_json)
+        .map_err(|e| {
+            AppError::CustomError(format!(
+                "Failed to save glowmarkt credentials to keychain: {}",
+                e
+            ))
+        })?;
+
+    Ok(())
+}
+
 pub fn get_glowmarkt_credentials_opt() -> Result<Option<GlowmarktCredentials>, AppError> {
-    let username_entry = Entry::new(APP_SERVICE_NAME, "glowmarkt_username")
+    // Attempt to get credentials from new single entry point
+    let credentials_entry = Entry::new(APP_SERVICE_NAME, "glowmarkt_credentials")
         .map_err(|e| AppError::CustomError(e.to_string()))?;
 
-    let password_entry = Entry::new(APP_SERVICE_NAME, "glowmarkt_password")
-        .map_err(|e| AppError::CustomError(e.to_string()))?;
+    if let Some(credentials_json) = get_entry_password(&credentials_entry)? {
+        let credentials: GlowmarktCredentials =
+            serde_json::from_str(&credentials_json).map_err(|e| {
+                AppError::CustomError(format!(
+                    "Failed to deserialize glowmarkt credentials: {}",
+                    e
+                ))
+            })?;
 
-    let username = get_entry_password(&username_entry)?;
-    let password = get_entry_password(&password_entry)?;
+        return Ok(Some(credentials));
+    } else {
+        // Fallback to older separate entries
+        let username_entry = Entry::new(APP_SERVICE_NAME, "glowmarkt_username")
+            .map_err(|e| AppError::CustomError(e.to_string()))?;
 
-    match (username, password) {
-        (Some(username), Some(password)) => Ok(Some(GlowmarktCredentials { username, password })),
-        _ => Ok(None),
+        let password_entry = Entry::new(APP_SERVICE_NAME, "glowmarkt_password")
+            .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+        let username = get_entry_password(&username_entry)?;
+        let password = get_entry_password(&password_entry)?;
+
+        match (username, password) {
+            (Some(username), Some(password)) => {
+                let credentials = GlowmarktCredentials { username, password };
+
+                save_glowmarkt_credentials(&credentials)?;
+
+                username_entry.delete_credential().map_err(|e| {
+                    AppError::CustomError(format!(
+                        "Failed to delete glowmarkt username credential in keychain: {}",
+                        e
+                    ))
+                })?;
+
+                password_entry.delete_credential().map_err(|e| {
+                    AppError::CustomError(format!(
+                        "Failed to delete glowmarkt password credential in keychain: {}",
+                        e
+                    ))
+                })?;
+
+                Ok(Some(credentials))
+            }
+            _ => Ok(None),
+        }
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct MqttCredentials {
     pub username: String,
     pub password: String,
 }
 
 pub fn get_mqtt_credentials_opt() -> Result<Option<MqttCredentials>, AppError> {
-    let username_entry = Entry::new(APP_SERVICE_NAME, "mqtt_username")
+    // Attempt to get credentials from new single entry point
+    let credentials_entry = Entry::new(APP_SERVICE_NAME, "mqtt_credentials")
         .map_err(|e| AppError::CustomError(e.to_string()))?;
 
-    let password_entry = Entry::new(APP_SERVICE_NAME, "mqtt_password")
-        .map_err(|e| AppError::CustomError(e.to_string()))?;
+    if let Some(credentials_json) = get_entry_password(&credentials_entry)? {
+        let credentials: MqttCredentials =
+            serde_json::from_str(&credentials_json).map_err(|e| {
+                AppError::CustomError(format!("Failed to deserialize mqtt credentials: {}", e))
+            })?;
 
-    let username = get_entry_password(&username_entry)?;
-    let password = get_entry_password(&password_entry)?;
+        return Ok(Some(credentials));
+    } else {
+        // Fallback to older separate entries
 
-    match (username, password) {
-        (Some(username), Some(password)) => Ok(Some(MqttCredentials { username, password })),
-        _ => Ok(None),
+        let username_entry = Entry::new(APP_SERVICE_NAME, "mqtt_username")
+            .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+        let password_entry = Entry::new(APP_SERVICE_NAME, "mqtt_password")
+            .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+        let username = get_entry_password(&username_entry)?;
+        let password = get_entry_password(&password_entry)?;
+
+        match (username, password) {
+            (Some(username), Some(password)) => {
+                let credentials = MqttCredentials { username, password };
+
+                save_mqtt_credentials(&credentials)?;
+
+                username_entry.delete_credential().map_err(|e| {
+                    AppError::CustomError(format!(
+                        "Failed to delete mqtt username credential in keychain: {}",
+                        e
+                    ))
+                })?;
+
+                password_entry.delete_credential().map_err(|e| {
+                    AppError::CustomError(format!(
+                        "Failed to delete mqtt password credential in keychain: {}",
+                        e
+                    ))
+                })?;
+
+                Ok(Some(credentials))
+            }
+            _ => Ok(None),
+        }
     }
+}
+
+pub fn save_mqtt_credentials(credentials: &MqttCredentials) -> Result<(), AppError> {
+    let credentials_json = serde_json::to_string(credentials).map_err(|e| {
+        AppError::CustomError(format!("Failed to serialize mqtt credentials: {}", e))
+    })?;
+
+    let credentials_entry = Entry::new(APP_SERVICE_NAME, "mqtt_credentials")
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    credentials_entry
+        .set_password(&credentials_json)
+        .map_err(|e| {
+            AppError::CustomError(format!(
+                "Failed to save mqtt credentials to keychain: {}",
+                e
+            ))
+        })?;
+
+    Ok(())
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -210,7 +324,7 @@ pub async fn reset_mqtt_settings(app_handle: &AppHandle) -> Result<(), AppError>
             .map_err(|e| AppError::CustomError(e.to_string()))?;
     }
 
-    let credentials = ["mqtt_username", "mqtt_password"];
+    let credentials = ["mqtt_credentials", "mqtt_username", "mqtt_password"];
 
     for c in credentials {
         delete_credential(c)?;

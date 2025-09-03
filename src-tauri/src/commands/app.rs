@@ -100,7 +100,11 @@ pub async fn reset(app_handle: AppHandle, app_state: State<'_, AppState>) -> Res
             .map_err(|e| ApiError::Custom(format!("{}", e)))?;
     }
 
-    let credentials = ["glowmarkt_username", "glowmarkt_password"];
+    let credentials = [
+        "glowmarkt_credentials",
+        "glowmarkt_username",
+        "glowmarkt_password",
+    ];
 
     for c in credentials {
         delete_credential(c)?;
