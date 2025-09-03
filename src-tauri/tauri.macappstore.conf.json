@@ -1,0 +1,11 @@
+{
+  "bundle": {
+    "macOS": {
+      "entitlements": "./Entitlements.plist",
+      "signingIdentity": "Apple Distribution: RICHARD ANTHONY RUSSELL (3QW2VW47J6)",
+      "files": {
+        "embedded.provisionprofile": "./Smart_Energy_Explorer_Provision_Profile.provisionprofile"
+      }
+    }
+  }
+}
