@@ -5,7 +5,7 @@ This page lists the licenses of the projects used in smart_energy_explorer (as g
 
 <AGPL-3.0> GNU Affero General Public License v3.0
 Used by:
-* <https://crates.io/crates/smart_energy_explorer> smart_energy_explorer 1.2.2
+* <https://crates.io/crates/smart_energy_explorer> smart_energy_explorer 1.2.3
 
 GNU AFFERO GENERAL PUBLIC LICENSE
 Version 3, 19 November 2007
@@ -2050,7 +2050,7 @@ Used by:
 * <https://github.com/bitflags/bitflags> bitflags 1.3.2
 * <https://github.com/bitflags/bitflags> bitflags 2.9.4
 * <https://github.com/rust-lang/glob> glob 0.3.3
-* <https://github.com/rust-lang/log> log 0.4.27
+* <https://github.com/rust-lang/log> log 0.4.28
 * <https://github.com/rust-num/num-traits> num-traits 0.2.19
 * <https://github.com/rust-lang/regex> regex-automata 0.4.10
 * <https://github.com/rust-lang/regex> regex-syntax 0.8.6
@@ -2232,33 +2232,6 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
------------------------------------------------------------------------------------------------------------------------
-
-
-<MIT> MIT License
-Used by:
-* <https://github.com/diwic/dbus-rs> dbus 0.9.9
-* <https://github.com/diwic/dbus-rs> libdbus-sys 0.2.6
-
-Copyright (c) 2014-2018 David Henningsson <diwic@ubuntu.com> and other contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 -----------------------------------------------------------------------------------------------------------------------
 
 
@@ -3087,39 +3060,6 @@ Used by:
 * <https://github.com/hwchen/keyring-rs.git> keyring 3.6.3
 
 Copyright (c) 2016 keyring Developers
-
-Permission is hereby granted, free of charge, to any
-person obtaining a copy of this software and associated
-documentation files (the "Software"), to deal in the
-Software without restriction, including without
-limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software
-is furnished to do so, subject to the following
-conditions:
-
-The above copyright notice and this permission notice
-shall be included in all copies or substantial portions
-of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
-ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
-IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-
------------------------------------------------------------------------------------------------------------------------
-
-
-<MIT> MIT License
-Used by:
-* <https://github.com/brotskydotcom/dbus-secret-service.git> dbus-secret-service 4.1.0
-
-Copyright (c) 2016 secret-service Developers
 
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
@@ -4863,9 +4803,9 @@ Used by:
 * <https://github.com/rust-cli/anstyle.git> anstyle-query 1.1.4
 * <https://github.com/rust-cli/anstyle.git> anstyle-wincon 3.0.10
 * <https://github.com/rust-cli/anstyle.git> anstyle 1.0.11
-* <https://github.com/clap-rs/clap> clap 4.5.46
-* <https://github.com/clap-rs/clap> clap_builder 4.5.46
-* <https://github.com/clap-rs/clap> clap_derive 4.5.45
+* <https://github.com/clap-rs/clap> clap 4.5.47
+* <https://github.com/clap-rs/clap> clap_builder 4.5.47
+* <https://github.com/clap-rs/clap> clap_derive 4.5.47
 * <https://github.com/clap-rs/clap> clap_lex 0.7.5
 * <https://github.com/rust-cli/anstyle.git> colorchoice 1.0.4
 * <https://github.com/rust-cli/env_logger> env_filter 0.1.3
@@ -4906,9 +4846,9 @@ SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/time-rs/time> time-core 0.1.5
-* <https://github.com/time-rs/time> time-macros 0.2.23
-* <https://github.com/time-rs/time> time 0.3.42
+* <https://github.com/time-rs/time> time-core 0.1.6
+* <https://github.com/time-rs/time> time-macros 0.2.24
+* <https://github.com/time-rs/time> time 0.3.43
 
 Copyright (c) Jacob Pratt et al.
 
@@ -5381,34 +5321,6 @@ SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-log 2.6.0
-
-MIT License
-
-Copyright (c) 2017 - Present Tauri Apps Contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
------------------------------------------------------------------------------------------------------------------------
-
-
-<MIT> MIT License
-Used by:
 * <https://github.com/emilio/precomputed-hash> precomputed-hash 0.1.1
 
 MIT License
@@ -5869,35 +5781,6 @@ SOFTWARE.
 
 <MIT> MIT License
 Used by:
-* <https://github.com/RustCrypto/utils/tree/master/zeroize/derive> zeroize_derive 1.4.2
-
-MIT License
-
-Copyright (c) 2019-2023 The RustCrypto Project Developers
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
------------------------------------------------------------------------------------------------------------------------
-
-
-<MIT> MIT License
-Used by:
 * <https://github.com/katharostech/cfg_aliases> cfg_aliases 0.2.1
 
 MIT License
@@ -6333,6 +6216,7 @@ Used by:
 * <http://github.com/SSheldon/rust-dispatch> dispatch 0.2.0
 * <https://github.com/rust-windowing/winit> dpi 0.1.2
 * <https://github.com/cbreeden/fxhash> fxhash 0.2.1
+* <https://github.com/landhb/linux-keyutils> linux-keyutils 0.2.4
 * <https://github.com/reem/rust-mac.git> mac 0.1.1
 * <https://github.com/servo/html5ever> match_token 0.1.0
 * <https://github.com/rust-windowing/android-ndk-rs> ndk-context 0.1.1
@@ -6374,8 +6258,9 @@ Used by:
 * <https://github.com/tauri-apps/tauri> tauri-build 2.4.1
 * <https://github.com/tauri-apps/tauri> tauri-codegen 2.4.0
 * <https://github.com/tauri-apps/tauri> tauri-macros 2.4.0
-* <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-dialog 2.3.3
+* <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-dialog 2.4.0
 * <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-fs 2.4.2
+* <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-log 2.7.0
 * <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-shell 2.3.1
 * <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-sql 2.3.0
 * <https://github.com/tauri-apps/plugins-workspace> tauri-plugin-store 2.4.0
