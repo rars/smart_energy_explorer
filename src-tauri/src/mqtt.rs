@@ -161,7 +161,9 @@ pub async fn start_mqtt_listener(
                             info!("Deserialized data: {:?}", data);
                             // Now you can work with the structured 'data' object
 
-                            emit_event(app_handle, "electricityUpdate", data);
+                            if let Err(err) = emit_event(app_handle, "electricityUpdate", data) {
+                                error!("Unexpected error emitting electricityUpdate event: {}", err);
+                            }
                         }
                         Err(e) => {
                             error!("Failed to deserialize payload: {}", e);
