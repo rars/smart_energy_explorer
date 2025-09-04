@@ -1,6 +1,6 @@
 [package]
 name = "smart_energy_explorer"
-version = "1.2.2"
+version = "1.2.3"
 description = "A dashboard for exploring home energy usage"
 authors = ["Richard Russell"]
 license = "AGPL-3.0-or-later"
@@ -20,7 +20,7 @@ diesel = { version = "2.0.0", features = ["sqlite", "chrono"] }
 diesel_migrations = "2.0"
 git-version = "0.3.9"
 glowmarkt = { version = "0.5.3" }
-keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+keyring = { version = "3", features = ["apple-native", "windows-native", "linux-native"] }
 log = "^0.4"
 paho-mqtt = { version = "0.13.3", default-features = false, features = ["bundled"] }
 serde = { version = "1.0", features = ["derive"] }
