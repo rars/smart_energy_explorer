@@ -144,6 +144,12 @@ pub async fn start_mqtt_listener(
             }
         };
 
+        if !client.is_connected() {
+            info!("The MQTT client is no longer connected. Resetting client and stream.");
+            client_and_stream = None;
+            continue;
+        }
+
         tokio::select! {
             Some(app_message) = mqtt_message_receiver.recv() => {
                 match app_message {
@@ -155,20 +161,32 @@ pub async fn start_mqtt_listener(
                 }
             },
             message = stream.next() => {
-                if let Some(Some(msg)) = message {
-                    match serde_json::from_str::<ElectricityMeterMessage>(&msg.payload_str()) {
-                        Ok(data) => {
-                            info!("Deserialized data: {:?}", data);
-                            // Now you can work with the structured 'data' object
+                match message {
+                    Some(Some(msg)) => {
+                        match serde_json::from_str::<ElectricityMeterMessage>(&msg.payload_str()) {
+                            Ok(data) => {
+                                info!("Deserialized data: {:?}", data);
+                                // Now you can work with the structured 'data' object
 
-                            if let Err(err) = emit_event(app_handle, "electricityUpdate", data) {
-                                error!("Unexpected error emitting electricityUpdate event: {}", err);
+                                if let Err(err) = emit_event(app_handle, "electricityUpdate", data) {
+                                    error!("Unexpected error emitting electricityUpdate event: {}", err);
+                                }
+                            }
+                            Err(e) => {
+                                error!("Failed to deserialize payload: {}", e);
                             }
                         }
-                        Err(e) => {
-                            error!("Failed to deserialize payload: {}", e);
-                        }
                     }
+                    Some(None) => {
+                        info!("Unexpected message from MQTT stream receiever: None");
+                    }
+                    None => {
+                        info!("Notified that the MQTT client connection has been lost. Resetting client and stream.");
+                        if client.is_connected() {
+                            disconnect_client(client).await;
+                        }
+                        client_and_stream = None;
+                    },
                 }
             },
         }
