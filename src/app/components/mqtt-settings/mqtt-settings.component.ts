@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -19,14 +19,13 @@ import { MqttService } from '../../services/mqtt/mqtt.service';
 @Component({
   selector: 'app-mqtt-settings',
   imports: [
-    CommonModule,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     ReactiveFormsModule,
-    RouterLink,
-  ],
+    RouterLink
+],
   templateUrl: './mqtt-settings.component.html',
   styleUrl: './mqtt-settings.component.scss',
 })
