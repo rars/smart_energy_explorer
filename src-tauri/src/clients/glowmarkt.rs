@@ -30,6 +30,7 @@ pub enum GlowmarktDataProviderError {
     MissingResource(String),
 }
 
+#[derive(Debug)]
 struct ResourceIds {
     gas_cost: Option<String>,
     gas_consumption: Option<String>,
@@ -59,19 +60,21 @@ async fn get_resource_ids(api: &GlowmarktApi) -> Result<ResourceIds, GlowmarktDa
         if virtual_entity.name == "DCC Sourced" {
             for resource_info in &virtual_entity.resources {
                 if let Some(resource) = all_resources.get(&resource_info.resource_id) {
-                    match resource.name.as_str() {
-                        "electricity cost" => {
-                            resource_ids.electricity_cost = Some(resource.id.clone())
-                        }
-                        "electricity consumption" => {
+                    match resource.classifier.as_ref().map(|c| c.as_str()) {
+                        Some("electricity.consumption") => {
                             resource_ids.electricity_consumption = Some(resource.id.clone())
                         }
-                        "gas cost" => resource_ids.gas_cost = Some(resource.id.clone()),
-                        "gas consumption" => {
+                        Some("electricity.consumption.cost") => {
+                            resource_ids.electricity_cost = Some(resource.id.clone())
+                        }
+                        Some("gas.consumption") => {
                             resource_ids.gas_consumption = Some(resource.id.clone())
                         }
+                        Some("gas.consumption.cost") => {
+                            resource_ids.gas_cost = Some(resource.id.clone())
+                        }
                         _ => (),
-                    }
+                    };
                 }
             }
             break;
