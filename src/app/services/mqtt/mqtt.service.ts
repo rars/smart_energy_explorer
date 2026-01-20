@@ -9,6 +9,7 @@ import { ErrorService } from '../error/error.service';
 type MqttSettings = {
   hostname: string;
   topic: string;
+  gasTopic: string;
   username: string;
   password: string;
 };
@@ -26,6 +27,7 @@ export class MqttService {
   public async saveMqttSettings(
     hostname: string,
     topic: string,
+    gasTopic: string,
     username: string,
     password: string,
   ): Promise<void> {
@@ -33,6 +35,7 @@ export class MqttService {
       await invoke('store_mqtt_settings', {
         hostname,
         topic,
+        gasTopic,
         username,
         password,
       });

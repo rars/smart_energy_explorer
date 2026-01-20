@@ -12,6 +12,19 @@
   </div>
 }
 
+@if (gasUpdateReceived$ | async) {
+  <div class="w-full flex text-sm">
+    <div class="grow"></div>
+    <div class="flex items-center">
+      <mat-icon>mode_heat</mat-icon>
+      <div>
+        {{ cumulativeGasDay$ | async }}
+      </div>
+    </div>
+    <div class="grow"></div>
+  </div>
+}
+
 @if (isDownloading$ | async) {
   <app-data-downloading></app-data-downloading>
 }

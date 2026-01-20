@@ -16,12 +16,12 @@ use crate::{
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ElectricityMeter {
     pub timestamp: String,
-    pub energy: Energy,
+    pub energy: ElectricityEnergyContainer,
     pub power: Power,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct Energy {
+pub struct ElectricityEnergyContainer {
     pub export: EnergyExport,
     pub import: EnergyImport,
 }
@@ -56,6 +56,45 @@ pub struct Power {
     pub units: String,
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+pub struct GasMeter {
+    pub timestamp: String,
+    pub energy: GasEnergyContainer,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+pub struct GasEnergyContainer {
+    pub import: GasImport,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+pub struct GasImport {
+    pub cumulative: f64,
+    pub day: f64,
+    pub week: f64,
+    pub month: f64,
+    pub units: String,
+
+    pub cumulativevol: f64,
+    pub cumulativevolunits: String,
+
+    pub dayvol: f64,
+    pub weekvol: f64,
+    pub monthvol: f64,
+    pub dayweekmonthvolunits: String,
+
+    pub mprn: String,
+    pub supplier: String,
+    pub price: ImportPrice,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum MeterPayload {
+    ElectricityMeter(ElectricityMeter),
+    GasMeter(GasMeter),
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ElectricityMeterMessage {
     pub electricitymeter: ElectricityMeter,
@@ -65,6 +104,17 @@ pub struct ElectricityMeterMessage {
 pub struct ElectricityUpdate {
     is_active: bool,
     message: ElectricityMeterMessage,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct GasMeterMessage {
+    pub gasmeter: GasMeter,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct GasUpdate {
+    is_active: bool,
+    message: GasMeterMessage,
 }
 
 async fn create_mqtt_client(
@@ -90,7 +140,13 @@ async fn create_mqtt_client(
 
     client.connect(connection_options).await?;
 
-    client.subscribe(settings.topic.clone(), qos).await?;
+    if settings.topic.len() > 0 {
+        client.subscribe(settings.topic.clone(), qos).await?;
+    }
+
+    if settings.gas_topic.len() > 0 {
+        client.subscribe(settings.gas_topic.clone(), qos).await?;
+    }
 
     Ok(client)
 }
@@ -163,13 +219,22 @@ pub async fn start_mqtt_listener(
             message = stream.next() => {
                 match message {
                     Some(Some(msg)) => {
-                        match serde_json::from_str::<ElectricityMeterMessage>(&msg.payload_str()) {
-                            Ok(data) => {
-                                info!("Deserialized data: {:?}", data);
+                        match serde_json::from_str::<MeterPayload>(&msg.payload_str()) {
+                            Ok(payload) => {
+                                info!("Deserialized data: {:?}", payload);
                                 // Now you can work with the structured 'data' object
 
-                                if let Err(err) = emit_event(app_handle, "electricityUpdate", data) {
-                                    error!("Unexpected error emitting electricityUpdate event: {}", err);
+                                match payload {
+                                    MeterPayload::ElectricityMeter(data) => {
+                                      if let Err(err) = emit_event(app_handle, "electricityUpdate", ElectricityMeterMessage { electricitymeter: data }) {
+                                          error!("Unexpected error emitting electricityUpdate event: {}", err);
+                                      }
+                                    },
+                                    MeterPayload::GasMeter(data) => {
+                                      if let Err(err) = emit_event(app_handle, "gasUpdate", GasMeterMessage { gasmeter: data }) {
+                                          error!("Unexpected error emitting gasUpdate event: {}", err);
+                                      }
+                                    }
                                 }
                             }
                             Err(e) => {

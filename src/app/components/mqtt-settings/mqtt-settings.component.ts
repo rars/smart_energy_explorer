@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
@@ -23,11 +23,10 @@ import { MqttService } from '../../services/mqtt/mqtt.service';
     MatIconModule,
     MatInputModule,
     ReactiveFormsModule,
-    RouterLink
-],
+    RouterLink,
+  ],
   templateUrl: './mqtt-settings.component.html',
   styleUrl: './mqtt-settings.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MqttSettingsComponent {
   public form: FormGroup;
@@ -45,6 +44,10 @@ export class MqttSettingsComponent {
         '',
         [Validators.required, noLeadingOrTrailingWhitespaceValidator()],
       ],
+      gasTopic: [
+        '',
+        [Validators.required, noLeadingOrTrailingWhitespaceValidator()],
+      ],
       username: [
         '',
         [Validators.required, noLeadingOrTrailingWhitespaceValidator()],
@@ -58,9 +61,10 @@ export class MqttSettingsComponent {
     this.mqttService
       .getMqttSettings()
       .pipe(takeUntilDestroyed())
-      .subscribe(({ hostname, topic, username, password }) => {
+      .subscribe(({ hostname, topic, gasTopic, username, password }) => {
         this.form.get('hostname')?.setValue(hostname);
         this.form.get('topic')?.setValue(topic);
+        this.form.get('gasTopic')?.setValue(gasTopic);
         this.form.get('username')?.setValue(username);
         this.form.get('password')?.setValue(password);
       });
@@ -72,12 +76,14 @@ export class MqttSettingsComponent {
 
       const hostname = this.form.get('hostname')?.value;
       const topic = this.form.get('topic')?.value;
+      const gasTopic = this.form.get('gasTopic')?.value;
       const username = this.form.get('username')?.value;
       const password = this.form.get('password')?.value;
 
       await this.mqttService.saveMqttSettings(
         hostname,
         topic,
+        gasTopic,
         username,
         password,
       );

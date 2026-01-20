@@ -28,22 +28,30 @@ export class StatusBarComponent implements OnInit, OnDestroy {
 
   protected electricityPower$: Observable<string>;
   protected cumulativeDay$: Observable<string>;
+  protected cumulativeGasDay$: Observable<string>;
   protected electricityUpdateReceived$: Observable<boolean>;
+  protected gasUpdateReceived$: Observable<boolean>;
 
   private unlistenFn?: UnlistenFn;
   private electricityUpdateUnlistenFn?: UnlistenFn;
+  private gasUpdateUnlistenFn?: UnlistenFn;
   private clearCurrentUse?: any;
+  private clearCurrentGasUse?: any;
 
   private readonly electricityPowerSubject = new ReplaySubject<string>();
   private readonly cumulativeDaySubject = new ReplaySubject<string>();
+  private readonly cumulativeGasDaySubject = new ReplaySubject<string>();
   private readonly electricityUpdateReceivedSubject =
     new ReplaySubject<boolean>();
+  private readonly gasUpdateReceivedSubject = new ReplaySubject<boolean>();
 
   public constructor() {
     this.electricityPower$ = this.electricityPowerSubject.asObservable();
     this.cumulativeDay$ = this.cumulativeDaySubject.asObservable();
+    this.cumulativeGasDay$ = this.cumulativeGasDaySubject.asObservable();
     this.electricityUpdateReceived$ =
       this.electricityUpdateReceivedSubject.asObservable();
+    this.gasUpdateReceived$ = this.gasUpdateReceivedSubject.asObservable();
   }
 
   public ngOnInit(): void {
@@ -83,6 +91,38 @@ export class StatusBarComponent implements OnInit, OnDestroy {
       this.electricityUpdateUnlistenFn = unlisten;
     });
 
+    listen<any>('gasUpdate', (message) => {
+      if (this.clearCurrentGasUse !== undefined) {
+        clearTimeout(this.clearCurrentGasUse);
+        this.clearCurrentGasUse = undefined;
+      }
+
+      this.gasUpdateReceivedSubject.next(true);
+
+      const lastUpdated = new Date(message.payload.gasmeter.timestamp);
+      const friendlyTimestamp = format(
+        lastUpdated,
+        "dd/MM/yyyy 'at' h:mm:ss a",
+      );
+
+      const energy = message.payload.gasmeter.energy;
+      const dayMessage = `${energy.import.day} ${energy.import.units} used today (last updated ${friendlyTimestamp})`;
+
+      this.cumulativeGasDaySubject.next(dayMessage);
+
+      if (this.clearCurrentGasUse !== undefined) {
+        clearTimeout(this.clearCurrentGasUse);
+        this.clearCurrentGasUse = undefined;
+      }
+
+      this.clearCurrentGasUse = setTimeout(
+        () => this.gasUpdateReceivedSubject.next(false),
+        30000,
+      );
+    }).then((unlisten) => {
+      this.gasUpdateUnlistenFn = unlisten;
+    });
+
     listen<{ isDownloading: boolean }>('appStatusUpdate', (event) => {
       // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
       // event.payload is the payload object
@@ -105,5 +145,8 @@ export class StatusBarComponent implements OnInit, OnDestroy {
     this.electricityUpdateUnlistenFn?.();
     this.electricityPowerSubject.complete();
     this.cumulativeDaySubject.complete();
+
+    this.gasUpdateUnlistenFn?.();
+    this.cumulativeGasDaySubject.complete();
   }
 }

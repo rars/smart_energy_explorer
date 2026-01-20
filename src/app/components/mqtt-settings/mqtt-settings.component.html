@@ -37,6 +37,19 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
+          <mat-label>Gas Sensor Topic</mat-label>
+          <input matInput formControlName="gasTopic" required />
+          @if (form.get('gasTopic')?.hasError('required')) {
+            <mat-error> Topic is required </mat-error>
+          }
+          @if (form.get('gasTopic')?.hasError('leadingOrTrailingWhitespace')) {
+            <mat-error>
+              Topic must not contain leading or trailing whitespace
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
           <mat-label>Username</mat-label>
           <input matInput formControlName="username" required />
           @if (form.get('username')?.hasError('required')) {

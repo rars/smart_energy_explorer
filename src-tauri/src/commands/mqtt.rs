@@ -17,6 +17,7 @@ pub fn get_mqtt_settings(app_state: State<'_, AppState>) -> Result<MqttSettings,
     Ok(MqttSettings {
         hostname: "".to_string(),
         topic: "".to_string(),
+        gas_topic: "".to_string(),
         username: "".to_string(),
         password: "".to_string(),
     })
@@ -27,6 +28,7 @@ pub async fn store_mqtt_settings(
     app_state: State<'_, AppState>,
     hostname: String,
     topic: String,
+    gas_topic: String,
     username: String,
     password: String,
 ) -> Result<(), ApiError> {
@@ -52,6 +54,10 @@ pub async fn store_mqtt_settings(
 
         app_settings
             .safe_set("mqttTopic", topic.trim().to_string())
+            .map_err(|e| ApiError::Custom(format!("{}", e)))?;
+
+        app_settings
+            .safe_set("mqttGasTopic", gas_topic.trim().to_string())
             .map_err(|e| ApiError::Custom(format!("{}", e)))?;
 
         let updated_settings =
