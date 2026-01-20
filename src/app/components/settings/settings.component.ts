@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,7 +14,6 @@ import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-settings',
   imports: [
-    CommonModule,
     MatIconModule,
     MatButtonModule,
     MatCardModule,
@@ -24,8 +23,8 @@ import { RouterLink } from '@angular/router';
     MatSlideToggleModule,
     MatTooltipModule,
     ReactiveFormsModule,
-    RouterLink,
-  ],
+    RouterLink
+],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
 })
