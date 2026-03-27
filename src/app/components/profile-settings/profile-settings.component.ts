@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import {
   FormArray,
   FormBuilder,
@@ -41,12 +41,13 @@ import { CanComponentDeactivate } from '../../unsaved-changes.guard';
   ],
   templateUrl: './profile-settings.component.html',
   styleUrl: './profile-settings.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileSettingsComponent
   implements OnInit, CanComponentDeactivate
 {
   public form: FormGroup;
-  public data?: any;
+  public data = signal<any[]>([]);
 
   public constructor(
     private readonly dateService: DateService,
@@ -63,7 +64,7 @@ export class ProfileSettingsComponent
 
   public ngOnInit(): void {
     from(invoke<any[]>('get_energy_profiles', {})).subscribe((x) => {
-      this.data = x;
+      this.data.set(x);
 
       for (const p of x) {
         this.profiles.push(

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
@@ -15,5 +15,6 @@ import { BrightCredentialsFormComponent } from '../bright-credentials-form/brigh
   ],
   templateUrl: './bright-settings.component.html',
   styleUrl: './bright-settings.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BrightSettingsComponent {}

@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
 import { BehaviorSubject, Observable, ReplaySubject, from } from 'rxjs';
@@ -21,6 +21,7 @@ import { DataDownloadingComponent } from '../data-downloading/data-downloading.c
   ],
   templateUrl: './status-bar.component.html',
   styleUrl: './status-bar.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatusBarComponent implements OnInit, OnDestroy {
   public isDownloading$ = new BehaviorSubject(false);

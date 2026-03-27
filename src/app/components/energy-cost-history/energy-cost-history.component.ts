@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import {
-  AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
-  Input,
   OnDestroy,
-  ViewChild,
+  effect,
+  input,
+  viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -15,7 +16,6 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
 import {
-  ReplaySubject,
   combineLatest,
   filter,
   from,
@@ -47,13 +47,12 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
         MatSortModule,
     ],
     templateUrl: './energy-cost-history.component.html',
-    styleUrl: './energy-cost-history.component.scss'
+    styleUrl: './energy-cost-history.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EnergyCostHistoryComponent implements AfterViewInit, OnDestroy {
-  @Input() public title?: string;
-  @Input() public set command(value: string) {
-    this.commandSubject.next(value);
-  }
+export class EnergyCostHistoryComponent implements OnDestroy {
+  public title = input<string>();
+  public command = input.required<string>();
 
   public readonly startDateControl: FormControl<Date | null>;
   public readonly endDateControl: FormControl<Date | null>;
@@ -61,9 +60,7 @@ export class EnergyCostHistoryComponent implements AfterViewInit, OnDestroy {
   public readonly displayedColumns = ['date', 'costPence'];
   public readonly dataSource: any = new MatTableDataSource([]);
 
-  private readonly commandSubject = new ReplaySubject<string>(1);
-
-  @ViewChild(MatSort) public sort?: MatSort;
+  public sort = viewChild(MatSort);
 
   public constructor(
     private readonly formControlService: FormControlService,
@@ -76,6 +73,13 @@ export class EnergyCostHistoryComponent implements AfterViewInit, OnDestroy {
       this.dateService.startOfToday(),
     );
 
+    effect(() => {
+      const sort = this.sort();
+      if (sort) {
+        this.dataSource.sort = sort;
+      }
+    });
+
     this.formControlService
       .getDateRange()
       .pipe(take(1))
@@ -85,7 +89,7 @@ export class EnergyCostHistoryComponent implements AfterViewInit, OnDestroy {
       });
 
     combineLatest([
-      this.commandSubject.asObservable(),
+      toObservable(this.command),
       getValueStream(this.startDateControl),
       getValueStream(this.endDateControl),
     ])
@@ -114,10 +118,6 @@ export class EnergyCostHistoryComponent implements AfterViewInit, OnDestroy {
       .subscribe((data) => {
         this.dataSource.data = data;
       });
-  }
-
-  public ngAfterViewInit(): void {
-    this.dataSource.sort = this.sort;
   }
 
   public ngOnDestroy(): void {

@@ -3,12 +3,12 @@
   <div
     class="flex flex-col sm:flex-row gap-4 flex-1 items-stretch overflow-hidden"
   >
-    @if (standingChargesDataSource) {
+    @if (standingChargesDataSource()) {
       <div class="flex-1 overflow-auto">
         <div class="w-full xl:w-1/2">
           <table
             mat-table
-            [dataSource]="standingChargesDataSource"
+            [dataSource]="standingChargesDataSource()!"
             matSort
             #standingChargesSort="matSort"
           >
@@ -51,12 +51,12 @@
       </div>
     }
 
-    @if (unitPricesDataSource) {
+    @if (unitPricesDataSource()) {
       <div class="flex-1 overflow-auto">
         <div class="w-full xl:w-1/2">
           <table
             mat-table
-            [dataSource]="unitPricesDataSource"
+            [dataSource]="unitPricesDataSource()!"
             matSort
             #unitPricesSort="matSort"
           >

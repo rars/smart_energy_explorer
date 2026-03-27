@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, viewChild } from '@angular/core';
 import {
   FormBuilder,
   FormsModule,
@@ -47,9 +47,10 @@ import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-gui
       ]),
     ]),
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WelcomeComponent {
-  @ViewChild('stepper') public stepper?: MatStepper;
+  public stepper = viewChild<MatStepper>('stepper');
 
   protected showElement = false;
   protected active$: Observable<boolean>;
@@ -128,7 +129,7 @@ export class WelcomeComponent {
   }
 
   public complete(): void {
-    this.stepper?.reset();
+    this.stepper()?.reset();
     this.apiKeyService.closeWelcomeScreen();
   }
 }

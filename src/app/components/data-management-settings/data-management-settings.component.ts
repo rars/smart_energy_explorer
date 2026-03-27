@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
@@ -11,6 +11,7 @@ import { confirm } from '@tauri-apps/plugin-dialog';
   imports: [MatButtonModule, MatIconModule, RouterLink],
   templateUrl: './data-management-settings.component.html',
   styleUrl: './data-management-settings.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DataManagementSettingsComponent {
   public async clearAllData(): Promise<void> {

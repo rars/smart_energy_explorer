@@ -1,6 +1,6 @@
 import { parseISO } from 'date-fns';
 
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -50,15 +50,16 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
   ],
   templateUrl: './gas-consumption-chart.component.html',
   styleUrl: './gas-consumption-chart.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GasConsumptionChartComponent implements OnInit, OnDestroy {
   public readonly startDateControl: FormControl<Date | null>;
   public readonly endDateControl: FormControl<Date | null>;
   public readonly aggregationControl = new FormControl<Aggregation>('raw');
 
-  public values?: any[];
-  public chartConfiguration: any;
-  public loading = false;
+  public values = signal<any[] | undefined>(undefined);
+  public chartConfiguration = signal<any>(undefined);
+  public loading = signal(false);
 
   public constructor(
     private readonly dateService: DateService,
@@ -99,7 +100,7 @@ export class GasConsumptionChartComponent implements OnInit, OnDestroy {
           aggregation,
         ]),
         switchMap(([startDate, endDate, aggregation]) => {
-          this.loading = true;
+          this.loading.set(true);
 
           let data: Observable<
             { timestamp: string; energyConsumptionKwh: number }[]
@@ -163,8 +164,8 @@ export class GasConsumptionChartComponent implements OnInit, OnDestroy {
         takeUntilDestroyed(),
       )
       .subscribe(([values, aggregation]) => {
-        this.loading = false;
-        this.values = values;
+        this.loading.set(false);
+        this.values.set(values);
 
         const unit =
           aggregation === 'raw'
@@ -173,7 +174,7 @@ export class GasConsumptionChartComponent implements OnInit, OnDestroy {
               ? 'day'
               : 'month';
 
-        this.chartConfiguration = {
+        this.chartConfiguration.set({
           type: 'bar',
           data: {
             datasets: [
@@ -212,7 +213,7 @@ export class GasConsumptionChartComponent implements OnInit, OnDestroy {
               },
             },
           },
-        };
+        });
       });
   }
 
@@ -259,8 +260,9 @@ export class GasConsumptionChartComponent implements OnInit, OnDestroy {
   }
 
   public exportAsCsv(): void {
-    if (this.values) {
-      this.csvExportService.exportToCSV(this.values as any[], 'data.csv');
+    const values = this.values();
+    if (values) {
+      this.csvExportService.exportToCSV(values, 'data.csv');
     }
   }
 

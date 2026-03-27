@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -24,6 +24,7 @@ import { ThemeService } from '../../services/theme/theme.service';
   ],
   templateUrl: './navigation-bar.component.html',
   styleUrl: './navigation-bar.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavigationBarComponent implements OnDestroy {
   protected electricityPower$: Observable<string>;

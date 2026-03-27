@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -12,17 +12,18 @@ import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-gui
     selector: 'app-about',
     imports: [MatButtonModule],
     templateUrl: './about.component.html',
-    styleUrl: './about.component.scss'
+    styleUrl: './about.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AboutComponent {
-  protected version: string = '';
+  protected version = signal<string>('');
 
   public constructor(
     protected readonly shellService: ShellService,
     private readonly dialog: MatDialog,
   ) {
     invoke<string>('get_app_version', {}).then((version) => {
-      this.version = version;
+      this.version.set(version);
     });
   }
 

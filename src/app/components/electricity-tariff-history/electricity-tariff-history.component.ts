@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, signal, viewChild } from '@angular/core';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 
@@ -22,6 +22,7 @@ export interface UnitPrice {
   imports: [CommonModule, MatTableModule, MatSortModule],
   templateUrl: './electricity-tariff-history.component.html',
   styleUrl: './electricity-tariff-history.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ElectricityTariffHistoryComponent implements OnInit {
   public readonly displayedStandingChargeColumns = [
@@ -33,19 +34,28 @@ export class ElectricityTariffHistoryComponent implements OnInit {
     'unitPricePence',
   ];
 
-  public standingChargesDataSource?: MatTableDataSource<StandingCharge> =
-    undefined;
-  public unitPricesDataSource?: MatTableDataSource<UnitPrice> = undefined;
+  public standingChargesDataSource = signal<MatTableDataSource<StandingCharge> | undefined>(undefined);
+  public unitPricesDataSource = signal<MatTableDataSource<UnitPrice> | undefined>(undefined);
 
-  @ViewChild('standingChargesSort') set standingChargesSort(sort: MatSort) {
-    if (this.standingChargesDataSource) {
-      this.standingChargesDataSource.sort = sort;
-    }
-  }
-  @ViewChild('unitPricesSort') set unitPricesSort(sort: MatSort) {
-    if (this.unitPricesDataSource) {
-      this.unitPricesDataSource.sort = sort;
-    }
+  public standingChargesSort = viewChild<MatSort>('standingChargesSort');
+  public unitPricesSort = viewChild<MatSort>('unitPricesSort');
+
+  public constructor() {
+    effect(() => {
+      const sort = this.standingChargesSort();
+      const ds = this.standingChargesDataSource();
+      if (ds && sort) {
+        ds.sort = sort;
+      }
+    });
+
+    effect(() => {
+      const sort = this.unitPricesSort();
+      const ds = this.unitPricesDataSource();
+      if (ds && sort) {
+        ds.sort = sort;
+      }
+    });
   }
 
   public ngOnInit(): void {
@@ -55,22 +65,26 @@ export class ElectricityTariffHistoryComponent implements OnInit {
         unitPrices: { priceEffectiveTime: string; unitPricePence: number }[];
       }>('get_electricity_tariff_history', {}),
     ).subscribe((data) => {
-      this.standingChargesDataSource = new MatTableDataSource<StandingCharge>(
-        data?.standingCharges?.map((x) => {
-          return {
-            startDate: new Date(x.startDate),
-            standingChargePence: x.standingChargePence,
-          };
-        }) ?? [],
+      this.standingChargesDataSource.set(
+        new MatTableDataSource<StandingCharge>(
+          data?.standingCharges?.map((x) => {
+            return {
+              startDate: new Date(x.startDate),
+              standingChargePence: x.standingChargePence,
+            };
+          }) ?? [],
+        )
       );
 
-      this.unitPricesDataSource = new MatTableDataSource<UnitPrice>(
-        data?.unitPrices?.map((x) => {
-          return {
-            priceEffectiveTime: new Date(x.priceEffectiveTime),
-            unitPricePence: x.unitPricePence,
-          };
-        }) ?? [],
+      this.unitPricesDataSource.set(
+        new MatTableDataSource<UnitPrice>(
+          data?.unitPrices?.map((x) => {
+            return {
+              priceEffectiveTime: new Date(x.priceEffectiveTime),
+              unitPricePence: x.unitPricePence,
+            };
+          }) ?? [],
+        )
       );
     });
   }
