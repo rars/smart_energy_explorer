@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 
@@ -8,7 +8,8 @@ import { LicenseComponent } from '../license/license.component';
     selector: 'app-license-dialog',
     imports: [LicenseComponent, MatDialogModule, MatButtonModule],
     templateUrl: './license-dialog.component.html',
-    styleUrl: './license-dialog.component.scss'
+    styleUrl: './license-dialog.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LicenseDialogComponent {
   public readonly isReadonly: boolean;

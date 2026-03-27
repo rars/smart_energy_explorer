@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
     selector: 'app-usage-guidance',
     imports: [],
     templateUrl: './usage-guidance.component.html',
-    styleUrl: './usage-guidance.component.scss'
+    styleUrl: './usage-guidance.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsageGuidanceComponent {}

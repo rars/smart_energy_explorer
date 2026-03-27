@@ -1,5 +1,4 @@
-
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
@@ -28,6 +27,7 @@ import { MqttService } from '../../services/mqtt/mqtt.service';
 ],
   templateUrl: './mqtt-settings.component.html',
   styleUrl: './mqtt-settings.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MqttSettingsComponent {
   public form: FormGroup;

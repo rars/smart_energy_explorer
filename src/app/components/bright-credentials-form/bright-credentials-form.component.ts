@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
@@ -22,6 +22,7 @@ import { ApiKeyService } from '../../services/api-key/api-key.service';
   ],
   templateUrl: './bright-credentials-form.component.html',
   styleUrl: './bright-credentials-form.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BrightCredentialsFormComponent {
   public readonly glowmarktCredentialsForm: FormGroup;

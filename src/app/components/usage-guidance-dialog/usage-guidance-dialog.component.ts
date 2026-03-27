@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 
@@ -8,7 +8,8 @@ import { UsageGuidanceComponent } from '../usage-guidance/usage-guidance.compone
     selector: 'app-usage-guidance-dialog',
     imports: [UsageGuidanceComponent, MatDialogModule, MatButtonModule],
     templateUrl: './usage-guidance-dialog.component.html',
-    styleUrl: './usage-guidance-dialog.component.scss'
+    styleUrl: './usage-guidance-dialog.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsageGuidanceDialogComponent {
   public readonly isReadonly: boolean;

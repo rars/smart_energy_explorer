@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { ShellService } from '../../services/shell/shell.service';
 import { ThirdPartyLicensingComponent } from '../third-party-licensing/third-party-licensing.component';
@@ -9,7 +9,8 @@ import { ThirdPartyLicensingComponent } from '../third-party-licensing/third-par
     selector: 'app-license',
     imports: [ThirdPartyLicensingComponent, CommonModule],
     templateUrl: './license.component.html',
-    styleUrl: './license.component.scss'
+    styleUrl: './license.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LicenseComponent {
   private readonly httpClient = inject(HttpClient);
