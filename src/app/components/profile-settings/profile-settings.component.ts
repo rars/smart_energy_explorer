@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  signal,
+} from '@angular/core';
+import {
+  AbstractControl,
   FormArray,
   FormBuilder,
   FormGroup,
@@ -47,7 +53,10 @@ export class ProfileSettingsComponent
   implements OnInit, CanComponentDeactivate
 {
   public form: FormGroup;
-  public data = signal<any[]>([]);
+  public readonly data = signal<any[]>([]);
+  public readonly profileControls = signal<AbstractControl<any, any, any>[]>(
+    [],
+  );
 
   public constructor(
     private readonly dateService: DateService,
@@ -76,6 +85,8 @@ export class ProfileSettingsComponent
           }),
         );
       }
+
+      this.profileControls.set(this.profiles.controls);
     });
   }
 
