@@ -3,6 +3,7 @@ import { enGB } from 'date-fns/locale';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 import {
   ApplicationConfig,
@@ -21,7 +22,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideRouter(routes, withComponentInputBinding()),
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(withXhr(), withInterceptorsFromDi()),
     provideAnimationsAsync(),
     { provide: MAT_DATE_LOCALE, useValue: enGB },
     provideDateFnsAdapter(),
