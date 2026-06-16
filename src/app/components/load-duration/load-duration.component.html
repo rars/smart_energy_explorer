@@ -1,0 +1,93 @@
+<div class="h-full w-full flex flex-col">
+  <div class="flex flex-row gap-6 p-4 h-full">
+    <div class="flex flex-col gap-4 w-80 shrink-0">
+      <div class="mat-typography">
+        <h2>Electricity usage profile</h2>
+      </div>
+      <div class="form-field-container">
+        <mat-form-field>
+          <mat-label> Date range </mat-label>
+          <mat-date-range-input [rangePicker]="picker">
+            <input
+              matStartDate
+              placeholder="Start date"
+              [formControl]="startDateControl"
+            />
+            <input
+              matEndDate
+              placeholder="End date"
+              [formControl]="endDateControl"
+            />
+          </mat-date-range-input>
+          <mat-hint>DD/MM/YYYY - DD/MM/YYYY</mat-hint>
+          <mat-datepicker-toggle
+            matIconSuffix
+            [for]="picker"
+          ></mat-datepicker-toggle>
+          <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
+      </div>
+
+      @if (loading()) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      } @else {
+        <mat-card>
+          <mat-card-header>
+            <mat-card-subtitle>
+              Average baseload power consumption
+            </mat-card-subtitle>
+            <mat-card-title>
+              {{ baseLoadEstimate() | number: '1.0-0' }} W
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="text-xs text-justify">
+              Estimated from 30-min average power consumption intervals measured
+              during the selected period. 95% of intervals consumed at least
+              this amount of power.
+            </p>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card>
+          <mat-card-header>
+            <mat-card-subtitle>
+              Projected annual baseload consumption
+            </mat-card-subtitle>
+            <mat-card-title>
+              {{ annualBaseloadCostEstimate() | currency: 'GBP' }}
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="pt-2">
+            <div
+              class="flex justify-between text-sm border-t border-slate-700 pt-3"
+            >
+              <span>Annual Energy:</span>
+              <span class="font-mono"
+                >{{
+                  annualBaseloadConsumptionEstimate() | number: '1.0-0'
+                }}
+                kWh</span
+              >
+            </div>
+            <p class="text-xs">
+              The total amount over one year this baseload would consume. Cost
+              estimated at a fixed cost of 25p/kWh.
+            </p>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+
+    <div class="grow">
+      @if (loading()) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      } @else {
+        <app-chart
+          [chartConfiguration]="chartConfiguration()"
+          class="block h-full w-full"
+        ></app-chart>
+      }
+    </div>
+  </div>
+</div>

@@ -8,6 +8,7 @@ import { ElectricityTariffHistoryComponent } from './components/electricity-tari
 import { EnergyCostHistoryComponent } from './components/energy-cost-history/energy-cost-history.component';
 import { GasConsumptionChartComponent } from './components/gas-consumption-chart/gas-consumption-chart.component';
 import { GasTariffHistoryComponent } from './components/gas-tariff-history/gas-tariff-history.component';
+import { LoadDurationComponent } from './components/load-duration/load-duration.component';
 import { MqttSettingsComponent } from './components/mqtt-settings/mqtt-settings.component';
 import { ProfileSettingsComponent } from './components/profile-settings/profile-settings.component';
 import { SettingsComponent } from './components/settings/settings.component';
@@ -19,6 +20,7 @@ export const routes: Routes = [
   { path: 'welcome', component: WelcomeComponent },
   { path: 'electricity', component: ElectricityConsumptionChartComponent },
   { path: 'gas', component: GasConsumptionChartComponent },
+  { path: 'electricity/usage-profile', component: LoadDurationComponent },
   { path: 'electricity/tariff', component: ElectricityTariffHistoryComponent },
   {
     path: 'electricity/costs',
