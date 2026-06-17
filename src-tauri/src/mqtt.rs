@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{pin::Pin, time::Duration};
 
 use log::{error, info};
 use paho_mqtt::{self as mqtt, AsyncClient, AsyncReceiver, DisconnectOptionsBuilder, Message};
@@ -161,7 +161,8 @@ pub async fn start_mqtt_listener(
     let client_id = format!("smart-energy-explorer-{}", uuid_string);
     info!("Generated Client ID: {}", client_id);
 
-    let mut client_and_stream: Option<(AsyncClient, AsyncReceiver<Option<Message>>)> = None;
+    let mut client_and_stream: Option<(AsyncClient, Pin<Box<AsyncReceiver<Option<Message>>>>)> =
+        None;
 
     loop {
         let (client, stream) = match client_and_stream.as_mut() {
@@ -178,7 +179,7 @@ pub async fn start_mqtt_listener(
                         info!("MQTT settings are complete but client is not yet created. Creating MQTT client...");
                         match create_mqtt_client(client_id.clone(), &settings).await {
                             Ok(mut client) => {
-                                let stream = client.get_stream(None);
+                                let stream = Box::pin(client.get_stream(None));
                                 info!("MQTT client and stream created");
                                 client_and_stream = Some((client, stream));
                                 continue;
