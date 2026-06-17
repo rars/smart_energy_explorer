@@ -100,15 +100,20 @@ pub async fn reset(app_handle: AppHandle, app_state: State<'_, AppState>) -> Res
             .map_err(|e| ApiError::Custom(format!("{}", e)))?;
     }
 
-    let credentials = [
-        "glowmarkt_credentials",
-        "glowmarkt_username",
-        "glowmarkt_password",
-    ];
+    tokio::task::spawn_blocking(|| {
+        let credentials = [
+            "glowmarkt_credentials",
+            "glowmarkt_username",
+            "glowmarkt_password",
+        ];
 
-    for c in credentials {
-        delete_credential(c)?;
-    }
+        for c in credentials {
+            delete_credential(c)?;
+        }
+
+        Ok::<(), ApiError>(())
+    })
+    .await??;
 
     reset_mqtt_settings(&app_handle).await?;
 

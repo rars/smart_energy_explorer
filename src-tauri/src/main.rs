@@ -23,8 +23,8 @@ use commands::mqtt::*;
 use commands::profiles::*;
 
 use crate::mqtt::start_mqtt_listener;
-use crate::utils::get_mqtt_settings_opt;
 use crate::utils::MqttSettings;
+use crate::utils::{get_mqtt_settings_opt, MqttAppSettings};
 
 mod app_settings;
 mod clients;
@@ -70,6 +70,8 @@ pub enum AppError {
     CustomError(String),
     #[error("Mutex '{name}' is poisoned")]
     MutexPoisonedError { name: String },
+    #[error("Background task execution failed: {0}")]
+    JoinError(#[from] tokio::task::JoinError),
 }
 
 fn set_close_handlers(window: &Window) {
@@ -82,7 +84,35 @@ fn set_close_handlers(window: &Window) {
     ()
 }
 
+fn set_default_store() -> keyring_core::Result<()> {
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    {
+        use apple_native_keyring_store::keychain::Store;
+        keyring_core::set_default_store(Store::new()?);
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        use windows_native_keyring_store::Store;
+        keyring_core::set_default_store(Store::new()?);
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        use zbus_secret_service_keyring_store::Store;
+        keyring_core::set_default_store(Store::new()?);
+    }
+
+    Ok(())
+}
+
 fn main() {
+    set_default_store()
+        .map_err(|e| {
+            error!("Encountered error setting default keyring store: {}", e);
+        })
+        .expect("Failed to set default keyring store");
+
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
@@ -109,7 +139,12 @@ fn main() {
 
             let app_settings = AppSettings::new(store);
 
-            let mqtt_settings = get_mqtt_settings_opt(&app_settings)?;
+            let mqtt_app_settings = MqttAppSettings::from_app_settings(&app_settings)?;
+
+            let mqtt_settings = tauri::async_runtime::block_on(async {
+                get_mqtt_settings_opt(mqtt_app_settings).await
+            })
+            .expect("Failed to get MQTT settings");
 
             let (tx, rx) = tokio::sync::mpsc::channel::<MqttMessage>(1);
 
