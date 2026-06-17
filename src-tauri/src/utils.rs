@@ -221,6 +221,7 @@ pub fn save_mqtt_credentials(credentials: &MqttCredentials) -> Result<(), AppErr
 pub struct MqttSettings {
     pub hostname: String,
     pub topic: String,
+    pub gas_topic: String,
     pub username: String,
     pub password: String,
 }
@@ -228,7 +229,7 @@ pub struct MqttSettings {
 impl MqttSettings {
     pub fn is_complete(&self) -> bool {
         self.hostname.len() > 0
-            && self.topic.len() > 0
+            && (self.topic.len() > 0 || self.gas_topic.len() > 0)
             && self.username.len() > 0
             && self.password.len() > 0
     }
@@ -243,12 +244,17 @@ pub fn get_mqtt_settings_opt(app_settings: &AppSettings) -> Result<Option<MqttSe
         .get::<String>("mqttTopic")
         .map_err(|e| AppError::CustomError(e.to_string()))?;
 
+    let gas_topic = app_settings
+        .get::<String>("mqttGasTopic")
+        .map_err(|e| AppError::CustomError(e.to_string()))?;
+
     if let Some(credentials) =
         get_mqtt_credentials_opt().map_err(|e| AppError::CustomError(e.to_string()))?
     {
         return Ok(Some(MqttSettings {
             hostname: hostname.unwrap_or("".to_string()),
             topic: topic.unwrap_or("".to_string()),
+            gas_topic: gas_topic.unwrap_or("".to_string()),
             username: credentials.username,
             password: credentials.password,
         }));
@@ -261,6 +267,7 @@ pub fn get_mqtt_settings_opt(app_settings: &AppSettings) -> Result<Option<MqttSe
     Ok(Some(MqttSettings {
         hostname: hostname.unwrap_or("".to_string()),
         topic: topic.unwrap_or("".to_string()),
+        gas_topic: gas_topic.unwrap_or("".to_string()),
         username: "".to_string(),
         password: "".to_string(),
     }))
