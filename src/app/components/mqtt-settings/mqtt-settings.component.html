@@ -8,78 +8,43 @@
       <h3>MQTT Settings</h3>
     </header>
 
-    <form [formGroup]="form" (ngSubmit)="update()">
+    <form [formRoot]="form">
       <div class="flex flex-col gap-4">
         <mat-form-field appearance="outline">
           <mat-label>Hostname</mat-label>
-          <input matInput formControlName="hostname" required />
-          @if (form.get('h  ostname')?.hasError('required')) {
-            <mat-error> Hostname is required </mat-error>
-          }
-          @if (form.get('topic')?.hasError('leadingOrTrailingWhitespace')) {
-            <mat-error>
-              Hostname must not contain leading or trailing whitespace
-            </mat-error>
-          }
+          <input matInput [formField]="form.hostname" />
+          <mat-error>{{ form.hostname().errors().at(0)?.message }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Electricity Sensor Topic</mat-label>
-          <input matInput formControlName="topic" required />
-          @if (form.get('topic')?.hasError('required')) {
-            <mat-error> Topic is required </mat-error>
-          }
-          @if (form.get('topic')?.hasError('leadingOrTrailingWhitespace')) {
-            <mat-error>
-              Topic must not contain leading or trailing whitespace
-            </mat-error>
-          }
+          <input matInput [formField]="form.topic" />
+          <mat-error>{{ form.topic().errors().at(0)?.message }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Gas Sensor Topic</mat-label>
-          <input matInput formControlName="gasTopic" required />
-          @if (form.get('gasTopic')?.hasError('required')) {
-            <mat-error> Topic is required </mat-error>
-          }
-          @if (form.get('gasTopic')?.hasError('leadingOrTrailingWhitespace')) {
-            <mat-error>
-              Topic must not contain leading or trailing whitespace
-            </mat-error>
-          }
+          <input matInput [formField]="form.gasTopic" />
+          <mat-error>{{ form.gasTopic().errors().at(0)?.message }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Username</mat-label>
-          <input matInput formControlName="username" required />
-          @if (form.get('username')?.hasError('required')) {
-            <mat-error> Username is required </mat-error>
-          }
-          @if (form.get('username')?.hasError('leadingOrTrailingWhitespace')) {
-            <mat-error>
-              Username must not contain leading or trailing whitespace
-            </mat-error>
-          }
+          <input matInput [formField]="form.username" />
+          <mat-error>{{ form.username().errors().at(0)?.message }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Password</mat-label>
-          <input matInput type="password" formControlName="password" required />
-          @if (form.get('password')?.hasError('required')) {
-            <mat-error> Password is required </mat-error>
-          }
-          @if (form.get('password')?.hasError('leadingOrTrailingWhitespace')) {
-            <mat-error>
-              Password must not contain leading or trailing whitespace
-            </mat-error>
-          }
+          <input matInput type="password" [formField]="form.password" />
+          <mat-error>{{ form.password().errors().at(0)?.message }}</mat-error>
         </mat-form-field>
       </div>
       <div class="mt-4 space-x-4">
         <button
           mat-raised-button
           type="submit"
-          [disabled]="form.invalid || !form.dirty"
+          [disabled]="form().invalid() || !form().dirty()"
         >
           Save Changes
         </button>
