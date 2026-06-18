@@ -4,11 +4,13 @@ import { beforeEach, vi } from 'vitest';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
+
+import { mockLazyStore } from './testing/tauri-plugin-store.mock';
 
 const tauriMocks = vi.hoisted(() => {
   const invoke = vi.fn((command: string) => {
@@ -56,9 +58,9 @@ vi.mock('@tauri-apps/plugin-fs', () => ({
   writeFile: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@tauri-apps/plugin-store', () =>
-  import('./testing/tauri-plugin-store.mock'),
-);
+vi.mock('@tauri-apps/plugin-store', () => ({
+  LazyStore: mockLazyStore,
+}));
 
 vi.mock('@tauri-apps/plugin-shell', () => ({
   open: vi.fn().mockResolvedValue(undefined),

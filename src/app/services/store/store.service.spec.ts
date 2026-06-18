@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TestBed } from '@angular/core/testing';
 
 import {
+  mockLazyStore,
   mockStoreConstructor,
   mockStoreGet,
   mockStoreSave,
@@ -10,6 +11,10 @@ import {
   resetStoreMocks,
 } from '../../../testing/tauri-plugin-store.mock';
 import { StoreService } from './store.service';
+
+vi.mock('@tauri-apps/plugin-store', () => ({
+  LazyStore: mockLazyStore,
+}));
 
 describe('StoreService', () => {
   let service: StoreService;

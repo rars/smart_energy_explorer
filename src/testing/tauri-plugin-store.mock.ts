@@ -5,7 +5,7 @@ export const mockStoreSave = vi.fn().mockResolvedValue(undefined);
 export const mockStoreGet = vi.fn().mockResolvedValue(undefined);
 export const mockStoreConstructor = vi.fn();
 
-export class LazyStore {
+export class mockLazyStore {
   public readonly filename: string;
   public readonly set = mockStoreSet;
   public readonly save = mockStoreSave;

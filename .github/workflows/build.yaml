@@ -7,7 +7,25 @@ on:
     branches: ['main']
 
 jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Run frontend tests
+        run: npx ng test --no-watch
+
   build:
+    needs: test
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -49,9 +67,6 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm ci
-
-      - name: Run frontend tests
-        run: npx ng test --no-watch
 
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli@latest
