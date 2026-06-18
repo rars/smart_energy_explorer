@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { of } from 'rxjs';
+
+import { ThemeService } from '../../services/theme/theme.service';
 import { NavigationBarComponent } from './navigation-bar.component';
 
 describe('NavigationBarComponent', () => {
@@ -8,9 +11,17 @@ describe('NavigationBarComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [NavigationBarComponent]
-    })
-    .compileComponents();
+      imports: [NavigationBarComponent],
+      providers: [
+        {
+          provide: ThemeService,
+          useValue: {
+            isLightMode: () => of(true),
+            toggleTheme: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(NavigationBarComponent);
     component = fixture.componentInstance;

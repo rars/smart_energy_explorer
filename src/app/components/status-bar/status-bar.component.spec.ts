@@ -73,6 +73,7 @@ describe('StatusBarComponent', () => {
       'electricityUpdate',
       expect.any(Function),
     );
+    expect(listen).toHaveBeenCalledWith('gasUpdate', expect.any(Function));
     expect(listen).toHaveBeenCalledWith(
       'appStatusUpdate',
       expect.any(Function),
@@ -162,6 +163,6 @@ describe('StatusBarComponent', () => {
 
     component.ngOnDestroy();
 
-    expect(unlistenSpy).toHaveBeenCalledTimes(2);
+    expect(unlistenSpy).toHaveBeenCalledTimes(3);
   });
 });

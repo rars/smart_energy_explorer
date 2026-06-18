@@ -1,36 +1,21 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { TestBed } from '@angular/core/testing';
 
+import {
+  mockStoreConstructor,
+  mockStoreGet,
+  mockStoreSave,
+  mockStoreSet,
+  resetStoreMocks,
+} from '../../../testing/tauri-plugin-store.mock';
 import { StoreService } from './store.service';
-
-const mockset = vi.fn().mockResolvedValue(undefined);
-const mocksave = vi.fn().mockResolvedValue(undefined);
-const mockget = vi.fn().mockResolvedValue('mocked_value');
-
-const mockConstructor = vi.fn();
-
-vi.mock('@tauri-apps/plugin-store', () => {
-  return {
-    LazyStore: class {
-      filename: string;
-      set = mockset;
-      save = mocksave;
-      get = mockget;
-
-      constructor(filename: string) {
-        this.filename = filename;
-        mockConstructor(filename);
-      }
-    },
-  };
-});
 
 describe('StoreService', () => {
   let service: StoreService;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetStoreMocks();
 
     TestBed.configureTestingModule({
       providers: [StoreService],
@@ -42,7 +27,7 @@ describe('StoreService', () => {
   it('should be created and initialize LazyStore with "app_settings.bin"', () => {
     expect(service).toBeTruthy();
 
-    expect(mockConstructor).toHaveBeenCalledWith('app_settings.bin');
+    expect(mockStoreConstructor).toHaveBeenCalledWith('app_settings.bin');
   });
 
   describe('safe_set', () => {
@@ -52,8 +37,8 @@ describe('StoreService', () => {
 
       await service.safe_set(key, value);
 
-      expect(mockset).toHaveBeenCalledWith(key, value);
-      expect(mocksave).toHaveBeenCalled();
+      expect(mockStoreSet).toHaveBeenCalledWith(key, value);
+      expect(mockStoreSave).toHaveBeenCalled();
     });
   });
 
@@ -61,11 +46,11 @@ describe('StoreService', () => {
     it('should retrieve a value from the store by its key', async () => {
       const key = 'user_id';
 
-      mockget.mockResolvedValue(12345);
+      mockStoreGet.mockResolvedValue(12345);
 
       const result = await service.get(key);
 
-      expect(mockget).toHaveBeenCalledWith(key);
+      expect(mockStoreGet).toHaveBeenCalledWith(key);
       expect(result).toBe(12345);
     });
   });
