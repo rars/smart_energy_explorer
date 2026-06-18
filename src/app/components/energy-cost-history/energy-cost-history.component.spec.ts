@@ -12,6 +12,7 @@ describe('ElectricityCostHistoryComponent', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(EnergyCostHistoryComponent);
+    fixture.componentRef.setInput('command', 'get_daily_electricity_cost');
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

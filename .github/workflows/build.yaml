@@ -7,7 +7,25 @@ on:
     branches: ['main']
 
 jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Run frontend tests
+        run: npx ng test --no-watch
+
   build:
+    needs: test
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -33,6 +51,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
+          cache: 'npm'
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -53,7 +72,7 @@ jobs:
         run: npm install -g @tauri-apps/cli@latest
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0.6
+        uses: tauri-apps/tauri-action@v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
