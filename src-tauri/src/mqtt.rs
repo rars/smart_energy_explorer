@@ -199,14 +199,25 @@ pub async fn start_mqtt_listener(
                     info!("MQTT settings are not set")
                 }
 
-                // Sleep to avoid tight loop
-                tokio::time::sleep(Duration::from_secs(10)).await;
+                // Sleep to avoid tight loop, but settings updates should be handled immediately
+                tokio::select! {
+                  Some(app_message) = mqtt_message_receiver.recv() => {
+                      match app_message {
+                          MqttMessage::SettingsUpdated => {
+                              info!("MQTT settings updated");
+                          }
+                      }
+                  },
+                  _ = tokio::time::sleep(Duration::from_secs(10)) => {}
+                }
+
                 continue;
             }
         };
 
         if !client.is_connected() {
             info!("The MQTT client is no longer connected. Resetting client and stream.");
+            mqtt_client_state = MqttClientState::Disconnected;
             continue;
         }
 
