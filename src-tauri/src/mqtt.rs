@@ -151,6 +151,11 @@ async fn create_mqtt_client(
     Ok(client)
 }
 
+enum MqttClientState {
+    Disconnected,
+    Connected(AsyncClient, Pin<Box<AsyncReceiver<Option<Message>>>>),
+}
+
 pub async fn start_mqtt_listener(
     app_handle: &AppHandle,
     mut mqtt_message_receiver: mpsc::Receiver<MqttMessage>,
@@ -161,13 +166,12 @@ pub async fn start_mqtt_listener(
     let client_id = format!("smart-energy-explorer-{}", uuid_string);
     info!("Generated Client ID: {}", client_id);
 
-    let mut client_and_stream: Option<(AsyncClient, Pin<Box<AsyncReceiver<Option<Message>>>>)> =
-        None;
+    let mut mqtt_client_state = MqttClientState::Disconnected;
 
     loop {
-        let (client, stream) = match client_and_stream.as_mut() {
-            Some((c, s)) => (c, s),
-            None => {
+        let (client, stream) = match &mut mqtt_client_state {
+            MqttClientState::Connected(c, s) => (c, s),
+            MqttClientState::Disconnected => {
                 let settings = {
                     let app_state = app_handle.state::<AppState>();
                     let settings = app_state.mqtt_settings.lock().unwrap();
@@ -181,7 +185,7 @@ pub async fn start_mqtt_listener(
                             Ok(mut client) => {
                                 let stream = Box::pin(client.get_stream(None));
                                 info!("MQTT client and stream created");
-                                client_and_stream = Some((client, stream));
+                                mqtt_client_state = MqttClientState::Connected(client, stream);
                                 continue;
                             }
                             Err(e) => {
@@ -195,15 +199,25 @@ pub async fn start_mqtt_listener(
                     info!("MQTT settings are not set")
                 }
 
-                // Sleep to avoid tight loop
-                tokio::time::sleep(Duration::from_secs(10)).await;
+                // Sleep to avoid tight loop, but settings updates should be handled immediately
+                tokio::select! {
+                  Some(app_message) = mqtt_message_receiver.recv() => {
+                      match app_message {
+                          MqttMessage::SettingsUpdated => {
+                              info!("MQTT settings updated");
+                          }
+                      }
+                  },
+                  _ = tokio::time::sleep(Duration::from_secs(10)) => {}
+                }
+
                 continue;
             }
         };
 
         if !client.is_connected() {
             info!("The MQTT client is no longer connected. Resetting client and stream.");
-            client_and_stream = None;
+            mqtt_client_state = MqttClientState::Disconnected;
             continue;
         }
 
@@ -211,9 +225,14 @@ pub async fn start_mqtt_listener(
             Some(app_message) = mqtt_message_receiver.recv() => {
                 match app_message {
                     MqttMessage::SettingsUpdated => {
-                        info!("MQTT settings updated, recreating client");
-                        disconnect_client(client).await;
-                        client_and_stream = None;
+                        info!("MQTT settings updated");
+                        if let MqttClientState::Connected(client, _) = &mqtt_client_state {
+                          info!("Disconnecting existing MQTT client due to settings update...");
+                          if client.is_connected() {
+                            disconnect_client(client).await;
+                          }
+                        }
+                        mqtt_client_state = MqttClientState::Disconnected;
                     }
                 }
             },
@@ -249,9 +268,9 @@ pub async fn start_mqtt_listener(
                     None => {
                         info!("Notified that the MQTT client connection has been lost. Resetting client and stream.");
                         if client.is_connected() {
-                            disconnect_client(client).await;
+                            disconnect_client(&client).await;
                         }
-                        client_and_stream = None;
+                        mqtt_client_state = MqttClientState::Disconnected;
                     },
                 }
             },
