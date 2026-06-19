@@ -54,17 +54,11 @@ pub async fn store_mqtt_settings(
                     name: "app_settings".into(),
                 })?;
 
-        app_settings
-            .safe_set("mqttHostname", hostname.trim().to_string())
-            .map_err(|e| ApiError::Custom(format!("{}", e)))?;
+        app_settings.safe_set("mqttHostname", hostname.trim().to_string())?;
 
-        app_settings
-            .safe_set("mqttTopic", topic.trim().to_string())
-            .map_err(|e| ApiError::Custom(format!("{}", e)))?;
+        app_settings.safe_set("mqttTopic", topic.trim().to_string())?;
 
-        app_settings
-            .safe_set("mqttGasTopic", gas_topic.trim().to_string())
-            .map_err(|e| ApiError::Custom(format!("{}", e)))?;
+        app_settings.safe_set("mqttGasTopic", gas_topic.trim().to_string())?;
 
         MqttAppSettings::from_app_settings(&app_settings)?
     };
