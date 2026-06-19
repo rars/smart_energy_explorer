@@ -107,6 +107,12 @@ fn set_default_store() -> keyring_core::Result<()> {
 }
 
 fn main() {
+    // Fix for Linux systems with WebKitGTK 2.38+ where DMA-BUF renderer is enabled by default, which can cause issues with rendering (showing a jagged distorted window) in some environments.
+    #[cfg(target_os = "linux")]
+    {
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
+
     set_default_store()
         .map_err(|e| {
             error!("Encountered error setting default keyring store: {}", e);
