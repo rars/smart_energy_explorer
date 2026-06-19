@@ -22,6 +22,8 @@ pub enum ApiError {
     RepositoryError(#[from] RepositoryError),
     #[error("Failed interaction with Glowmarkt API: {0}")]
     GlowmarktApiError(#[from] GlowmarktDataProviderError),
+    #[error("Background task execution failed: {0}")]
+    JoinError(#[from] tokio::task::JoinError),
     #[error("Mutex '{name}' is poisoned")]
     MutexPoisonedError { name: String },
 }
@@ -41,6 +43,7 @@ impl From<AppError> for ApiError {
             AppError::GlowmarktApiError(e) => ApiError::GlowmarktApiError(e),
             AppError::CustomError(s) => ApiError::Custom(s),
             AppError::MutexPoisonedError { name } => ApiError::MutexPoisonedError { name },
+            AppError::JoinError(e) => ApiError::JoinError(e),
         }
     }
 }

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { Component, OnInit, Signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
@@ -11,21 +12,20 @@ import { StatusBarComponent } from './components/status-bar/status-bar.component
 import { ThemeService } from './services/theme/theme.service';
 
 @Component({
-    selector: 'app-root',
-    imports: [
-        RouterOutlet,
-        CommonModule,
-        NavigationBarComponent,
-        StatusBarComponent,
-        MatIconModule,
-        MatButtonModule,
-    ],
-    templateUrl: './app.component.html',
-    styleUrl: './app.component.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-root',
+  imports: [
+    RouterOutlet,
+    CommonModule,
+    NavigationBarComponent,
+    StatusBarComponent,
+    MatIconModule,
+    MatButtonModule,
+  ],
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
-  public isWelcomeActive$: Observable<boolean>;
+  public isWelcomeActive: Signal<boolean | undefined>;
   public isLightMode$: Observable<boolean>;
 
   public constructor(
@@ -35,10 +35,12 @@ export class AppComponent implements OnInit {
   ) {
     this.matIconRegistry.setDefaultFontSetClass('material-symbols-outlined');
     this.isLightMode$ = this.themeService.isLightMode();
-    this.isWelcomeActive$ = this.router.events.pipe(
-      filter((event) => event instanceof NavigationEnd),
-      map((event: NavigationEnd) => event.urlAfterRedirects === '/welcome'),
-      startWith(true),
+    this.isWelcomeActive = toSignal(
+      this.router.events.pipe(
+        filter((event) => event instanceof NavigationEnd),
+        map((event: NavigationEnd) => event.urlAfterRedirects === '/welcome'),
+        startWith(true),
+      ),
     );
   }
 

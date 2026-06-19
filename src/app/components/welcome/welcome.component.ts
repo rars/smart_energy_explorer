@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, viewChild } from '@angular/core';
+import { Component, inject, signal, viewChild } from '@angular/core';
 import {
   FormBuilder,
   FormsModule,
@@ -47,12 +47,11 @@ import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-gui
       ]),
     ]),
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WelcomeComponent {
   public stepper = viewChild<MatStepper>('stepper');
 
-  protected showElement = false;
+  protected showElement = signal(false);
   protected active$: Observable<boolean>;
   protected isTestingConnection$: Observable<boolean>;
 
@@ -76,7 +75,7 @@ export class WelcomeComponent {
     this.active$ = this.isActiveSubject.asObservable();
     this.isTestingConnection$ = this.isTestingConnectionSubject.asObservable();
 
-    setTimeout(() => (this.showElement = true), 100);
+    setTimeout(() => this.showElement.set(true), 100);
   }
 
   public showUsageGuidance() {

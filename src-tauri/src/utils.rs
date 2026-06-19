@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use chrono::NaiveDate;
 use diesel::SqliteConnection;
-use keyring::Entry;
+use keyring_core::Entry;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -49,7 +49,10 @@ pub fn get_or_create_energy_profile(
 }
 
 pub async fn get_glowmarkt_data_provider() -> Result<Option<GlowmarktDataProvider>, AppError> {
-    if let Some(GlowmarktCredentials { username, password }) = get_glowmarkt_credentials_opt()? {
+    let credentials_result =
+        tokio::task::spawn_blocking(|| get_glowmarkt_credentials_opt()).await?;
+
+    if let Some(GlowmarktCredentials { username, password }) = credentials_result? {
         let data_provider = GlowmarktDataProvider::new(&username, &password)
             .await
             .map_err(|e| AppError::CustomError(e.to_string()))?;
@@ -235,39 +238,58 @@ impl MqttSettings {
     }
 }
 
-pub fn get_mqtt_settings_opt(app_settings: &AppSettings) -> Result<Option<MqttSettings>, AppError> {
-    let hostname = app_settings
-        .get::<String>("mqttHostname")
-        .map_err(|e| AppError::CustomError(e.to_string()))?;
+#[derive(Clone)]
+pub struct MqttAppSettings {
+    pub hostname: Option<String>,
+    pub topic: Option<String>,
+    pub gas_topic: Option<String>,
+}
 
-    let topic = app_settings
-        .get::<String>("mqttTopic")
-        .map_err(|e| AppError::CustomError(e.to_string()))?;
+impl MqttAppSettings {
+    pub fn from_app_settings(app_settings: &AppSettings) -> Result<Self, AppError> {
+        let hostname = app_settings
+            .get::<String>("mqttHostname")
+            .map_err(|e| AppError::CustomError(e.to_string()))?;
 
-    let gas_topic = app_settings
-        .get::<String>("mqttGasTopic")
-        .map_err(|e| AppError::CustomError(e.to_string()))?;
+        let topic = app_settings
+            .get::<String>("mqttTopic")
+            .map_err(|e| AppError::CustomError(e.to_string()))?;
 
-    if let Some(credentials) =
-        get_mqtt_credentials_opt().map_err(|e| AppError::CustomError(e.to_string()))?
-    {
+        let gas_topic = app_settings
+            .get::<String>("mqttGasTopic")
+            .map_err(|e| AppError::CustomError(e.to_string()))?;
+
+        Ok(MqttAppSettings {
+            hostname,
+            topic,
+            gas_topic,
+        })
+    }
+}
+
+pub async fn get_mqtt_settings_opt(
+    mqtt_app_settings: MqttAppSettings,
+) -> Result<Option<MqttSettings>, AppError> {
+    let credentials_result = tokio::task::spawn_blocking(|| get_mqtt_credentials_opt()).await?;
+
+    if let Some(credentials) = credentials_result? {
         return Ok(Some(MqttSettings {
-            hostname: hostname.unwrap_or("".to_string()),
-            topic: topic.unwrap_or("".to_string()),
-            gas_topic: gas_topic.unwrap_or("".to_string()),
+            hostname: mqtt_app_settings.hostname.unwrap_or("".to_string()),
+            topic: mqtt_app_settings.topic.unwrap_or("".to_string()),
+            gas_topic: mqtt_app_settings.gas_topic.unwrap_or("".to_string()),
             username: credentials.username,
             password: credentials.password,
         }));
     }
 
-    if hostname.is_none() && topic.is_none() {
+    if mqtt_app_settings.hostname.is_none() && mqtt_app_settings.topic.is_none() {
         return Ok(None);
     }
 
     Ok(Some(MqttSettings {
-        hostname: hostname.unwrap_or("".to_string()),
-        topic: topic.unwrap_or("".to_string()),
-        gas_topic: gas_topic.unwrap_or("".to_string()),
+        hostname: mqtt_app_settings.hostname.unwrap_or("".to_string()),
+        topic: mqtt_app_settings.topic.unwrap_or("".to_string()),
+        gas_topic: mqtt_app_settings.gas_topic.unwrap_or("".to_string()),
         username: "".to_string(),
         password: "".to_string(),
     }))
@@ -277,7 +299,7 @@ fn get_entry_password(entry: &Entry) -> Result<Option<String>, AppError> {
     match entry.get_password() {
         Ok(password) => Ok(Some(password)),
         Err(e) => match e {
-            keyring::Error::NoEntry => Ok(None),
+            keyring_core::Error::NoEntry => Ok(None),
             _ => Err(AppError::CustomError(e.to_string())),
         },
     }
@@ -305,7 +327,7 @@ pub fn delete_credential(key_name: &str) -> Result<(), AppError> {
 
     match entry.delete_credential() {
         Ok(()) => Ok(()),
-        Err(keyring::Error::NoEntry) => Ok(()),
+        Err(keyring_core::Error::NoEntry) => Ok(()),
         Err(e) => Err(AppError::CustomError(e.to_string())),
     }
 }
@@ -331,11 +353,16 @@ pub async fn reset_mqtt_settings(app_handle: &AppHandle) -> Result<(), AppError>
             .map_err(|e| AppError::CustomError(e.to_string()))?;
     }
 
-    let credentials = ["mqtt_credentials", "mqtt_username", "mqtt_password"];
+    tokio::task::spawn_blocking(|| {
+        let credentials = ["mqtt_credentials", "mqtt_username", "mqtt_password"];
 
-    for c in credentials {
-        delete_credential(c)?;
-    }
+        for c in credentials {
+            delete_credential(c)?;
+        }
+
+        Ok::<(), AppError>(())
+    })
+    .await??;
 
     {
         let mut mqtt_settings =

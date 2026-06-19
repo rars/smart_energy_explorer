@@ -19,7 +19,7 @@ pub async fn store_glowmarkt_credentials(
 ) -> Result<(), ApiError> {
     let credentials = GlowmarktCredentials { username, password };
 
-    save_glowmarkt_credentials(&credentials)?;
+    tokio::task::spawn_blocking(move || save_glowmarkt_credentials(&credentials)).await??;
 
     if let Some(data_provider) = get_glowmarkt_data_provider()
         .await
@@ -40,8 +40,11 @@ pub struct GlowmarktCredentialsResponse {
 }
 
 #[tauri::command]
-pub fn get_glowmarkt_credentials() -> Result<GlowmarktCredentialsResponse, ApiError> {
-    if let Some(credentials) = get_glowmarkt_credentials_opt()? {
+pub async fn get_glowmarkt_credentials() -> Result<GlowmarktCredentialsResponse, ApiError> {
+    let credentials_result =
+        tokio::task::spawn_blocking(|| get_glowmarkt_credentials_opt()).await?;
+
+    if let Some(credentials) = credentials_result? {
         return Ok(GlowmarktCredentialsResponse {
             username: credentials.username,
             password: credentials.password,
