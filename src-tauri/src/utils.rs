@@ -247,17 +247,11 @@ pub struct MqttAppSettings {
 
 impl MqttAppSettings {
     pub fn from_app_settings(app_settings: &AppSettings) -> Result<Self, AppError> {
-        let hostname = app_settings
-            .get::<String>("mqttHostname")
-            .map_err(|e| AppError::CustomError(e.to_string()))?;
+        let hostname = app_settings.get::<String>("mqttHostname")?;
 
-        let topic = app_settings
-            .get::<String>("mqttTopic")
-            .map_err(|e| AppError::CustomError(e.to_string()))?;
+        let topic = app_settings.get::<String>("mqttTopic")?;
 
-        let gas_topic = app_settings
-            .get::<String>("mqttGasTopic")
-            .map_err(|e| AppError::CustomError(e.to_string()))?;
+        let gas_topic = app_settings.get::<String>("mqttGasTopic")?;
 
         Ok(MqttAppSettings {
             hostname,
@@ -344,13 +338,11 @@ pub async fn reset_mqtt_settings(app_handle: &AppHandle) -> Result<(), AppError>
                     name: "app_settings".into(),
                 })?;
 
-        app_settings
-            .safe_set("mqttHostname", "")
-            .map_err(|e| AppError::CustomError(e.to_string()))?;
+        app_settings.safe_set("mqttHostname", "")?;
 
-        app_settings
-            .safe_set("mqttTopic", "")
-            .map_err(|e| AppError::CustomError(e.to_string()))?;
+        app_settings.safe_set("mqttTopic", "")?;
+
+        app_settings.safe_set("mqttGasTopic", "")?;
     }
 
     tokio::task::spawn_blocking(|| {

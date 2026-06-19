@@ -21,12 +21,8 @@ pub async fn store_glowmarkt_credentials(
 
     tokio::task::spawn_blocking(move || save_glowmarkt_credentials(&credentials)).await??;
 
-    if let Some(data_provider) = get_glowmarkt_data_provider()
-        .await
-        .map_err(|e| ApiError::Custom(e.to_string()))?
-    {
-        spawn_download_tasks(app_handle, (*app_state).clone(), data_provider)
-            .map_err(|e| ApiError::Custom(e.to_string()))?;
+    if let Some(data_provider) = get_glowmarkt_data_provider().await? {
+        spawn_download_tasks(app_handle, (*app_state).clone(), data_provider)?;
     }
 
     Ok(())

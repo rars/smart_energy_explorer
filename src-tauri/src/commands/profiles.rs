@@ -59,12 +59,8 @@ pub async fn update_energy_profile_settings(
 
     let app_state_clone = (*app_state).clone();
 
-    if let Some(data_provider) = get_glowmarkt_data_provider()
-        .await
-        .map_err(|e| ApiError::Custom(e.to_string()))?
-    {
-        spawn_download_tasks(app_handle, app_state_clone, data_provider)
-            .map_err(|e| ApiError::Custom(e.to_string()))?;
+    if let Some(data_provider) = get_glowmarkt_data_provider().await? {
+        spawn_download_tasks(app_handle, app_state_clone, data_provider)?;
     }
 
     Ok(())
