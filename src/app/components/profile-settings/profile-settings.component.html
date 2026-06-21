@@ -1,7 +1,7 @@
 <div class="flex flex-col w-full h-full">
   <div class="flex-1 overflow-auto">
     <form [formRoot]="form">
-      <fieldset [disabled]="form().submitting()">
+      <fieldset class="border-none p-0 m-0" [disabled]="form().submitting()">
         <header class="flex items-center">
           <button mat-icon-button type="button" routerLink="/settings">
             <mat-icon>settings</mat-icon>

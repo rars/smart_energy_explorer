@@ -25,9 +25,10 @@ export class ApiKeyService {
   public async saveGlowmarktCredentials(
     username: string,
     password: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       await invoke('store_glowmarkt_credentials', { username, password });
+      return true;
     } catch (error) {
       this.errorService.showError(
         `${error}`,
@@ -35,6 +36,7 @@ export class ApiKeyService {
       );
       console.error(error);
     }
+    return false;
   }
 
   public async testGlowmarktConnection(): Promise<{ active: boolean }> {
