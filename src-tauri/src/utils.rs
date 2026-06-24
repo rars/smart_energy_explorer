@@ -148,12 +148,20 @@ pub struct MqttCredentials {
     pub password: String,
 }
 
+fn get_keyring_entry_value(value: &str) -> Result<(Entry, Option<String>), AppError> {
+    let entry =
+        Entry::new(APP_SERVICE_NAME, value).map_err(|e| AppError::CustomError(e.to_string()))?;
+
+    let password = get_entry_password(&entry)?;
+
+    Ok((entry, password))
+}
+
 pub fn get_mqtt_credentials_opt() -> Result<Option<MqttCredentials>, AppError> {
     // Attempt to get credentials from new single entry point
-    let credentials_entry = Entry::new(APP_SERVICE_NAME, "mqtt_credentials")
-        .map_err(|e| AppError::CustomError(e.to_string()))?;
+    let (_, credentials_entry) = get_keyring_entry_value("mqtt_credentials")?;
 
-    if let Some(credentials_json) = get_entry_password(&credentials_entry)? {
+    if let Some(credentials_json) = credentials_entry {
         let credentials: MqttCredentials =
             serde_json::from_str(&credentials_json).map_err(|e| {
                 AppError::CustomError(format!("Failed to deserialize mqtt credentials: {}", e))
@@ -162,15 +170,8 @@ pub fn get_mqtt_credentials_opt() -> Result<Option<MqttCredentials>, AppError> {
         return Ok(Some(credentials));
     } else {
         // Fallback to older separate entries
-
-        let username_entry = Entry::new(APP_SERVICE_NAME, "mqtt_username")
-            .map_err(|e| AppError::CustomError(e.to_string()))?;
-
-        let password_entry = Entry::new(APP_SERVICE_NAME, "mqtt_password")
-            .map_err(|e| AppError::CustomError(e.to_string()))?;
-
-        let username = get_entry_password(&username_entry)?;
-        let password = get_entry_password(&password_entry)?;
+        let (username_entry, username) = get_keyring_entry_value("mqtt_username")?;
+        let (password_entry, password) = get_keyring_entry_value("mqtt_password")?;
 
         match (username, password) {
             (Some(username), Some(password)) => {
@@ -292,10 +293,8 @@ pub async fn get_mqtt_settings_opt(
 fn get_entry_password(entry: &Entry) -> Result<Option<String>, AppError> {
     match entry.get_password() {
         Ok(password) => Ok(Some(password)),
-        Err(e) => match e {
-            keyring_core::Error::NoEntry => Ok(None),
-            _ => Err(AppError::CustomError(e.to_string())),
-        },
+        Err(keyring_core::Error::NoEntry) => Ok(None),
+        Err(e) => Err(AppError::CustomError(e.to_string())),
     }
 }
 
