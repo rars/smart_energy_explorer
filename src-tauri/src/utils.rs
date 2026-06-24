@@ -376,3 +376,95 @@ pub async fn reset_mqtt_settings(app_handle: &AppHandle) -> Result<(), AppError>
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+
+    fn complete_settings() -> MqttSettings {
+        MqttSettings {
+            hostname: "localhost".to_string(),
+            topic: "test/topic".to_string(),
+            gas_topic: "test/gas".to_string(),
+            username: "user".to_string(),
+            password: "password".to_string(),
+        }
+    }
+
+    #[test]
+    fn test_parse_iso_string_to_naive_date_valid() {
+        let result = parse_iso_string_to_naive_date("2026-06-24T12:00:00Z");
+        assert!(result.is_ok());
+        assert_eq!(
+            result.unwrap(),
+            NaiveDate::from_ymd_opt(2026, 6, 24).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_parse_iso_string_to_naive_date_invalid() {
+        let result = parse_iso_string_to_naive_date("invalid-date");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_mqtt_settings_is_complete_all_fields() {
+        assert!(complete_settings().is_complete());
+    }
+
+    #[test]
+    fn test_mqtt_settings_is_complete_only_electricity_topic() {
+        let settings = MqttSettings {
+            gas_topic: "".to_string(),
+            ..complete_settings()
+        };
+        assert!(settings.is_complete());
+    }
+
+    #[test]
+    fn test_mqtt_settings_is_complete_only_gas_topic() {
+        let settings = MqttSettings {
+            topic: "".to_string(),
+            ..complete_settings()
+        };
+        assert!(settings.is_complete());
+    }
+
+    #[test]
+    fn test_mqtt_settings_is_incomplete_missing_hostname() {
+        let settings = MqttSettings {
+            hostname: "".to_string(),
+            ..complete_settings()
+        };
+        assert!(!settings.is_complete());
+    }
+
+    #[test]
+    fn test_mqtt_settings_is_incomplete_missing_topics() {
+        let settings = MqttSettings {
+            topic: "".to_string(),
+            gas_topic: "".to_string(),
+            ..complete_settings()
+        };
+        assert!(!settings.is_complete());
+    }
+
+    #[test]
+    fn test_mqtt_settings_is_incomplete_missing_username() {
+        let settings = MqttSettings {
+            username: "".to_string(),
+            ..complete_settings()
+        };
+        assert!(!settings.is_complete());
+    }
+
+    #[test]
+    fn test_mqtt_settings_is_incomplete_missing_password() {
+        let settings = MqttSettings {
+            password: "".to_string(),
+            ..complete_settings()
+        };
+        assert!(!settings.is_complete());
+    }
+}

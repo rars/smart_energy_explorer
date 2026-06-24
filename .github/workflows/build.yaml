@@ -7,29 +7,10 @@ on:
     branches: ['main']
 
 jobs:
-  test:
+  test-frontend:
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-          cache: 'npm'
-      - name: Install frontend dependencies
-        run: npm ci
-      - name: Run frontend tests
-        run: npx ng test --no-watch
-
-  build:
-    needs: test
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
+      matrix: &shared-matrix
         include:
           - platform: 'macos-latest' # for Arm based macs (M1 and above).
             args: '--target aarch64-apple-darwin'
@@ -41,6 +22,51 @@ jobs:
             args: ''
           - platform: 'windows-latest'
             args: ''
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Run frontend tests
+        run: npx ng test --no-watch
+
+  test-backend:
+    strategy:
+      fail-fast: false
+      matrix: *shared-matrix
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'ubuntu-24.04-arm' # This must match the platform value defined above.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Test
+        run: cargo nextest run
+        working-directory: src-tauri
+
+  build:
+    needs: [test-frontend, test-backend]
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix: *shared-matrix
 
     runs-on: ${{ matrix.platform }}
 
