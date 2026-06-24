@@ -227,6 +227,25 @@ where
     }
 }
 
+struct DownloadUpdateEventEmitter<'a> {
+    app_handle: &'a AppHandle,
+}
+
+impl<'a> DownloadUpdateEventEmitter<'a> {
+    pub fn update(&self, percentage: f64, download_name: &str) -> Result<(), AppError> {
+        emit_event(
+            &self.app_handle,
+            "downloadUpdate",
+            DownloadUpdateEvent {
+                percentage: percentage.round() as u32,
+                name: download_name.into(),
+            },
+        )?;
+
+        Ok(())
+    }
+}
+
 pub async fn download_history<T, U>(
     app_handle: AppHandle,
     data_loader: T,
@@ -248,6 +267,10 @@ where
     }
 
     let total_days = today.signed_duration_since(until_date).num_days();
+
+    let download_update_event_emitter = DownloadUpdateEventEmitter {
+        app_handle: &app_handle,
+    };
 
     while start_of_period >= until_date && start_of_period < end_date {
         let records = data_loader
@@ -280,26 +303,42 @@ where
 
         let percentage = 100.0 * (1.0 - (days_remaining as f64 / total_days as f64));
 
-        emit_event(
-            &app_handle,
-            "downloadUpdate",
-            DownloadUpdateEvent {
-                percentage: percentage.round() as u32,
-                name: download_name.into(),
-            },
-        )?;
+        download_update_event_emitter.update(percentage, download_name)?;
     }
 
-    emit_event(
-        &app_handle,
-        "downloadUpdate",
-        DownloadUpdateEvent {
-            percentage: 100,
-            name: download_name.into(),
-        },
-    )?;
+    download_update_event_emitter.update(100f64, download_name)?;
 
     Ok(today)
+}
+
+struct DownloadGuard<'a> {
+    app_handle: &'a AppHandle,
+    downloading: &'a std::sync::Mutex<bool>,
+}
+
+impl<'a> Drop for DownloadGuard<'a> {
+    fn drop(&mut self) {
+        if let Ok(mut downloading) = self.downloading.lock() {
+            *downloading = false;
+        }
+
+        debug!("Emitting is_downloading = false event");
+
+        let event_publish_result = emit_event(
+            &self.app_handle,
+            "appStatusUpdate",
+            AppStatusUpdateEvent {
+                is_downloading: false,
+            },
+        );
+
+        if let Err(e) = event_publish_result {
+            error!(
+                "Failed to publish appStatusUpdate to indicate downloading stopped: {:?}",
+                e
+            );
+        }
+    }
 }
 
 pub async fn check_and_download_new_data<U>(
@@ -323,7 +362,13 @@ where
         *downloading = true;
     }
 
-    debug!("is_downloading = true event emitted");
+    // Will notify downloading stopped and clean up downloading state on exit of this method
+    let _download_guard = DownloadGuard {
+        app_handle: &app_handle,
+        downloading: &app_state.downloading,
+    };
+
+    debug!("Emitting is_downloading = true event");
 
     emit_event(
         &app_handle,
@@ -408,25 +453,6 @@ where
         },
     )
     .await?;
-
-    {
-        let mut downloading = app_state
-            .downloading
-            .lock()
-            .map_err(|e| AppError::CustomError(format!("Failed to acquire lock, error: {}", e)))?;
-
-        *downloading = false;
-    }
-
-    debug!("is_downloading = false event emitted");
-
-    emit_event(
-        &app_handle,
-        "appStatusUpdate",
-        AppStatusUpdateEvent {
-            is_downloading: false,
-        },
-    )?;
 
     Ok(())
 }

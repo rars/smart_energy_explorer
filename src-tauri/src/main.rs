@@ -33,6 +33,7 @@ mod data;
 mod db;
 mod download;
 mod mqtt;
+mod retry;
 mod schema;
 mod utils;
 

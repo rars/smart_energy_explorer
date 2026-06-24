@@ -2,7 +2,7 @@ use std::sync::Arc;
 use tauri::async_runtime::Mutex;
 
 use chrono::{Datelike, NaiveDate, NaiveDateTime};
-use glowmarkt::{GlowmarktApi, ReadingPeriod};
+use glowmarkt::{ErrorKind, GlowmarktApi, ReadingPeriod};
 use time::{
     error::ComponentRange, macros::date, macros::time, Date, OffsetDateTime, PrimitiveDateTime,
     Time,
@@ -14,6 +14,7 @@ use crate::data::{
 };
 
 use super::data_provider::EnergyDataProvider;
+use crate::retry::with_retry;
 
 struct OffsetDateTimeRange {
     start: OffsetDateTime,
@@ -145,7 +146,7 @@ impl GlowmarktDataProvider {
         let from = OffsetDateTime::new_utc(
             Date::from_calendar_date(
                 start.year(),
-                self.get_month(start.month()),
+                self.get_time_month(&start),
                 start.day0() as u8 + 1u8,
             )
             .map_err(|e| GlowmarktDataProviderError::TimeComponentRangeError(e))?,
@@ -156,7 +157,7 @@ impl GlowmarktDataProvider {
         let to: OffsetDateTime = OffsetDateTime::new_utc(
             Date::from_calendar_date(
                 end.year(),
-                self.get_month(end.month()),
+                self.get_time_month(&end),
                 end.day0() as u8 + 1u8,
             )
             .map_err(|e| GlowmarktDataProviderError::TimeComponentRangeError(e))?,
@@ -170,22 +171,9 @@ impl GlowmarktDataProvider {
         })
     }
 
-    fn get_month(&self, month: u32) -> time::Month {
-        match month {
-            1 => time::Month::January,
-            2 => time::Month::February,
-            3 => time::Month::March,
-            4 => time::Month::April,
-            5 => time::Month::May,
-            6 => time::Month::June,
-            7 => time::Month::July,
-            8 => time::Month::August,
-            9 => time::Month::September,
-            10 => time::Month::October,
-            11 => time::Month::November,
-            12 => time::Month::December,
-            _ => time::Month::January,
-        }
+    fn get_time_month(&self, date: &NaiveDate) -> time::Month {
+        time::Month::try_from(date.month() as u8)
+            .expect("Failed to extract valid month from NaiveDate")
     }
 }
 
@@ -204,17 +192,24 @@ impl EnergyDataProvider for GlowmarktDataProvider {
         if let Some(resource_id) = &self.resource_ids.electricity_consumption {
             let offset_date_range = self.get_range(start, end)?;
 
-            let readings = {
-                let api = self.api.lock().await;
-                api.readings(
-                    resource_id,
-                    &offset_date_range.start,
-                    &offset_date_range.end,
-                    ReadingPeriod::HalfHour,
-                )
-                .await
-            }
-            .map_err(|e| GlowmarktDataProviderError::GlowmarktApiError(e.to_string()))?;
+            let response = with_retry(
+                async || {
+                    let api = self.api.lock().await;
+                    api.readings(
+                        resource_id,
+                        &offset_date_range.start,
+                        &offset_date_range.end,
+                        ReadingPeriod::HalfHour,
+                    )
+                    .await
+                },
+                is_retryable,
+                3,
+            )
+            .await;
+
+            let readings = response
+                .map_err(|e| GlowmarktDataProviderError::GlowmarktApiError(e.to_string()))?;
 
             let consumption_values: Vec<_> = readings
                 .iter()
@@ -280,17 +275,24 @@ impl EnergyDataProvider for GlowmarktDataProvider {
         if let Some(resource_id) = &self.resource_ids.gas_consumption {
             let offset_date_range = self.get_range(start, end)?;
 
-            let readings = {
-                let api = self.api.lock().await;
-                api.readings(
-                    resource_id,
-                    &offset_date_range.start,
-                    &offset_date_range.end,
-                    ReadingPeriod::HalfHour,
-                )
-                .await
-            }
-            .map_err(|e| GlowmarktDataProviderError::GlowmarktApiError(e.to_string()))?;
+            let response = with_retry(
+                async || {
+                    let api = self.api.lock().await;
+                    api.readings(
+                        resource_id,
+                        &offset_date_range.start,
+                        &offset_date_range.end,
+                        ReadingPeriod::HalfHour,
+                    )
+                    .await
+                },
+                is_retryable,
+                3,
+            )
+            .await;
+
+            let readings = response
+                .map_err(|e| GlowmarktDataProviderError::GlowmarktApiError(e.to_string()))?;
 
             let consumption_values: Vec<_> = readings
                 .iter()
@@ -343,4 +345,8 @@ impl EnergyDataProvider for GlowmarktDataProvider {
             "gas cost".to_string(),
         ))
     }
+}
+
+fn is_retryable(error: &glowmarkt::Error) -> bool {
+    matches!(error.kind, ErrorKind::Server | ErrorKind::Network)
 }
