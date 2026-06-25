@@ -1,3 +1,5 @@
+import { Chart } from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
 import { enGB } from 'date-fns/locale';
 
 import {
@@ -8,6 +10,7 @@ import {
 import {
   ApplicationConfig,
   ErrorHandler,
+  provideEnvironmentInitializer,
   provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
@@ -27,5 +30,8 @@ export const appConfig: ApplicationConfig = {
     { provide: MAT_DATE_LOCALE, useValue: enGB },
     provideDateFnsAdapter(),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
+    provideEnvironmentInitializer(() => {
+      Chart.register(annotationPlugin);
+    }),
   ],
 };

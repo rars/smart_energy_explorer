@@ -3,10 +3,13 @@ import Chart from 'chart.js/auto';
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   HostListener,
   OnDestroy,
   effect,
   input,
+  output,
+  viewChild,
 } from '@angular/core';
 
 @Component({
@@ -17,17 +20,19 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChartComponent implements OnDestroy {
-  public chartConfiguration = input<unknown>();
+  public readonly chartConfiguration = input<unknown>();
+  public readonly chartInstanceChange = output<Chart>();
+  private readonly canvasRef =
+    viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 
-  public chart?: Chart;
+  private chart?: Chart;
 
   public constructor() {
     effect(() => {
+      const canvasRef = this.canvasRef();
       const config = this.chartConfiguration();
-      if (config) {
-        this.chart?.destroy();
-        this.chart = new Chart('canvas', config as any);
-      }
+
+      this.createNewChartInstance(canvasRef, config);
     });
   }
 
@@ -35,10 +40,27 @@ export class ChartComponent implements OnDestroy {
     this.chart?.destroy();
   }
 
-  @HostListener('window:resize', ['$event'])
-  public onResize(_event: Event): void {
+  @HostListener('window:resize')
+  public onResize(): void {
+    const canvasRef = this.canvasRef();
+    if (!canvasRef?.nativeElement?.ownerDocument) {
+      return;
+    }
+
     // To avoid a created chart from overflowing, recreate it so it fits the parent
+    this.createNewChartInstance(canvasRef, this.chartConfiguration());
+  }
+
+  private createNewChartInstance(
+    canvasRef: ElementRef<HTMLCanvasElement>,
+    config: any,
+  ): void {
+    if (!canvasRef || !config) {
+      return;
+    }
+
     this.chart?.destroy();
-    this.chart = new Chart('canvas', this.chartConfiguration() as any);
+    this.chart = new Chart(canvasRef.nativeElement, config);
+    this.chartInstanceChange.emit(this.chart);
   }
 }

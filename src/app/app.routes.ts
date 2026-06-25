@@ -4,6 +4,7 @@ import { AboutComponent } from './components/about/about.component';
 import { BrightSettingsComponent } from './components/bright-settings/bright-settings.component';
 import { DataManagementSettingsComponent } from './components/data-management-settings/data-management-settings.component';
 import { ElectricityConsumptionChartComponent } from './components/electricity-consumption-chart/electricity-consumption-chart.component';
+import { ElectricityDailyPaceComponent } from './components/electricity-daily-pace/electricity-daily-pace.component';
 import { ElectricityTariffHistoryComponent } from './components/electricity-tariff-history/electricity-tariff-history.component';
 import { EnergyCostHistoryComponent } from './components/energy-cost-history/energy-cost-history.component';
 import { GasConsumptionChartComponent } from './components/gas-consumption-chart/gas-consumption-chart.component';
@@ -21,6 +22,10 @@ export const routes: Routes = [
   { path: 'electricity', component: ElectricityConsumptionChartComponent },
   { path: 'gas', component: GasConsumptionChartComponent },
   { path: 'electricity/usage-profile', component: LoadDurationComponent },
+  {
+    path: 'electricity/daily-pace',
+    component: ElectricityDailyPaceComponent,
+  },
   { path: 'electricity/tariff', component: ElectricityTariffHistoryComponent },
   {
     path: 'electricity/costs',
