@@ -1,3 +1,5 @@
+import { Chart } from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
 import { enGB } from 'date-fns/locale';
 import { beforeEach, vi } from 'vitest';
 
@@ -11,6 +13,8 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 
 import { mockLazyStore } from './testing/tauri-plugin-store.mock';
+
+Chart.register(annotationPlugin);
 
 const tauriMocks = vi.hoisted(() => {
   const invoke = vi.fn((command: string) => {

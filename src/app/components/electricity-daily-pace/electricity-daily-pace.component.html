@@ -1,0 +1,36 @@
+<div class="h-full w-full flex flex-col">
+  <div class="flex flex-row gap-6 p-4 h-full">
+    <div class="flex flex-col gap-4 w-80 shrink-0">
+      <div class="mat-typography">
+        <h2>Daily pace</h2>
+      </div>
+      <div class="form-field-container">
+        <mat-form-field>
+          <mat-label> Date </mat-label>
+
+          <input
+            matInput
+            placeholder="Date"
+            [matDatepicker]="picker"
+            [formField]="inputParamsForm.date"
+          />
+
+          <mat-hint>DD/MM/YYYY </mat-hint>
+          <mat-datepicker-toggle
+            matIconSuffix
+            [for]="picker"
+          ></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+      </div>
+    </div>
+
+    @if (chartConfiguration()) {
+      <app-chart
+        [chartConfiguration]="chartConfiguration()"
+        (chartInstanceChange)="chartInstance.set($event)"
+        class="flex-1"
+      ></app-chart>
+    }
+  </div>
+</div>
