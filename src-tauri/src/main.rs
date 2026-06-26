@@ -35,6 +35,7 @@ mod download;
 mod mqtt;
 mod retry;
 mod schema;
+mod serde_utils;
 mod utils;
 
 struct AppState {

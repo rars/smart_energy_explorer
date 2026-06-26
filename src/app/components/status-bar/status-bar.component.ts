@@ -1,7 +1,11 @@
-import { format } from 'date-fns';
-
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
 import { BehaviorSubject, Observable, ReplaySubject, from } from 'rxjs';
@@ -9,6 +13,7 @@ import { BehaviorSubject, Observable, ReplaySubject, from } from 'rxjs';
 import { invoke } from '@tauri-apps/api/core';
 import { UnlistenFn, listen } from '@tauri-apps/api/event';
 
+import { DateService } from '../../services/date/date.service';
 import { DataDownloadingComponent } from '../data-downloading/data-downloading.component';
 
 @Component({
@@ -24,6 +29,8 @@ import { DataDownloadingComponent } from '../data-downloading/data-downloading.c
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatusBarComponent implements OnInit, OnDestroy {
+  private readonly dateService = inject(DateService);
+
   public isDownloading$ = new BehaviorSubject(false);
 
   protected electricityPower$: Observable<string>;
@@ -64,7 +71,7 @@ export class StatusBarComponent implements OnInit, OnDestroy {
       this.electricityUpdateReceivedSubject.next(true);
 
       const lastUpdated = new Date(message.payload.electricitymeter.timestamp);
-      const friendlyTimestamp = format(
+      const friendlyTimestamp = this.dateService.format(
         lastUpdated,
         "dd/MM/yyyy 'at' h:mm:ss a",
       );
@@ -100,7 +107,7 @@ export class StatusBarComponent implements OnInit, OnDestroy {
       this.gasUpdateReceivedSubject.next(true);
 
       const lastUpdated = new Date(message.payload.gasmeter.timestamp);
-      const friendlyTimestamp = format(
+      const friendlyTimestamp = this.dateService.format(
         lastUpdated,
         "dd/MM/yyyy 'at' h:mm:ss a",
       );

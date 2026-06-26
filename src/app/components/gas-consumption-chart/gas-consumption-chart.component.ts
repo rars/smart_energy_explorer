@@ -1,6 +1,10 @@
-import { parseISO } from 'date-fns';
-
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -181,7 +185,9 @@ export class GasConsumptionChartComponent implements OnInit, OnDestroy {
               {
                 label: 'Gas',
                 data: values.map((x) => ({
-                  x: x.timestamp ? new Date(parseISO(x.timestamp)) : undefined,
+                  x: x.timestamp
+                    ? new Date(this.dateService.parseISO(x.timestamp))
+                    : undefined,
                   y: x.energyConsumptionKwh,
                 })),
               },
