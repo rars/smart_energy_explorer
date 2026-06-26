@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime, TimeZone, Utc};
+use chrono_tz::Europe::London;
 use diesel::SqliteConnection;
 use keyring_core::Entry;
 use serde::{Deserialize, Serialize};
@@ -16,6 +17,16 @@ use crate::{
 
 pub fn parse_iso_string_to_naive_date(iso_date_str: &str) -> Result<NaiveDate, ApiError> {
     NaiveDate::parse_from_str(&iso_date_str[..10], "%Y-%m-%d").map_err(ApiError::ChronoParseError)
+}
+
+pub fn london_midnight_as_utc(date: &NaiveDate) -> NaiveDateTime {
+    let london_midnight_local = London
+        .from_local_datetime(&date.and_hms_opt(0, 0, 0).unwrap())
+        .unwrap();
+
+    let london_midnight_utc = london_midnight_local.with_timezone(&Utc);
+
+    london_midnight_utc.naive_utc()
 }
 
 pub fn emit_event<T>(app_handle: &AppHandle, event: &str, payload: T) -> Result<(), AppError>
@@ -380,6 +391,7 @@ pub async fn reset_mqtt_settings(app_handle: &AppHandle) -> Result<(), AppError>
 mod tests {
     use super::*;
     use chrono::NaiveDate;
+    use chrono::NaiveTime;
 
     fn complete_settings() -> MqttSettings {
         MqttSettings {
@@ -465,5 +477,61 @@ mod tests {
             ..complete_settings()
         };
         assert!(!settings.is_complete());
+    }
+
+    #[test]
+    fn test_london_midnight_during_gmt_winter() {
+        let winter_date = NaiveDate::from_ymd_opt(2026, 1, 15).unwrap();
+
+        let result = london_midnight_as_utc(&winter_date);
+
+        let expected = winter_date.and_hms_opt(0, 0, 0).unwrap();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_london_midnight_during_bst_summer() {
+        let summer_date = NaiveDate::from_ymd_opt(2026, 6, 26).unwrap();
+
+        let result = london_midnight_as_utc(&summer_date);
+
+        let expected_date = NaiveDate::from_ymd_opt(2026, 6, 25).unwrap();
+        let expected_time = NaiveTime::from_hms_opt(23, 0, 0).unwrap();
+        let expected = expected_date.and_time(expected_time);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_london_midnight_on_clocks_forward_transition_day() {
+        let transition_date = NaiveDate::from_ymd_opt(2026, 3, 29).unwrap();
+
+        let result = london_midnight_as_utc(&transition_date);
+
+        let expected = transition_date.and_hms_opt(0, 0, 0).unwrap();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_london_midnight_on_clocks_back_transition_day() {
+        let transition_sunday = NaiveDate::from_ymd_opt(2026, 10, 25).unwrap();
+
+        let result = london_midnight_as_utc(&transition_sunday);
+
+        let expected_date = NaiveDate::from_ymd_opt(2026, 10, 24).unwrap();
+        let expected_time = NaiveTime::from_hms_opt(23, 0, 0).unwrap();
+        let expected = expected_date.and_time(expected_time);
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_london_midnight_day_after_clocks_back() {
+        let post_transition_monday = NaiveDate::from_ymd_opt(2026, 10, 26).unwrap();
+
+        let result = london_midnight_as_utc(&post_transition_monday);
+
+        let expected = post_transition_monday.and_hms_opt(0, 0, 0).unwrap();
+        assert_eq!(result, expected);
     }
 }

@@ -1,5 +1,3 @@
-import { parseISO } from 'date-fns';
-
 import { Service, inject } from '@angular/core';
 
 import { invoke } from '@tauri-apps/api/core';
@@ -35,7 +33,7 @@ export class ElectricityConsumptionService {
     );
 
     return data.map((x) => ({
-      timestamp: new Date(parseISO(x.timestamp)),
+      timestamp: new Date(this.dateService.parseISO(x.timestamp)),
       electricityConsumptionKwh: x.value,
     }));
   }

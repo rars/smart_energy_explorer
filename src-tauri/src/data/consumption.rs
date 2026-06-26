@@ -9,6 +9,7 @@ use diesel::{prelude::*, upsert::excluded};
 use log::error;
 
 use crate::schema::{electricity_consumption, gas_consumption};
+use crate::utils::london_midnight_as_utc;
 
 use super::RepositoryError;
 
@@ -130,8 +131,8 @@ impl ConsumptionRepository<ElectricityConsumptionValue, ElectricityConsumptionRe
         let mut conn = self.get_connection()?;
 
         Ok(electricity_consumption
-            .filter(timestamp.ge(NaiveDateTime::from(start)))
-            .filter(timestamp.lt(NaiveDateTime::from(end)))
+            .filter(timestamp.ge(london_midnight_as_utc(&start)))
+            .filter(timestamp.lt(london_midnight_as_utc(&end)))
             .load::<ElectricityConsumptionRecord>(&mut *conn)?)
     }
 
@@ -145,8 +146,8 @@ impl ConsumptionRepository<ElectricityConsumptionValue, ElectricityConsumptionRe
         let mut connection = self.get_connection()?;
 
         Ok(electricity_consumption
-            .filter(timestamp.ge(NaiveDateTime::from(start)))
-            .filter(timestamp.lt(NaiveDateTime::from(end)))
+            .filter(timestamp.ge(london_midnight_as_utc(&start)))
+            .filter(timestamp.lt(london_midnight_as_utc(&end)))
             .select((
                 sql::<Date>("DATE(timestamp)"),
                 sql::<Double>("COALESCE(SUM(energy_consumption_kwh), 0.0)"),
@@ -166,8 +167,8 @@ impl ConsumptionRepository<ElectricityConsumptionValue, ElectricityConsumptionRe
         let mut connection = self.get_connection()?;
 
         Ok(electricity_consumption
-            .filter(timestamp.ge(NaiveDateTime::from(start)))
-            .filter(timestamp.lt(NaiveDateTime::from(end)))
+            .filter(timestamp.ge(london_midnight_as_utc(&start)))
+            .filter(timestamp.lt(london_midnight_as_utc(&end)))
             .select((
                 sql::<Date>("DATE(timestamp, 'start of month')"),
                 sql::<Double>("COALESCE(SUM(energy_consumption_kwh), 0.0)"),
@@ -240,8 +241,8 @@ impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
         let mut conn = self.get_connection()?;
 
         Ok(gas_consumption
-            .filter(timestamp.ge(NaiveDateTime::from(start)))
-            .filter(timestamp.lt(NaiveDateTime::from(end)))
+            .filter(timestamp.ge(london_midnight_as_utc(&start)))
+            .filter(timestamp.lt(london_midnight_as_utc(&end)))
             .filter(energy_consumption_kwh.ne(ENERGY_CONSUMPTION_KWH_ERROR_CODE))
             .load::<GasConsumptionRecord>(&mut *conn)?)
     }
@@ -256,8 +257,8 @@ impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
         let mut conn = self.get_connection()?;
 
         Ok(gas_consumption
-            .filter(timestamp.ge(NaiveDateTime::from(start)))
-            .filter(timestamp.lt(NaiveDateTime::from(end)))
+            .filter(timestamp.ge(london_midnight_as_utc(&start)))
+            .filter(timestamp.lt(london_midnight_as_utc(&end)))
             .filter(energy_consumption_kwh.ne(ENERGY_CONSUMPTION_KWH_ERROR_CODE))
             .select((
                 sql::<Date>("DATE(timestamp)"),
@@ -278,8 +279,8 @@ impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
         let mut conn = self.get_connection()?;
 
         Ok(gas_consumption
-            .filter(timestamp.ge(NaiveDateTime::from(start)))
-            .filter(timestamp.lt(NaiveDateTime::from(end)))
+            .filter(timestamp.ge(london_midnight_as_utc(&start)))
+            .filter(timestamp.lt(london_midnight_as_utc(&end)))
             .filter(energy_consumption_kwh.ne(ENERGY_CONSUMPTION_KWH_ERROR_CODE))
             .select((
                 sql::<Date>("DATE(timestamp, 'start of month')"),

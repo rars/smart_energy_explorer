@@ -1,5 +1,4 @@
 import { Chart, ChartConfiguration } from 'chart.js';
-import { addDays, format, set, startOfToday } from 'date-fns';
 
 import {
   Component,
@@ -18,6 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 
 import { UnlistenFn, listen } from '@tauri-apps/api/event';
 
+import { DateService } from '../../services/date/date.service';
 import {
   ElectricityConsumption,
   ElectricityConsumptionService,
@@ -48,14 +48,16 @@ type MyChart = ChartConfiguration<'line', ChartPoint[]>;
   styleUrl: './electricity-daily-pace.component.scss',
 })
 export class ElectricityDailyPaceComponent implements OnDestroy {
-  private readonly dateToNormalizeTo = startOfToday();
+  private readonly dateService = inject(DateService);
+
+  private readonly dateToNormalizeTo = this.dateService.startOfToday();
 
   private readonly electricityConsumptionService = inject(
     ElectricityConsumptionService,
   );
 
   private readonly inputParams = signal<InputParams>({
-    date: addDays(startOfToday(), -1),
+    date: this.dateService.addDays(this.dateService.startOfToday(), -1),
   });
 
   protected readonly chartInstance = signal<Chart | undefined>(undefined);
@@ -144,7 +146,7 @@ export class ElectricityDailyPaceComponent implements OnDestroy {
           this.createCumulativeSeriesFromRawConsumption(data),
         );
 
-        const label = format(date, 'eee d MMM');
+        const label = this.dateService.format(date, 'eee d MMM');
         return { label, data: cumulativeSeries };
       })(),
       this.getDatasetForOtherDay(-1, date),
@@ -155,9 +157,9 @@ export class ElectricityDailyPaceComponent implements OnDestroy {
   }
 
   private async getDatasetForOtherDay(dayDelta: number, referenceDate: Date) {
-    const otherDate = addDays(referenceDate, dayDelta);
+    const otherDate = this.dateService.addDays(referenceDate, dayDelta);
 
-    const label = format(otherDate, 'eee d MMM');
+    const label = this.dateService.format(otherDate, 'eee d MMM');
 
     const nextData =
       await this.electricityConsumptionService.getRawElectricityConsumption(
@@ -237,7 +239,9 @@ export class ElectricityDailyPaceComponent implements OnDestroy {
     return {
       todayProgressBox: {
         type: 'box',
-        xMin: this.normalizeTimestamp(startOfToday()).getTime(),
+        xMin: this.normalizeTimestamp(
+          this.dateService.startOfToday(),
+        ).getTime(),
         xMax: now.getTime(),
 
         yMin: 0,
@@ -271,7 +275,7 @@ export class ElectricityDailyPaceComponent implements OnDestroy {
   }
 
   private normalizeTimestamp(date: Date): Date {
-    return set(this.dateToNormalizeTo, {
+    return this.dateService.set(this.dateToNormalizeTo, {
       hours: date.getHours(),
       minutes: date.getMinutes(),
       seconds: date.getSeconds(),

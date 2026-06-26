@@ -18,6 +18,7 @@ use crate::{
 
 #[derive(Serialize, PartialEq, Debug)]
 pub struct GasConsumption {
+    #[serde(serialize_with = "crate::serde_utils::serialize_naive_as_utc")]
     pub timestamp: NaiveDateTime,
     pub value: f64,
 }
