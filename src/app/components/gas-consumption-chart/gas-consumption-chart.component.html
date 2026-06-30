@@ -8,12 +8,12 @@
         <input
           matStartDate
           placeholder="Start date"
-          [formControl]="startDateControl"
+          [formField]="inputParamsForm.startDate"
         />
         <input
           matEndDate
           placeholder="End date"
-          [formControl]="endDateControl"
+          [formField]="inputParamsForm.endDate"
         />
       </mat-date-range-input>
       <mat-hint>DD/MM/YYYY - DD/MM/YYYY</mat-hint>
@@ -26,7 +26,7 @@
 
     <mat-form-field>
       <mat-label>Aggregation</mat-label>
-      <mat-select [formControl]="aggregationControl">
+      <mat-select [formField]="inputParamsForm.aggregation">
         <mat-option value="raw">Raw</mat-option>
         <mat-option value="daily">Daily</mat-option>
         <mat-option value="monthly">Monthly</mat-option>

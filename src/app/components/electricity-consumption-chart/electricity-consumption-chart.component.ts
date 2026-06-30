@@ -70,7 +70,7 @@ export class ElectricityConsumptionChartComponent implements OnInit, OnDestroy {
     aggregation: 'raw',
   });
 
-  protected readonly form = form(this.inputParams);
+  protected readonly inputParamsForm = form(this.inputParams);
 
   public values = signal<any[] | undefined>(undefined);
   public chartConfiguration = signal<any>(undefined);
@@ -237,16 +237,13 @@ export class ElectricityConsumptionChartComponent implements OnInit, OnDestroy {
   public ngOnInit(): void {}
 
   public ngOnDestroy(): void {
-    const inputParams = this.inputParams();
-    if (inputParams.startDate && inputParams.endDate) {
-      this.formControlService.setDateRange(
-        inputParams.startDate,
-        inputParams.endDate,
-      );
+    const { startDate, endDate, aggregation } = this.inputParams();
+    if (startDate && endDate) {
+      this.formControlService.setDateRange(startDate, endDate);
     }
 
-    if (inputParams.aggregation) {
-      this.formControlService.setAggregationLevel(inputParams.aggregation);
+    if (aggregation) {
+      this.formControlService.setAggregationLevel(aggregation);
     }
   }
 
