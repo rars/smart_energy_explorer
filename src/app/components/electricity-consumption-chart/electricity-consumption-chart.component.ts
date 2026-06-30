@@ -3,10 +3,11 @@ import {
   Component,
   OnDestroy,
   OnInit,
+  inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { FormField, form } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,7 +24,6 @@ import {
   from,
   map,
   of,
-  startWith,
   switchMap,
   take,
 } from 'rxjs';
@@ -39,13 +39,16 @@ import { ChartComponent } from '../chart/chart.component';
 
 const nonNullOrUndefined = <T>(x: T | null | undefined): x is T => !!x;
 
-const getValueStream = <T>(x: FormControl<T | null>) =>
-  x.valueChanges.pipe(startWith(x.value), filter(nonNullOrUndefined));
+interface InputParams {
+  startDate: Date;
+  endDate: Date;
+  aggregation: Aggregation;
+}
 
 @Component({
   selector: 'app-electricity-consumption-chart',
   imports: [
-    ReactiveFormsModule,
+    FormField,
     MatButtonModule,
     MatFormFieldModule,
     MatDatepickerModule,
@@ -59,48 +62,46 @@ const getValueStream = <T>(x: FormControl<T | null>) =>
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ElectricityConsumptionChartComponent implements OnInit, OnDestroy {
-  public readonly startDateControl: FormControl<Date | null>;
-  public readonly endDateControl: FormControl<Date | null>;
-  public readonly aggregationControl = new FormControl<Aggregation>('raw');
+  private readonly dateService = inject(DateService);
+
+  protected readonly inputParams = signal<InputParams>({
+    startDate: this.dateService.addDays(this.dateService.startOfToday(), -7),
+    endDate: this.dateService.startOfToday(),
+    aggregation: 'raw',
+  });
+
+  protected readonly form = form(this.inputParams);
 
   public values = signal<any[] | undefined>(undefined);
   public chartConfiguration = signal<any>(undefined);
   public loading = signal(false);
 
   public constructor(
-    private readonly dateService: DateService,
     private readonly formControlService: FormControlService,
     private readonly csvExportService: CsvExportService,
   ) {
-    this.startDateControl = new FormControl<Date>(
-      this.dateService.addDays(this.dateService.startOfToday(), -7),
-    );
-    this.endDateControl = new FormControl<Date>(
-      this.dateService.startOfToday(),
-    );
-
-    this.formControlService
-      .getDateRange()
-      .pipe(take(1))
-      .subscribe(([startDate, endDate]) => {
-        this.startDateControl.setValue(startDate);
-        this.endDateControl.setValue(endDate);
-      });
-
-    this.formControlService
-      .getAggregationLevel()
-      .pipe(take(1))
-      .subscribe((aggregation) => {
-        this.aggregationControl.setValue(aggregation);
-      });
-
     combineLatest([
-      getValueStream(this.startDateControl),
-      getValueStream(this.endDateControl),
-      getValueStream(this.aggregationControl),
+      this.formControlService.getDateRange(),
+      this.formControlService.getAggregationLevel(),
     ])
+      .pipe(take(1))
+      .subscribe(([[startDate, endDate], aggregation]) => {
+        this.inputParams.set({
+          startDate,
+          endDate,
+          aggregation,
+        });
+      });
+
+    toObservable(this.inputParams)
       .pipe(
-        map(([startDate, endDate, aggregation]) => [
+        filter(
+          ({ startDate, endDate, aggregation }) =>
+            nonNullOrUndefined(startDate) &&
+            nonNullOrUndefined(endDate) &&
+            nonNullOrUndefined(aggregation),
+        ),
+        map(({ startDate, endDate, aggregation }) => [
           this.dateService.formatISODate(startDate),
           this.dateService.formatISODate(this.dateService.addDays(endDate, 1)),
           aggregation,
@@ -236,17 +237,16 @@ export class ElectricityConsumptionChartComponent implements OnInit, OnDestroy {
   public ngOnInit(): void {}
 
   public ngOnDestroy(): void {
-    if (this.startDateControl.value && this.endDateControl.value) {
+    const inputParams = this.inputParams();
+    if (inputParams.startDate && inputParams.endDate) {
       this.formControlService.setDateRange(
-        this.startDateControl.value,
-        this.endDateControl.value,
+        inputParams.startDate,
+        inputParams.endDate,
       );
     }
 
-    if (this.aggregationControl.value) {
-      this.formControlService.setAggregationLevel(
-        this.aggregationControl.value,
-      );
+    if (inputParams.aggregation) {
+      this.formControlService.setAggregationLevel(inputParams.aggregation);
     }
   }
 
@@ -283,7 +283,10 @@ export class ElectricityConsumptionChartComponent implements OnInit, OnDestroy {
   }
 
   private setDateRange(startDate: Date, endDate: Date): void {
-    this.startDateControl.setValue(startDate);
-    this.endDateControl.setValue(endDate);
+    this.inputParams.update((currentValue) => ({
+      ...currentValue,
+      startDate,
+      endDate,
+    }));
   }
 }
