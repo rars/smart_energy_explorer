@@ -21,19 +21,19 @@ use super::ApiError;
 pub struct ElectricityConsumption {
     #[serde(serialize_with = "crate::serde_utils::serialize_naive_as_utc")]
     pub timestamp: NaiveDateTime,
-    pub value: f64,
+    pub value: i64,
 }
 
 #[derive(Serialize, Debug)]
 pub struct DailyElectricityConsumption {
     pub timestamp: NaiveDate,
-    pub value: f64,
+    pub value: i64,
 }
 
 #[derive(Serialize, Debug)]
 pub struct MonthlyElectricityConsumption {
     pub timestamp: NaiveDate,
-    pub value: f64,
+    pub value: i64,
 }
 
 #[tauri::command]
@@ -42,7 +42,10 @@ pub async fn get_raw_electricity_consumption(
     start_date: String,
     end_date: String,
 ) -> Result<Vec<ElectricityConsumption>, ApiError> {
-    debug!("get_raw_electricity_consumption called");
+    debug!(
+        "get_raw_electricity_consumption({}, {}) called",
+        start_date, end_date
+    );
 
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
@@ -63,7 +66,7 @@ pub async fn get_raw_electricity_consumption(
                     .iter()
                     .map(|x| ElectricityConsumption {
                         timestamp: x.timestamp,
-                        value: x.energy_consumption_kwh,
+                        value: x.energy_consumption_wh,
                     })
                     .collect());
             }
@@ -82,7 +85,10 @@ pub async fn get_daily_electricity_consumption(
     start_date: String,
     end_date: String,
 ) -> Result<Vec<DailyElectricityConsumption>, ApiError> {
-    debug!("get_daily_electricity_consumption called");
+    debug!(
+        "get_daily_electricity_consumption called({}, {})",
+        start_date, end_date
+    );
 
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
@@ -113,7 +119,10 @@ pub async fn get_monthly_electricity_consumption(
     start_date: String,
     end_date: String,
 ) -> Result<Vec<MonthlyElectricityConsumption>, ApiError> {
-    debug!("get_monthly_electricity_consumption called");
+    debug!(
+        "get_monthly_electricity_consumption({}, {}) called",
+        start_date, end_date
+    );
 
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
@@ -240,7 +249,7 @@ pub async fn get_electricity_cost_history(
         if let (Some(sc), Some(up)) = (standing_charge, unit_price) {
             daily_costs.push(DailyCost {
                 date: c.0,
-                cost_pence: sc + (c.1 * up),
+                cost_pence: sc + (((c.1 as f64) * up) / 1000.0),
             });
         } else {
             warn!(

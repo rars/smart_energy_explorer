@@ -124,7 +124,7 @@ export class ElectricityConsumptionChartComponent implements OnInit, OnDestroy {
                 map((x) =>
                   x.map(({ timestamp, value }) => ({
                     timestamp,
-                    energyConsumptionKwh: value,
+                    energyConsumptionKwh: value / 1000.0,
                   })),
                 ),
               );
@@ -141,7 +141,7 @@ export class ElectricityConsumptionChartComponent implements OnInit, OnDestroy {
                 map((x) =>
                   x.map(({ timestamp, value }) => ({
                     timestamp,
-                    energyConsumptionKwh: value,
+                    energyConsumptionKwh: value / 1000.0,
                   })),
                 ),
               );
@@ -158,7 +158,7 @@ export class ElectricityConsumptionChartComponent implements OnInit, OnDestroy {
                 map((x) =>
                   x.map(({ timestamp, value }) => ({
                     timestamp,
-                    energyConsumptionKwh: value,
+                    energyConsumptionKwh: value / 1000.0,
                   })),
                 ),
               );

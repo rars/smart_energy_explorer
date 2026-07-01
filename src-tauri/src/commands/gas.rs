@@ -20,19 +20,19 @@ use crate::{
 pub struct GasConsumption {
     #[serde(serialize_with = "crate::serde_utils::serialize_naive_as_utc")]
     pub timestamp: NaiveDateTime,
-    pub value: f64,
+    pub value: i64,
 }
 
 #[derive(Serialize, Debug)]
 pub struct DailyGasConsumption {
     pub timestamp: NaiveDate,
-    pub value: f64,
+    pub value: i64,
 }
 
 #[derive(Serialize, Debug)]
 pub struct MonthlyGasConsumption {
     pub timestamp: NaiveDate,
-    pub value: f64,
+    pub value: i64,
 }
 
 #[tauri::command]
@@ -61,7 +61,7 @@ pub async fn get_raw_gas_consumption(
         .iter()
         .map(|x| GasConsumption {
             timestamp: x.timestamp,
-            value: x.energy_consumption_kwh,
+            value: x.energy_consumption_wh,
         })
         .collect())
 }
@@ -230,7 +230,7 @@ pub async fn get_gas_cost_history(
         if let (Some(sc), Some(up)) = (standing_charge, unit_price) {
             daily_costs.push(DailyCost {
                 date: c.0,
-                cost_pence: sc + (c.1 * up),
+                cost_pence: sc + (((c.1 as f64) * up) / 1000.0),
             });
         } else {
             warn!(
