@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use chrono::{NaiveDate, NaiveDateTime, TimeZone, Utc};
+use chrono::{Datelike, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::Europe::London;
 use diesel::SqliteConnection;
 use keyring_core::Entry;
@@ -27,6 +27,28 @@ pub fn london_midnight_as_utc(date: &NaiveDate) -> NaiveDateTime {
     let london_midnight_utc = london_midnight_local.with_timezone(&Utc);
 
     london_midnight_utc.naive_utc()
+}
+
+pub fn utc_timestamp_to_london_date_id(timestamp_utc: &NaiveDateTime) -> i32 {
+    let london_time = timestamp_utc.and_utc().with_timezone(&London);
+
+    london_time
+        .format("%Y%m%d")
+        .to_string()
+        .parse::<i32>()
+        .unwrap()
+}
+
+pub fn naive_date_to_london_date_id(date: &NaiveDate) -> i32 {
+    (date.year() * 10000) + (date.month() as i32 * 100) + (date.day() as i32)
+}
+
+pub fn london_date_id_to_naive_date(date_id: i32) -> NaiveDate {
+    let year = date_id / 10000;
+    let month = ((date_id % 10000) / 100) as u32;
+    let day = (date_id % 100) as u32;
+
+    NaiveDate::from_ymd_opt(year, month, day).expect("Invalid date_id in the database")
 }
 
 pub fn emit_event<T>(app_handle: &AppHandle, event: &str, payload: T) -> Result<(), AppError>

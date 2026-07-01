@@ -5,6 +5,7 @@ diesel::table! {
         electricity_consumption_id -> Integer,
         timestamp -> Timestamp,
         energy_consumption_wh -> BigInt,
+        london_date_id -> Nullable<Integer>,
     }
 }
 
@@ -49,6 +50,7 @@ diesel::table! {
         gas_consumption_id -> Integer,
         timestamp -> Timestamp,
         energy_consumption_wh -> BigInt,
+        london_date_id -> Nullable<Integer>,
     }
 }
 
