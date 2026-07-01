@@ -1,8 +1,7 @@
-use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, MutexGuard};
 
-use chrono::{Datelike, NaiveDate, NaiveDateTime};
-use chrono_tz::Europe::London;
+use chrono::{NaiveDate, NaiveDateTime};
+use diesel::dsl::sql;
 use diesel::insert_into;
 use diesel::SqliteConnection;
 use diesel::{prelude::*, upsert::excluded};
@@ -11,11 +10,13 @@ use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 
 use crate::schema::{electricity_consumption, gas_consumption};
-use crate::utils::london_midnight_as_utc;
+use crate::utils::london_date_id_to_naive_date;
+use crate::utils::{
+    london_midnight_as_utc, naive_date_to_london_date_id, utc_timestamp_to_london_date_id,
+};
 
 use super::RepositoryError;
 
-const ENERGY_CONSUMPTION_KWH_ERROR_CODE: f64 = 16777.215f64;
 const ENERGY_CONSUMPTION_WH_ERROR_CODE: i64 = 16777215i64;
 
 const KWH_TO_WH_SCALE: Decimal = Decimal::ONE_THOUSAND;
@@ -35,6 +36,7 @@ pub struct GasConsumptionValue {
 struct NewElectricityConsumption {
     timestamp: NaiveDateTime,
     energy_consumption_wh: i64,
+    london_date_id: i32,
 }
 
 #[derive(Insertable)]
@@ -42,6 +44,7 @@ struct NewElectricityConsumption {
 struct NewGasConsumption {
     timestamp: NaiveDateTime,
     energy_consumption_wh: i64,
+    london_date_id: i32,
 }
 
 #[derive(Queryable)]
@@ -49,6 +52,7 @@ pub struct ElectricityConsumptionRecord {
     pub electricity_consumption_id: i32,
     pub timestamp: NaiveDateTime,
     pub energy_consumption_wh: i64,
+    pub london_date_id: Option<i32>,
 }
 
 #[derive(Queryable)]
@@ -56,60 +60,10 @@ pub struct GasConsumptionRecord {
     pub gas_consumption_id: i32,
     pub timestamp: NaiveDateTime,
     pub energy_consumption_wh: i64,
+    pub london_date_id: Option<i32>,
 }
 
 type RepositoryResult<T> = Result<T, RepositoryError>;
-
-fn group_raw_by_london_day<T, F, G>(
-    raw_data_utc: &Vec<T>,
-    proj_date_time: F,
-    proj_energy: G,
-) -> Vec<(NaiveDate, i64)>
-where
-    F: Fn(&T) -> &NaiveDateTime,
-    G: Fn(&T) -> i64,
-{
-    let mut energy_by_day: BTreeMap<NaiveDate, i64> = BTreeMap::new();
-
-    for elem in raw_data_utc {
-        let date_time = proj_date_time(elem);
-        let energy = proj_energy(elem);
-
-        let london_date = date_time.and_utc().with_timezone(&London).date_naive();
-
-        *energy_by_day.entry(london_date).or_insert(0) += energy;
-    }
-
-    energy_by_day.into_iter().collect()
-}
-
-fn group_raw_by_london_month<T, F, G>(
-    raw_data_utc: &Vec<T>,
-    proj_date_time: F,
-    proj_energy: G,
-) -> Vec<(NaiveDate, i64)>
-where
-    F: Fn(&T) -> &NaiveDateTime,
-    G: Fn(&T) -> i64,
-{
-    let mut energy_by_month: BTreeMap<NaiveDate, i64> = BTreeMap::new();
-
-    for elem in raw_data_utc {
-        let date_time = proj_date_time(elem);
-        let energy = proj_energy(elem);
-
-        let london_first_of_month = date_time
-            .and_utc()
-            .with_timezone(&London)
-            .date_naive()
-            .with_day(1)
-            .expect("Every month should have 1st of the month");
-
-        *energy_by_month.entry(london_first_of_month).or_insert(0) += energy;
-    }
-
-    energy_by_month.into_iter().collect()
-}
 
 pub trait ConsumptionRepository<T, U> {
     fn insert(&self, records: Vec<T>) -> RepositoryResult<()>;
@@ -156,6 +110,7 @@ impl ConsumptionRepository<ElectricityConsumptionValue, ElectricityConsumptionRe
                 energy_consumption_wh: (x.value * KWH_TO_WH_SCALE)
                     .to_i64()
                     .expect("Electricity consumption to fit in 64-bit integer"),
+                london_date_id: utc_timestamp_to_london_date_id(&x.timestamp),
             })
             .collect();
 
@@ -199,13 +154,32 @@ impl ConsumptionRepository<ElectricityConsumptionValue, ElectricityConsumptionRe
         start: NaiveDate,
         end: NaiveDate,
     ) -> RepositoryResult<Vec<(NaiveDate, i64)>> {
-        let raw_data = self.get_raw(start, end)?;
+        use crate::schema::electricity_consumption::dsl::*;
 
-        Ok(group_raw_by_london_day(
-            &raw_data,
-            |x| &x.timestamp,
-            |x| x.energy_consumption_wh,
-        ))
+        let mut conn = self.get_connection()?;
+
+        let start_london_date_id = naive_date_to_london_date_id(&start);
+        let end_london_date_id = naive_date_to_london_date_id(&end);
+
+        let daily_consumption = electricity_consumption
+            .filter(london_date_id.is_not_null())
+            .filter(london_date_id.ge(start_london_date_id))
+            .filter(london_date_id.lt(end_london_date_id))
+            .select((
+                london_date_id.assume_not_null(),
+                sql::<diesel::sql_types::BigInt>("COALESCE(SUM(energy_consumption_wh), 0)"),
+            ))
+            .group_by(london_date_id)
+            .order(london_date_id)
+            .load::<(i32, i64)>(&mut *conn)?;
+
+        Ok(daily_consumption
+            .iter()
+            .map(|(date_id, energy)| {
+                let date = london_date_id_to_naive_date(*date_id);
+                (date, *energy)
+            })
+            .collect())
     }
 
     fn get_monthly(
@@ -213,13 +187,35 @@ impl ConsumptionRepository<ElectricityConsumptionValue, ElectricityConsumptionRe
         start: NaiveDate,
         end: NaiveDate,
     ) -> RepositoryResult<Vec<(NaiveDate, i64)>> {
-        let raw_data = self.get_raw(start, end)?;
+        use crate::schema::electricity_consumption::dsl::*;
 
-        Ok(group_raw_by_london_month(
-            &raw_data,
-            |x| &x.timestamp,
-            |x| x.energy_consumption_wh,
-        ))
+        let mut conn = self.get_connection()?;
+
+        let start_london_date_id = naive_date_to_london_date_id(&start);
+        let end_london_date_id = naive_date_to_london_date_id(&end);
+
+        let london_month_id =
+            sql::<diesel::sql_types::Integer>("london_date_id - (london_date_id % 100) + 1");
+
+        let monthly_consumption = electricity_consumption
+            .filter(london_date_id.is_not_null())
+            .filter(london_date_id.ge(start_london_date_id))
+            .filter(london_date_id.lt(end_london_date_id))
+            .select((
+                london_month_id.clone().assume_not_null(),
+                sql::<diesel::sql_types::BigInt>("COALESCE(SUM(energy_consumption_wh), 0)"),
+            ))
+            .group_by(london_month_id.clone())
+            .order(london_month_id)
+            .load::<(i32, i64)>(&mut *conn)?;
+
+        Ok(monthly_consumption
+            .iter()
+            .map(|(date_id, energy)| {
+                let date = london_date_id_to_naive_date(*date_id);
+                (date, *energy)
+            })
+            .collect())
     }
 }
 
@@ -250,6 +246,7 @@ impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
                 energy_consumption_wh: (x.value * KWH_TO_WH_SCALE)
                     .to_i64()
                     .expect("Gas consumption to fit in i64"),
+                london_date_id: utc_timestamp_to_london_date_id(&x.timestamp),
             })
             .collect();
 
@@ -298,13 +295,32 @@ impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
         start: NaiveDate,
         end: NaiveDate,
     ) -> RepositoryResult<Vec<(NaiveDate, i64)>> {
-        let raw_data = self.get_raw(start, end)?;
+        use crate::schema::gas_consumption::dsl::*;
 
-        Ok(group_raw_by_london_day(
-            &raw_data,
-            |x| &x.timestamp,
-            |x| x.energy_consumption_wh,
-        ))
+        let mut conn = self.get_connection()?;
+
+        let start_london_date_id = naive_date_to_london_date_id(&start);
+        let end_london_date_id = naive_date_to_london_date_id(&end);
+
+        let daily_consumption = gas_consumption
+            .filter(london_date_id.is_not_null())
+            .filter(london_date_id.ge(start_london_date_id))
+            .filter(london_date_id.lt(end_london_date_id))
+            .select((
+                london_date_id.assume_not_null(),
+                sql::<diesel::sql_types::BigInt>("COALESCE(SUM(energy_consumption_wh), 0)"),
+            ))
+            .group_by(london_date_id)
+            .order(london_date_id)
+            .load::<(i32, i64)>(&mut *conn)?;
+
+        Ok(daily_consumption
+            .iter()
+            .map(|(date_id, energy)| {
+                let date = london_date_id_to_naive_date(*date_id);
+                (date, *energy)
+            })
+            .collect())
     }
 
     fn get_monthly(
@@ -312,12 +328,34 @@ impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
         start: NaiveDate,
         end: NaiveDate,
     ) -> RepositoryResult<Vec<(NaiveDate, i64)>> {
-        let raw_data = self.get_raw(start, end)?;
+        use crate::schema::gas_consumption::dsl::*;
 
-        Ok(group_raw_by_london_month(
-            &raw_data,
-            |x| &x.timestamp,
-            |x| x.energy_consumption_wh,
-        ))
+        let mut conn = self.get_connection()?;
+
+        let start_london_date_id = naive_date_to_london_date_id(&start);
+        let end_london_date_id = naive_date_to_london_date_id(&end);
+
+        let london_month_id =
+            sql::<diesel::sql_types::Integer>("london_date_id - (london_date_id % 100) + 1");
+
+        let monthly_consumption = gas_consumption
+            .filter(london_date_id.is_not_null())
+            .filter(london_date_id.ge(start_london_date_id))
+            .filter(london_date_id.lt(end_london_date_id))
+            .select((
+                london_month_id.clone().assume_not_null(),
+                sql::<diesel::sql_types::BigInt>("COALESCE(SUM(energy_consumption_wh), 0)"),
+            ))
+            .group_by(london_month_id.clone())
+            .order(london_month_id)
+            .load::<(i32, i64)>(&mut *conn)?;
+
+        Ok(monthly_consumption
+            .iter()
+            .map(|(date_id, energy)| {
+                let date = london_date_id_to_naive_date(*date_id);
+                (date, *energy)
+            })
+            .collect())
     }
 }

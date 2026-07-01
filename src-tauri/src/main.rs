@@ -22,6 +22,7 @@ use commands::glowmarkt::*;
 use commands::mqtt::*;
 use commands::profiles::*;
 
+use crate::db::populate_missing_london_date_ids;
 use crate::mqtt::start_mqtt_listener;
 use crate::utils::MqttSettings;
 use crate::utils::{get_mqtt_settings_opt, MqttAppSettings};
@@ -142,6 +143,7 @@ fn main() {
             let mut connection =
                 db::establish_connection(db_path.to_str().expect("db path needed"));
             db::run_migrations(&mut connection);
+            populate_missing_london_date_ids(&mut connection)?;
 
             let store = app.store(SETTINGS_FILE)?;
 
