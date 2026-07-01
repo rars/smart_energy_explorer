@@ -4,7 +4,7 @@ diesel::table! {
     electricity_consumption (electricity_consumption_id) {
         electricity_consumption_id -> Integer,
         timestamp -> Timestamp,
-        energy_consumption_kwh -> Double,
+        energy_consumption_wh -> BigInt,
     }
 }
 
@@ -48,7 +48,7 @@ diesel::table! {
     gas_consumption (gas_consumption_id) {
         gas_consumption_id -> Integer,
         timestamp -> Timestamp,
-        energy_consumption_kwh -> Double,
+        energy_consumption_wh -> BigInt,
     }
 }
 

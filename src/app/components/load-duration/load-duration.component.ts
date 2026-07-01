@@ -126,7 +126,7 @@ export class LoadDurationComponent {
             map((x) =>
               x.map(({ timestamp, value }) => ({
                 timestamp,
-                energyConsumptionKwh: value,
+                energyConsumptionKwh: value / 1000.0,
               })),
             ),
           );

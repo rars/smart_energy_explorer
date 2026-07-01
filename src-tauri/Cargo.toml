@@ -23,6 +23,7 @@ glowmarkt = { version = "0.5.3" }
 keyring-core = "1.0.0"
 log = "^0.4"
 paho-mqtt = { version = "0.14.0", default-features = false, features = ["bundled"] }
+rust_decimal = { version = "1.42", features = ["serde-float"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri = { version = "2.0.0", features = ["unstable"] }

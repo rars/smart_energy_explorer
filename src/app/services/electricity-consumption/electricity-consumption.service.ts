@@ -34,7 +34,7 @@ export class ElectricityConsumptionService {
 
     return data.map((x) => ({
       timestamp: new Date(this.dateService.parseISO(x.timestamp)),
-      electricityConsumptionKwh: x.value,
+      electricityConsumptionKwh: x.value / 1000.0,
     }));
   }
 

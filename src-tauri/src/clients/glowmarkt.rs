@@ -1,3 +1,4 @@
+use rust_decimal::{prelude::FromPrimitive, Decimal};
 use std::sync::Arc;
 use tauri::async_runtime::Mutex;
 
@@ -215,7 +216,7 @@ impl EnergyDataProvider for GlowmarktDataProvider {
                 .iter()
                 .map(|v| ElectricityConsumptionValue {
                     timestamp: to_naive_date_time(v.start),
-                    value: v.value as f64,
+                    value: Decimal::from_f32(v.value).expect("f32 should fit into Decimal"),
                 })
                 .collect();
 
@@ -298,7 +299,7 @@ impl EnergyDataProvider for GlowmarktDataProvider {
                 .iter()
                 .map(|v| GasConsumptionValue {
                     timestamp: to_naive_date_time(v.start),
-                    value: v.value as f64,
+                    value: Decimal::from_f32(v.value).expect("f32 should fit into Decimal"),
                 })
                 .collect();
 
