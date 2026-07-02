@@ -1,14 +1,16 @@
-use std::sync::{Arc, Mutex, MutexGuard};
-
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::dsl::sql;
 use diesel::insert_into;
+use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::Pool;
+use diesel::r2d2::PooledConnection;
 use diesel::SqliteConnection;
 use diesel::{prelude::*, upsert::excluded};
 use log::error;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 
+use crate::db::SqliteConnectionPool;
 use crate::schema::{electricity_consumption, gas_consumption};
 use crate::utils::london_date_id_to_naive_date;
 use crate::utils::{
@@ -84,18 +86,18 @@ pub trait ConsumptionRepository<T, U> {
 }
 
 pub struct SqliteElectricityConsumptionRepository {
-    conn: Arc<Mutex<SqliteConnection>>,
+    connection_pool: Pool<ConnectionManager<SqliteConnection>>,
 }
 
 impl SqliteElectricityConsumptionRepository {
-    pub fn new(conn: Arc<Mutex<SqliteConnection>>) -> Self {
-        Self { conn }
+    pub fn new(connection_pool: Pool<ConnectionManager<SqliteConnection>>) -> Self {
+        Self { connection_pool }
     }
 
-    fn get_connection(&self) -> RepositoryResult<MutexGuard<'_, SqliteConnection>> {
-        self.conn
-            .lock()
-            .map_err(|_| RepositoryError::SqliteConnectionMutexPoisonedError())
+    fn get_connection(
+        &self,
+    ) -> RepositoryResult<PooledConnection<ConnectionManager<SqliteConnection>>> {
+        Ok(self.connection_pool.get()?)
     }
 }
 
@@ -220,18 +222,18 @@ impl ConsumptionRepository<ElectricityConsumptionValue, ElectricityConsumptionRe
 }
 
 pub struct SqliteGasConsumptionRepository {
-    connection: Arc<Mutex<SqliteConnection>>,
+    connection_pool: SqliteConnectionPool,
 }
 
 impl SqliteGasConsumptionRepository {
-    pub fn new(connection: Arc<Mutex<SqliteConnection>>) -> Self {
-        Self { connection }
+    pub fn new(connection_pool: SqliteConnectionPool) -> Self {
+        Self { connection_pool }
     }
 
-    fn get_connection(&self) -> RepositoryResult<MutexGuard<'_, SqliteConnection>> {
-        self.connection
-            .lock()
-            .map_err(|_| RepositoryError::SqliteConnectionMutexPoisonedError())
+    fn get_connection(
+        &self,
+    ) -> RepositoryResult<PooledConnection<ConnectionManager<SqliteConnection>>> {
+        Ok(self.connection_pool.get()?)
     }
 }
 

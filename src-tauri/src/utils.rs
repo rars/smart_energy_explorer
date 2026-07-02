@@ -1,8 +1,5 @@
-use std::sync::{Arc, Mutex};
-
 use chrono::{Datelike, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::Europe::London;
-use diesel::SqliteConnection;
 use keyring_core::Entry;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
@@ -12,6 +9,7 @@ use crate::{
     clients::glowmarkt::GlowmarktDataProvider,
     commands::{ApiError, APP_SERVICE_NAME},
     data::energy_profile::{EnergyProfile, EnergyProfileRepository, SqliteEnergyProfileRepository},
+    db::SqliteConnectionPool,
     AppError, AppState, MqttMessage,
 };
 
@@ -63,11 +61,11 @@ where
 }
 
 pub fn get_or_create_energy_profile(
-    connection: Arc<Mutex<SqliteConnection>>,
+    connection_pool: SqliteConnectionPool,
     name: &str,
     base_unit: &str,
 ) -> Result<EnergyProfile, AppError> {
-    let repository = SqliteEnergyProfileRepository::new(connection);
+    let repository = SqliteEnergyProfileRepository::new(connection_pool);
 
     repository.get_energy_profile(name).or_else(|get_error| {
         repository

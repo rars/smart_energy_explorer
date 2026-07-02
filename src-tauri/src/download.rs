@@ -1,12 +1,6 @@
-use std::{
-    cmp,
-    error::Error,
-    future::Future,
-    sync::{Arc, Mutex},
-};
+use std::{cmp, error::Error, future::Future, sync::Arc};
 
 use chrono::{Duration, Local, NaiveDate, NaiveDateTime};
-use diesel::SqliteConnection;
 use log::{debug, error, info};
 use serde::Serialize;
 use tauri::{async_runtime, AppHandle};
@@ -25,6 +19,7 @@ use crate::{
         },
         RepositoryError,
     },
+    db::SqliteConnectionPool,
     utils::{emit_event, get_or_create_energy_profile},
     AppError, AppState,
 };
@@ -55,7 +50,7 @@ where
     T: EnergyDataProvider,
 {
     data_provider: Arc<T>,
-    connection: Arc<Mutex<SqliteConnection>>,
+    connection_pool: SqliteConnectionPool,
 }
 
 impl<T> DataLoader<ElectricityConsumptionValue> for ElectricityConsumptionDataLoader<T>
@@ -84,7 +79,8 @@ where
 
     fn insert_data(&self, data: Vec<ElectricityConsumptionValue>) -> Result<(), Self::InsertError> {
         if data.len() > 0 {
-            SqliteElectricityConsumptionRepository::new(self.connection.clone()).insert(data)?;
+            SqliteElectricityConsumptionRepository::new(self.connection_pool.clone())
+                .insert(data)?;
         }
 
         Ok(())
@@ -97,7 +93,7 @@ where
     T: EnergyDataProvider,
 {
     data_provider: Arc<T>,
-    connection: Arc<Mutex<SqliteConnection>>,
+    connection_pool: SqliteConnectionPool,
 }
 
 impl<T> DataLoader<TariffPlan> for ElectricityTariffDataLoader<T>
@@ -134,7 +130,7 @@ where
             })
             .collect();
 
-        SqliteElectricityTariffRepository::new(self.connection.clone()).insert(tps)?;
+        SqliteElectricityTariffRepository::new(self.connection_pool.clone()).insert(tps)?;
 
         Ok(())
     }
@@ -146,7 +142,7 @@ where
     T: EnergyDataProvider,
 {
     data_provider: Arc<T>,
-    connection: Arc<Mutex<SqliteConnection>>,
+    connection_pool: SqliteConnectionPool,
 }
 
 impl<T> DataLoader<GasConsumptionValue> for GasConsumptionDataLoader<T>
@@ -171,7 +167,7 @@ where
 
     fn insert_data(&self, data: Vec<GasConsumptionValue>) -> Result<(), Self::InsertError> {
         if data.len() > 0 {
-            SqliteGasConsumptionRepository::new(self.connection.clone()).insert(data)?;
+            SqliteGasConsumptionRepository::new(self.connection_pool.clone()).insert(data)?;
         }
 
         Ok(())
@@ -184,7 +180,7 @@ where
     T: EnergyDataProvider,
 {
     data_provider: Arc<T>,
-    connection: Arc<Mutex<SqliteConnection>>,
+    connection_pool: SqliteConnectionPool,
 }
 
 impl<T> DataLoader<TariffPlan> for GasTariffDataLoader<T>
@@ -221,7 +217,7 @@ where
             })
             .collect();
 
-        SqliteGasTariffRepository::new(self.connection.clone()).insert(tps)?;
+        SqliteGasTariffRepository::new(self.connection_pool.clone()).insert(tps)?;
 
         Ok(())
     }
@@ -380,18 +376,18 @@ where
 
     let electricity_consumption_data_loader = ElectricityConsumptionDataLoader {
         data_provider: data_provider.clone(),
-        connection: app_state.db.clone(),
+        connection_pool: app_state.db_pool.clone(),
     };
 
     let electricity_tariff_data_loader = ElectricityTariffDataLoader {
         data_provider: data_provider.clone(),
-        connection: app_state.db.clone(),
+        connection_pool: app_state.db_pool.clone(),
     };
 
     let app_handle_clone = app_handle.clone();
 
     check_for_new_data(
-        app_state.db.clone(),
+        app_state.db_pool.clone(),
         "electricity",
         "kWh",
         |until_date_time| async move {
@@ -418,18 +414,18 @@ where
 
     let gas_consumption_data_loader = GasConsumptionDataLoader {
         data_provider: data_provider.clone(),
-        connection: app_state.db.clone(),
+        connection_pool: app_state.db_pool.clone(),
     };
 
     let gas_tariff_data_loader = GasTariffDataLoader {
         data_provider: data_provider.clone(),
-        connection: app_state.db.clone(),
+        connection_pool: app_state.db_pool.clone(),
     };
 
     let app_handle_clone = app_handle.clone();
 
     check_for_new_data(
-        app_state.db.clone(),
+        app_state.db_pool.clone(),
         "gas",
         "kWh",
         |until_date_time| async move {
@@ -458,7 +454,7 @@ where
 }
 
 async fn check_for_new_data<F, Fut>(
-    connection: Arc<Mutex<SqliteConnection>>,
+    connection_pool: SqliteConnectionPool,
     profile_name: &str,
     base_unit: &str,
     download_action: F,
@@ -467,7 +463,7 @@ where
     F: FnOnce(NaiveDateTime) -> Fut,
     Fut: Future<Output = Result<NaiveDate, AppError>>,
 {
-    let profile = get_or_create_energy_profile(connection.clone(), profile_name, base_unit)?;
+    let profile = get_or_create_energy_profile(connection_pool.clone(), profile_name, base_unit)?;
 
     if !profile.is_active {
         info!(
@@ -481,7 +477,7 @@ where
 
     let last_date_retrieved = download_action(until_date_time).await?;
 
-    let repository = SqliteEnergyProfileRepository::new(connection);
+    let repository = SqliteEnergyProfileRepository::new(connection_pool);
 
     repository
         .update_energy_profile(

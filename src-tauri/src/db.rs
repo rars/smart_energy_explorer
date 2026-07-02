@@ -1,17 +1,15 @@
-use chrono_tz::Europe::London;
 use diesel::prelude::*;
+use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::{sqlite::SqliteConnection, Connection, ExpressionMethods};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use log::info;
 
 use crate::data::RepositoryError;
 use crate::utils::utc_timestamp_to_london_date_id;
-use crate::{
-    schema::electricity_consumption::{london_date_id, table},
-    AppError,
-};
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+
+pub type SqliteConnectionPool = Pool<ConnectionManager<SqliteConnection>>;
 
 pub fn run_migrations(conn: &mut SqliteConnection) {
     conn.run_pending_migrations(MIGRATIONS)
@@ -21,13 +19,6 @@ pub fn run_migrations(conn: &mut SqliteConnection) {
 pub fn revert_all_migrations(conn: &mut SqliteConnection) {
     conn.revert_all_migrations(MIGRATIONS)
         .expect("Error reverting migrations");
-}
-
-pub fn establish_connection(database_url: &str) -> SqliteConnection {
-    // dotenvy::dotenv().ok();
-    // let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    SqliteConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
 pub fn populate_missing_london_date_ids(

@@ -21,7 +21,7 @@ pub struct EnergyProfileUpdateParam {
 
 #[tauri::command]
 pub fn get_energy_profiles(app_state: State<'_, AppState>) -> Result<Vec<EnergyProfile>, ApiError> {
-    let repository = SqliteEnergyProfileRepository::new(app_state.db.clone());
+    let repository = SqliteEnergyProfileRepository::new(app_state.db_pool.clone());
 
     repository
         .get_all_energy_profiles()
@@ -45,7 +45,7 @@ pub async fn update_energy_profile_settings(
         })
         .collect();
 
-    let repository = SqliteEnergyProfileRepository::new(app_state.db.clone());
+    let repository = SqliteEnergyProfileRepository::new(app_state.db_pool.clone());
 
     for (energy_profile_id, is_active, start) in update_settings? {
         debug!("Updating {}, {}, {}", energy_profile_id, is_active, start);

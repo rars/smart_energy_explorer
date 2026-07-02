@@ -26,6 +26,8 @@ pub enum ApiError {
     JoinError(#[from] tokio::task::JoinError),
     #[error("Mutex '{name}' is poisoned")]
     MutexPoisonedError { name: String },
+    #[error("Error with DB connection pool: {0}")]
+    ConnectionPoolError(#[from] diesel::r2d2::PoolError),
 }
 
 impl serde::Serialize for ApiError {

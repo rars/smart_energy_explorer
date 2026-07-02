@@ -129,10 +129,7 @@ pub async fn reset(app_handle: AppHandle, app_state: State<'_, AppState>) -> Res
 }
 
 fn reset_database(app_state: &AppState) -> Result<(), ApiError> {
-    let mut conn = app_state
-        .db
-        .lock()
-        .map_err(|_| ApiError::MutexPoisonedError { name: "db".into() })?;
+    let mut conn = app_state.db_pool.get()?;
 
     revert_all_migrations(&mut conn);
     db::run_migrations(&mut conn);
