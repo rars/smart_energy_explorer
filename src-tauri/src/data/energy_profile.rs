@@ -1,10 +1,11 @@
-use std::sync::{Arc, Mutex, MutexGuard};
-
 use chrono::{Datelike, Local, NaiveDateTime};
 use diesel::dsl::*;
 use diesel::prelude::*;
+use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::PooledConnection;
 use serde::Serialize;
 
+use crate::db::SqliteConnectionPool;
 use crate::schema::energy_profile;
 
 #[derive(Serialize, Queryable, Debug)]
@@ -47,24 +48,22 @@ pub trait EnergyProfileRepository {
 }
 
 pub struct SqliteEnergyProfileRepository {
-    conn: Arc<Mutex<SqliteConnection>>,
+    connection_pool: SqliteConnectionPool,
 }
 
 impl SqliteEnergyProfileRepository {
-    pub fn new(conn: Arc<Mutex<SqliteConnection>>) -> Self {
-        Self { conn }
+    pub fn new(connection_pool: SqliteConnectionPool) -> Self {
+        Self { connection_pool }
     }
 
-    fn connection(&self) -> MutexGuard<'_, SqliteConnection> {
-        self.conn
-            .lock()
-            .expect("Could not acquire lock on SqliteConnection")
+    fn get_connection(&self) -> PooledConnection<ConnectionManager<SqliteConnection>> {
+        self.connection_pool.get().unwrap()
     }
 }
 
 impl EnergyProfileRepository for SqliteEnergyProfileRepository {
     fn get_energy_profile(&self, name: &str) -> QueryResult<EnergyProfile> {
-        let mut conn = self.connection();
+        let mut conn = self.get_connection();
 
         energy_profile::table
             .filter(energy_profile::name.eq(name))
@@ -72,7 +71,7 @@ impl EnergyProfileRepository for SqliteEnergyProfileRepository {
     }
 
     fn get_all_energy_profiles(&self) -> QueryResult<Vec<EnergyProfile>> {
-        let mut conn = self.connection();
+        let mut conn = self.get_connection();
         energy_profile::table.load::<EnergyProfile>(&mut *conn)
     }
 
@@ -89,7 +88,7 @@ impl EnergyProfileRepository for SqliteEnergyProfileRepository {
             base_unit,
         };
 
-        let mut conn = self.connection();
+        let mut conn = self.get_connection();
 
         diesel::insert_into(energy_profile::table)
             .values(&new_profile)
@@ -109,7 +108,7 @@ impl EnergyProfileRepository for SqliteEnergyProfileRepository {
     ) -> QueryResult<EnergyProfile> {
         use crate::schema::energy_profile::dsl::*;
 
-        let mut conn = self.connection();
+        let mut conn = self.get_connection();
 
         diesel::update(energy_profile.find(energy_profile_id_param))
             .set((
@@ -136,7 +135,7 @@ impl EnergyProfileRepository for SqliteEnergyProfileRepository {
     ) -> QueryResult<EnergyProfile> {
         use crate::schema::energy_profile::dsl::*;
 
-        let mut conn = self.connection();
+        let mut conn = self.get_connection();
 
         diesel::update(energy_profile.find(energy_profile_id_param))
             .set((

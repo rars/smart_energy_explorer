@@ -1,6 +1,5 @@
-use std::sync::{Arc, Mutex, MutexGuard};
-
 use chrono::NaiveDateTime;
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::sql_types::{Double, Timestamp};
 use diesel::{insert_into, sql_query, SqliteConnection};
 use diesel::{prelude::*, upsert::excluded};
@@ -91,18 +90,18 @@ pub trait TariffRepository<T> {
 }
 
 pub struct SqliteElectricityTariffRepository {
-    conn: Arc<Mutex<SqliteConnection>>,
+    connection_pool: Pool<ConnectionManager<SqliteConnection>>,
 }
 
 impl SqliteElectricityTariffRepository {
-    pub fn new(conn: Arc<Mutex<SqliteConnection>>) -> Self {
-        Self { conn }
+    pub fn new(connection_pool: Pool<ConnectionManager<SqliteConnection>>) -> Self {
+        Self { connection_pool }
     }
 
-    fn get_connection(&self) -> RepositoryResult<MutexGuard<'_, SqliteConnection>> {
-        self.conn
-            .lock()
-            .map_err(|_| RepositoryError::SqliteConnectionMutexPoisonedError())
+    fn get_connection(
+        &self,
+    ) -> RepositoryResult<PooledConnection<ConnectionManager<SqliteConnection>>> {
+        Ok(self.connection_pool.get()?)
     }
 }
 
@@ -137,7 +136,7 @@ impl TariffRepository<NewElectricityTariffPlan> for SqliteElectricityTariffRepos
 
         let query = r#"
                 WITH extracted_standing_charge AS (
-                    SELECT 
+                    SELECT
                         effective_date,
                         (SELECT json_extract(value, '$')
                         FROM json_tree(electricity_tariff_plan.plan)
@@ -146,14 +145,14 @@ impl TariffRepository<NewElectricityTariffPlan> for SqliteElectricityTariffRepos
                     FROM electricity_tariff_plan
                 ),
                 price_changes AS (
-                    SELECT 
-                        effective_date, 
+                    SELECT
+                        effective_date,
                         standing_charge_pence,
                         LAG(standing_charge_pence) OVER (ORDER BY effective_date) AS previous_price
                     FROM extracted_standing_charge
                 )
-                SELECT 
-                    pc.effective_date AS start_date, 
+                SELECT
+                    pc.effective_date AS start_date,
                     pc.standing_charge_pence
                 FROM price_changes AS pc
                 WHERE pc.standing_charge_pence <> COALESCE(pc.previous_price, pc.standing_charge_pence)
@@ -169,7 +168,7 @@ impl TariffRepository<NewElectricityTariffPlan> for SqliteElectricityTariffRepos
 
         let query = r#"
                 WITH extracted_unit_price AS (
-                    SELECT 
+                    SELECT
                         effective_date,
                         (SELECT json_extract(value, '$')
                         FROM json_tree(electricity_tariff_plan.plan)
@@ -178,17 +177,17 @@ impl TariffRepository<NewElectricityTariffPlan> for SqliteElectricityTariffRepos
                     FROM electricity_tariff_plan
                 ),
                 price_changes AS (
-                    SELECT 
-                        effective_date, 
+                    SELECT
+                        effective_date,
                         unit_price_pence,
                         LAG(unit_price_pence) OVER (ORDER BY effective_date) AS previous_price
                     FROM extracted_unit_price
                 )
-                SELECT 
-                    pc.effective_date AS price_effective_time, 
+                SELECT
+                    pc.effective_date AS price_effective_time,
                     pc.unit_price_pence
                 FROM price_changes AS pc
-                WHERE pc.unit_price_pence <> COALESCE(pc.previous_price, pc.unit_price_pence) 
+                WHERE pc.unit_price_pence <> COALESCE(pc.previous_price, pc.unit_price_pence)
                 OR pc.previous_price IS NULL
                 ORDER BY pc.effective_date;
             "#;
@@ -301,18 +300,18 @@ impl TariffRepository<ElectricityTariff> for SqliteElectricityTariffRepository {
 */
 
 pub struct SqliteGasTariffRepository {
-    conn: Arc<Mutex<SqliteConnection>>,
+    connection_pool: Pool<ConnectionManager<SqliteConnection>>,
 }
 
 impl SqliteGasTariffRepository {
-    pub fn new(conn: Arc<Mutex<SqliteConnection>>) -> Self {
-        Self { conn }
+    pub fn new(connection_pool: Pool<ConnectionManager<SqliteConnection>>) -> Self {
+        Self { connection_pool }
     }
 
-    fn get_connection(&self) -> RepositoryResult<MutexGuard<'_, SqliteConnection>> {
-        self.conn
-            .lock()
-            .map_err(|_| RepositoryError::SqliteConnectionMutexPoisonedError())
+    fn get_connection(
+        &self,
+    ) -> RepositoryResult<PooledConnection<ConnectionManager<SqliteConnection>>> {
+        Ok(self.connection_pool.get()?)
     }
 }
 
@@ -346,7 +345,7 @@ impl TariffRepository<NewGasTariffPlan> for SqliteGasTariffRepository {
 
         let query = r#"
                 WITH extracted_standing_charge AS (
-                    SELECT 
+                    SELECT
                         effective_date,
                         (SELECT json_extract(value, '$')
                         FROM json_tree(gas_tariff_plan.plan)
@@ -355,14 +354,14 @@ impl TariffRepository<NewGasTariffPlan> for SqliteGasTariffRepository {
                     FROM gas_tariff_plan
                 ),
                 price_changes AS (
-                    SELECT 
-                        effective_date, 
+                    SELECT
+                        effective_date,
                         standing_charge_pence,
                         LAG(standing_charge_pence) OVER (ORDER BY effective_date) AS previous_price
                     FROM extracted_standing_charge
                 )
-                SELECT 
-                    pc.effective_date AS start_date, 
+                SELECT
+                    pc.effective_date AS start_date,
                     pc.standing_charge_pence
                 FROM price_changes AS pc
                 WHERE pc.standing_charge_pence <> COALESCE(pc.previous_price, pc.standing_charge_pence)
@@ -378,7 +377,7 @@ impl TariffRepository<NewGasTariffPlan> for SqliteGasTariffRepository {
 
         let query = r#"
                 WITH extracted_unit_price AS (
-                    SELECT 
+                    SELECT
                         effective_date,
                         (SELECT json_extract(value, '$')
                         FROM json_tree(gas_tariff_plan.plan)
@@ -387,17 +386,17 @@ impl TariffRepository<NewGasTariffPlan> for SqliteGasTariffRepository {
                     FROM gas_tariff_plan
                 ),
                 price_changes AS (
-                    SELECT 
-                        effective_date, 
+                    SELECT
+                        effective_date,
                         unit_price_pence,
                         LAG(unit_price_pence) OVER (ORDER BY effective_date) AS previous_price
                     FROM extracted_unit_price
                 )
-                SELECT 
-                    pc.effective_date AS price_effective_time, 
+                SELECT
+                    pc.effective_date AS price_effective_time,
                     pc.unit_price_pence
                 FROM price_changes AS pc
-                WHERE pc.unit_price_pence <> COALESCE(pc.previous_price, pc.unit_price_pence) 
+                WHERE pc.unit_price_pence <> COALESCE(pc.previous_price, pc.unit_price_pence)
                 OR pc.previous_price IS NULL
                 ORDER BY pc.effective_date;
             "#;

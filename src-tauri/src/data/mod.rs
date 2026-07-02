@@ -6,6 +6,6 @@ pub mod tariff;
 pub enum RepositoryError {
     #[error("Database error: {0}")]
     DieselError(#[from] diesel::result::Error),
-    #[error("Mutex guarding SQLite connection is poisoned")]
-    SqliteConnectionMutexPoisonedError(),
+    #[error("Error with connection pool: {0}")]
+    ConnectionPoolError(#[from] diesel::r2d2::PoolError),
 }

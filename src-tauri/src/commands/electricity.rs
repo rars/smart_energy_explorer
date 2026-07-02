@@ -50,10 +50,10 @@ pub async fn get_raw_electricity_consumption(
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
 
-    let db_connection_clone = app_state.db.clone();
+    let connection_pool_clone = app_state.db_pool.clone();
 
     let result = async_runtime::spawn_blocking(move || {
-        let repository = SqliteElectricityConsumptionRepository::new(db_connection_clone);
+        let repository = SqliteElectricityConsumptionRepository::new(connection_pool_clone);
 
         repository.get_raw(start, end)
     })
@@ -93,10 +93,10 @@ pub async fn get_daily_electricity_consumption(
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
 
-    let db_connection_clone = app_state.db.clone();
+    let connection_pool_clone = app_state.db_pool.clone();
 
     let daily_consumption = async_runtime::spawn_blocking(move || {
-        let repository = SqliteElectricityConsumptionRepository::new(db_connection_clone);
+        let repository = SqliteElectricityConsumptionRepository::new(connection_pool_clone);
 
         repository.get_daily(start, end)
     })
@@ -127,10 +127,10 @@ pub async fn get_monthly_electricity_consumption(
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
 
-    let db_connection_clone = app_state.db.clone();
+    let connection_pool_clone = app_state.db_pool.clone();
 
     let monthly_consumption = async_runtime::spawn_blocking(move || {
-        let repository = SqliteElectricityConsumptionRepository::new(db_connection_clone);
+        let repository = SqliteElectricityConsumptionRepository::new(connection_pool_clone);
 
         repository.get_monthly(start, end)
     })
@@ -151,10 +151,10 @@ pub async fn get_monthly_electricity_consumption(
 pub async fn get_electricity_tariff_history(
     app_state: State<'_, AppState>,
 ) -> Result<TariffHistoryResponse, ApiError> {
-    let db_connection_clone = app_state.db.clone();
+    let connection_pool_clone = app_state.db_pool.clone();
 
     let standing_charge_history = async_runtime::spawn_blocking(move || {
-        let repository = SqliteElectricityTariffRepository::new(db_connection_clone);
+        let repository = SqliteElectricityTariffRepository::new(connection_pool_clone);
 
         repository.get_standing_charge_history()
     })
@@ -162,10 +162,10 @@ pub async fn get_electricity_tariff_history(
     .map_err(|e| ApiError::Custom(format!("Error: {}", e)))?
     .map_err(ApiError::RepositoryError)?;
 
-    let db_connection_clone = app_state.db.clone();
+    let connection_pool_clone = app_state.db_pool.clone();
 
     let unit_price_history = async_runtime::spawn_blocking(move || {
-        let repository = SqliteElectricityTariffRepository::new(db_connection_clone);
+        let repository = SqliteElectricityTariffRepository::new(connection_pool_clone);
 
         repository.get_unit_price_history()
     })
@@ -206,10 +206,10 @@ pub async fn get_electricity_cost_history(
     let start = parse_iso_string_to_naive_date(&start_date)?;
     let end = parse_iso_string_to_naive_date(&end_date)?;
 
-    let db_connection_clone = app_state.db.clone();
+    let connection_pool_clone = app_state.db_pool.clone();
 
     let mut consumption = async_runtime::spawn_blocking(move || {
-        let repository = SqliteElectricityConsumptionRepository::new(db_connection_clone);
+        let repository = SqliteElectricityConsumptionRepository::new(connection_pool_clone);
 
         repository.get_daily(start, end)
     })

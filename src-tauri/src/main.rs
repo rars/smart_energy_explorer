@@ -3,6 +3,7 @@
 
 use app_settings::{AppSettings, SETTINGS_FILE};
 use clients::glowmarkt::GlowmarktDataProviderError;
+use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::SqliteConnection;
 use log::{debug, error};
 use std::env;
@@ -22,7 +23,7 @@ use commands::glowmarkt::*;
 use commands::mqtt::*;
 use commands::profiles::*;
 
-use crate::db::populate_missing_london_date_ids;
+use crate::db::{populate_missing_london_date_ids, SqliteConnectionPool};
 use crate::mqtt::start_mqtt_listener;
 use crate::utils::MqttSettings;
 use crate::utils::{get_mqtt_settings_opt, MqttAppSettings};
@@ -40,7 +41,7 @@ mod serde_utils;
 mod utils;
 
 struct AppState {
-    db: Arc<Mutex<SqliteConnection>>,
+    db_pool: SqliteConnectionPool,
     downloading: Arc<Mutex<bool>>,
     client_available: Arc<Mutex<bool>>,
     app_settings: Arc<Mutex<AppSettings>>,
@@ -51,7 +52,7 @@ struct AppState {
 impl Clone for AppState {
     fn clone(&self) -> Self {
         Self {
-            db: self.db.clone(),
+            db_pool: self.db_pool.clone(),
             downloading: self.downloading.clone(),
             client_available: self.client_available.clone(),
             app_settings: self.app_settings.clone(),
@@ -140,10 +141,23 @@ fn main() {
 
             let db_path = app_data_dir.join("db.sqlite");
 
-            let mut connection =
-                db::establish_connection(db_path.to_str().expect("db path needed"));
-            db::run_migrations(&mut connection);
-            populate_missing_london_date_ids(&mut connection)?;
+            let connection_manager = ConnectionManager::<SqliteConnection>::new(
+                db_path.to_str().expect("db path needed"),
+            );
+
+            let db_connection_pool = Pool::builder()
+                .max_size(10)
+                .build(connection_manager)
+                .expect("Failed to create database connection pool");
+
+            {
+                let mut connection = db_connection_pool
+                    .get()
+                    .expect("Failed to get connection from pool");
+
+                db::run_migrations(&mut connection);
+                populate_missing_london_date_ids(&mut connection)?;
+            }
 
             let store = app.store(SETTINGS_FILE)?;
 
@@ -159,7 +173,7 @@ fn main() {
             let (tx, rx) = tokio::sync::mpsc::channel::<MqttMessage>(1);
 
             let app_state = AppState {
-                db: Arc::new(Mutex::new(connection)),
+                db_pool: db_connection_pool,
                 downloading: Arc::new(Mutex::new(false)),
                 client_available: Arc::new(Mutex::new(false)),
                 app_settings: Arc::new(Mutex::new(app_settings)),
