@@ -216,7 +216,7 @@ impl EnergyDataProvider for GlowmarktDataProvider {
                 .iter()
                 .map(|v| ElectricityConsumptionValue {
                     timestamp: to_naive_date_time(v.start),
-                    value: Decimal::from_f32(v.value).expect("f32 should fit into Decimal"),
+                    value: Decimal::from_f64(v.value).expect("f64 should fit into Decimal"),
                 })
                 .collect();
 
@@ -299,7 +299,7 @@ impl EnergyDataProvider for GlowmarktDataProvider {
                 .iter()
                 .map(|v| GasConsumptionValue {
                     timestamp: to_naive_date_time(v.start),
-                    value: Decimal::from_f32(v.value).expect("f32 should fit into Decimal"),
+                    value: Decimal::from_f64(v.value).expect("f64 should fit into Decimal"),
                 })
                 .collect();
 
