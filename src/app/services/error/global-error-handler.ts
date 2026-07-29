@@ -1,4 +1,5 @@
 import { ErrorHandler, Injectable, Injector } from '@angular/core';
+
 import { ErrorService } from './error.service';
 
 @Injectable()
@@ -7,6 +8,7 @@ export class GlobalErrorHandler implements ErrorHandler {
 
   public handleError(error: any): void {
     const errorService = this.injector.get(ErrorService);
+    debugger;
     errorService.showError(error);
   }
 }

@@ -6,9 +6,13 @@ use clients::glowmarkt::GlowmarktDataProviderError;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::SqliteConnection;
 use log::{debug, error};
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
+use sqlx::{Pool as SqlxPool, Sqlite};
 use std::env;
 use std::fs;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use tauri::Window;
 use tauri::{async_runtime, Manager};
 use tauri_plugin_log::{Target, TargetKind};
@@ -17,6 +21,7 @@ use tokio::sync::mpsc::Sender;
 use utils::{get_glowmarkt_data_provider, switch_splashscreen_to_main};
 
 use commands::app::*;
+use commands::assistant::*;
 use commands::electricity::*;
 use commands::gas::*;
 use commands::glowmarkt::*;
@@ -42,6 +47,7 @@ mod utils;
 
 struct AppState {
     db_pool: SqliteConnectionPool,
+    sqlx_pool: SqlxPool<Sqlite>,
     downloading: Arc<Mutex<bool>>,
     client_available: Arc<Mutex<bool>>,
     app_settings: Arc<Mutex<AppSettings>>,
@@ -53,6 +59,7 @@ impl Clone for AppState {
     fn clone(&self) -> Self {
         Self {
             db_pool: self.db_pool.clone(),
+            sqlx_pool: self.sqlx_pool.clone(),
             downloading: self.downloading.clone(),
             client_available: self.client_available.clone(),
             app_settings: self.app_settings.clone(),
@@ -140,10 +147,9 @@ fn main() {
             }
 
             let db_path = app_data_dir.join("db.sqlite");
+            let db_path_str = db_path.to_str().expect("db path needed");
 
-            let connection_manager = ConnectionManager::<SqliteConnection>::new(
-                db_path.to_str().expect("db path needed"),
-            );
+            let connection_manager = ConnectionManager::<SqliteConnection>::new(db_path_str);
 
             let db_connection_pool = Pool::builder()
                 .max_size(10)
@@ -158,6 +164,24 @@ fn main() {
                 db::run_migrations(&mut connection);
                 populate_missing_london_date_ids(&mut connection)?;
             }
+
+            let sqlx_pool = {
+                let connection_string = format!("sqlite://{}", db_path_str);
+
+                let connect_options = SqliteConnectOptions::from_str(&connection_string)
+                    .expect("Invalid SQLite connection string")
+                    .create_if_missing(true)
+                    .read_only(true)
+                    .journal_mode(SqliteJournalMode::Wal) // Prevents lock contention between Diesel and sqlx
+                    .busy_timeout(Duration::from_secs(5)); // Gives queries up to 5s to wait for locks
+
+                tauri::async_runtime::block_on(
+                    SqlitePoolOptions::new()
+                        .max_connections(5)
+                        .connect_with(connect_options),
+                )
+                .expect("Failed to create sqlx database connection pool")
+            };
 
             let store = app.store(SETTINGS_FILE)?;
 
@@ -174,6 +198,7 @@ fn main() {
 
             let app_state = AppState {
                 db_pool: db_connection_pool,
+                sqlx_pool,
                 downloading: Arc::new(Mutex::new(false)),
                 client_available: Arc::new(Mutex::new(false)),
                 app_settings: Arc::new(Mutex::new(app_settings)),
@@ -246,6 +271,8 @@ fn main() {
             clear_all_data,
             close_welcome_screen,
             fetch_data,
+            ask_assistant,
+            get_ollama_models,
             get_app_status,
             get_app_version,
             get_daily_electricity_consumption,

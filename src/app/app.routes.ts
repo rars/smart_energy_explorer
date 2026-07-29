@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { AboutComponent } from './components/about/about.component';
+import { AssistantComponent } from './components/assistant/assistant.component';
 import { BrightSettingsComponent } from './components/bright-settings/bright-settings.component';
 import { DataManagementSettingsComponent } from './components/data-management-settings/data-management-settings.component';
 import { ElectricityConsumptionChartComponent } from './components/electricity-consumption-chart/electricity-consumption-chart.component';
@@ -17,6 +18,7 @@ import { WelcomeComponent } from './components/welcome/welcome.component';
 import { unsavedChangesGuard } from './unsaved-changes.guard';
 
 export const routes: Routes = [
+  { path: 'assistant', component: AssistantComponent },
   { path: 'about', component: AboutComponent },
   { path: 'welcome', component: WelcomeComponent },
   { path: 'electricity', component: ElectricityConsumptionChartComponent },

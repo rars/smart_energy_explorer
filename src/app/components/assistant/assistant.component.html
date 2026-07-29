@@ -1,0 +1,87 @@
+<mat-card>
+  <mat-card-content>
+    <div class="flex flex-col">
+      @for (message of messages(); track message.id) {
+        <div
+          class="flex"
+          [ngClass]="{
+            'justify-end': message.user === 'You',
+            'justify-start': message.user !== 'You',
+          }"
+        >
+          <div
+            class="p-3 rounded-lg my-1"
+            [ngClass]="{
+              'bg-green-500': message.user === 'You',
+              'bg-blue-500': message.user !== 'You',
+            }"
+          >
+            <strong>{{ message.user }}:</strong>
+            <pre class="whitespace-pre-wrap">{{ message.text }}</pre>
+            @if (message.chartConfiguration !== null) {
+              <div class="bg-white rounded-lg p-4">
+                <app-chart
+                  [chartConfiguration]="message.chartConfiguration"
+                ></app-chart>
+              </div>
+              <div>
+                {{ message.chartConfiguration | json }}
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (!isMessageInFlight()) {
+      <div>
+        <mat-form-field appearance="outline" class="w-full mb-2">
+          <mat-label>Ollama Model</mat-label>
+          <mat-select
+            [(ngModel)]="selectedModel"
+            [disabled]="availableModels().length === 0"
+          >
+            @for (model of availableModels(); track model) {
+              <mat-option [value]="model">{{ model }}</mat-option>
+            }
+          </mat-select>
+          @if (availableModels().length === 0) {
+            <mat-hint
+              >No Ollama models found or Ollama service unavailable</mat-hint
+            >
+          }
+        </mat-form-field>
+
+        <div class="w-full flex flex-row items-center">
+          <mat-form-field appearance="outline" class="flex-grow">
+            <mat-label>Message</mat-label>
+            <input
+              matInput
+              [(ngModel)]="messageText"
+              (keyup.enter)="sendMessage()"
+            />
+          </mat-form-field>
+          <button mat-icon-button (click)="sendMessage()">
+            <mat-icon>send</mat-icon>
+          </button>
+        </div>
+        <br />
+
+        <textarea
+          [(ngModel)]="prePromptText"
+          style="width: 300px; height: 150px"
+        ></textarea>
+      </div>
+    }
+
+    @if (isMessageInFlight()) {
+      <div class="flex flex-row items-center">
+        <mat-progress-spinner
+          mode="indeterminate"
+          [diameter]="15"
+        ></mat-progress-spinner>
+        <div class="ml-1">{{ status() }}</div>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

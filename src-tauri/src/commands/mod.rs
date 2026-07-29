@@ -1,6 +1,8 @@
 use crate::{clients::glowmarkt::GlowmarktDataProviderError, data::RepositoryError, AppError};
+use ollama_rs::error::OllamaError;
 
 pub mod app;
+pub mod assistant;
 pub mod electricity;
 pub mod gas;
 pub mod glowmarkt;
@@ -28,6 +30,12 @@ pub enum ApiError {
     MutexPoisonedError { name: String },
     #[error("Error with DB connection pool: {0}")]
     ConnectionPoolError(#[from] diesel::r2d2::PoolError),
+    #[error("Failed interaction with ollama: {0}")]
+    OllamaError(#[from] OllamaError),
+    #[error("Tauri error: {0}")]
+    TauriError(#[from] tauri::Error),
+    #[error("Json error: {0}")]
+    JsonError(#[from] serde_json::Error),
 }
 
 impl serde::Serialize for ApiError {

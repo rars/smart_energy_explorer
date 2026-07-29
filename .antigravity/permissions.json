@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "command(git (status|diff|log|branch))",
+      "command(cargo (check|clippy|test))",
+      "command(npm run (build|test))",
+      "command(ng (build|test))"
+    ]
+  }
+}
