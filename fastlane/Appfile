@@ -1,0 +1,3 @@
+app_identifier("io.github.rars.smart-energy-explorer")
+apple_id(ENV["FASTLANE_APPLE_ID"]) # Apple Developer account email
+team_id("3QW2VW47J6")

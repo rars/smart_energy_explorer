@@ -45,3 +45,11 @@ Thumbs.db
 
 # Rust cargo check (rust-analyzer)
 /target/
+
+# Fastlane
+/fastlane/report.xml
+/fastlane/Preview.html
+/fastlane/*.log
+.env
+.env.*
+**/AuthKey_*.p8

@@ -1,0 +1,56 @@
+default_platform(:mac)
+
+APP_STORE_MERGE_CONFIG = "tauri.macappstore.conf.json" # relative to src-tauri/
+BUILD_TARGET = ENV.fetch("SEE_BUILD_TARGET", "universal-apple-darwin")
+INSTALLER_SIGNING_IDENTITY = ENV.fetch(
+  "SEE_INSTALLER_SIGNING_IDENTITY",
+  "3rd Party Mac Developer Installer: RICHARD ANTHONY RUSSELL (3QW2VW47J6)" # verify with `security find-identity -v -p basic`
+)
+
+platform :mac do
+  desc "Build and upload the Mac App Store package to App Store Connect"
+  lane :release do
+    project_root = File.expand_path("..", __dir__)
+    src_tauri_dir = File.join(project_root, "src-tauri")
+
+    # 1. Build the signed .app via Tauri, merging App-Store-only config at build time
+    #    (no on-disk mutation of tauri.conf.json, nothing to revert afterwards)
+    Dir.chdir(src_tauri_dir) do
+      sh(
+        "cargo", "tauri", "build",
+        "--target", BUILD_TARGET,
+        "--bundles", "app",
+        "--config", APP_STORE_MERGE_CONFIG
+      )
+    end
+
+    # 2. Locate the produced .app
+    app_glob = File.join(src_tauri_dir, "target", BUILD_TARGET, "release", "bundle", "macos", "*.app")
+    app_path = Dir.glob(app_glob).first
+    UI.user_error!("Could not find built .app at #{app_glob}") unless app_path
+
+    # 3. Wrap it in a signed .pkg (Tauri's bundler has no App Store installer support)
+    pkg_dir = File.join(src_tauri_dir, "target", BUILD_TARGET, "release", "bundle", "macos-app-store-pkg")
+    FileUtils.mkdir_p(pkg_dir)
+    pkg_path = File.join(pkg_dir, "Smart Energy Explorer.pkg")
+
+    sh(
+      "xcrun", "productbuild",
+      "--sign", INSTALLER_SIGNING_IDENTITY,
+      "--component", app_path, "/Applications",
+      pkg_path
+    )
+
+    # 4. Upload to App Store Connect (binary only — no metadata/screenshots/review submission)
+    upload_to_app_store(
+      api_key_path: ENV.fetch("ASC_API_KEY_PATH"),
+      platform: "osx",
+      pkg: pkg_path,
+      skip_screenshots: true,
+      skip_metadata: true,
+      skip_app_version_update: true,
+      submit_for_review: false,
+      force: true
+    )
+  end
+end
