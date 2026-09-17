@@ -34,3 +34,19 @@ After checkout:
 npm i
 cargo tauri dev
 ```
+
+### Publishing to the Mac App Store
+
+One-time setup:
+
+1. Install the pinned Ruby via [rbenv](https://github.com/rbenv/rbenv) (`rbenv install`, reads `.ruby-version`), then run `bundle install`.
+2. Ensure `src-tauri/Entitlements.plist`, `src-tauri/Info.plist`, and the `.provisionprofile` are present locally (these are gitignored and not tracked in version control).
+3. Generate an [App Store Connect API key](https://docs.fastlane.tools/app-store-connect-api/) and set `ASC_API_KEY_PATH` in your shell profile to point at its key JSON file.
+
+To build and upload a new build to App Store Connect:
+
+```bash
+bundle exec fastlane mac release
+```
+
+This builds the Mac App Store `.app` via `cargo tauri build`, wraps it in a signed `.pkg` via `productbuild`, and uploads it to App Store Connect. It does **not** submit for review or touch metadata/screenshots — do that manually in App Store Connect once the build finishes processing.
