@@ -41,14 +41,20 @@ platform :mac do
       pkg_path
     )
 
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      key_filepath: ENV.fetch("ASC_API_KEY_PATH"),
+    )
+
     # 4. Upload to App Store Connect (binary only — no metadata/screenshots/review submission)
     upload_to_app_store(
-      api_key_path: ENV.fetch("ASC_API_KEY_PATH"),
+      api_key: api_key,
       platform: "osx",
       pkg: pkg_path,
       skip_screenshots: true,
       skip_metadata: true,
       skip_app_version_update: true,
+      run_precheck_before_submit: false,
       submit_for_review: false,
       force: true
     )
