@@ -49,7 +49,7 @@
     </button>
   </div>
 
-  @if (loading()) {
+  @if (consumptionData.isLoading()) {
     <mat-progress-bar mode="indeterminate"></mat-progress-bar>
   } @else {
     <app-chart
