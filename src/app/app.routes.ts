@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { AboutComponent } from './components/about/about.component';
+import { AiSettingsComponent } from './components/ai-settings/ai-settings.component';
 import { BrightSettingsComponent } from './components/bright-settings/bright-settings.component';
 import { DataManagementSettingsComponent } from './components/data-management-settings/data-management-settings.component';
 import { ElectricityConsumptionChartComponent } from './components/electricity-consumption-chart/electricity-consumption-chart.component';
@@ -61,6 +62,10 @@ export const routes: Routes = [
   {
     path: 'settings/mqtt',
     component: MqttSettingsComponent,
+  },
+  {
+    path: 'settings/ai',
+    component: AiSettingsComponent,
   },
   { path: '', redirectTo: '/electricity', pathMatch: 'full' },
 ];

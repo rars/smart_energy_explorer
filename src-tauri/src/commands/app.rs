@@ -9,7 +9,7 @@ use crate::{
     db::{self, revert_all_migrations},
     download::check_and_download_new_data,
     utils::{
-        delete_credential, get_glowmarkt_data_provider, reset_mqtt_settings,
+        delete_credential, get_glowmarkt_data_provider, reset_mqtt_settings, save_mcp_token,
         switch_main_to_splashscreen, switch_splashscreen_to_main,
     },
     AppState, MqttMessage,
@@ -24,6 +24,134 @@ const GIT_VERSION: &str = git_version!();
 pub struct StatusResponse {
     pub is_downloading: bool,
     pub is_client_available: bool,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct McpConfigResponse {
+    pub url: String,
+    pub token: String,
+    pub config: String,
+}
+
+#[tauri::command]
+pub fn get_mcp_config(app_state: State<'_, AppState>) -> Result<McpConfigResponse, ApiError> {
+    let server = app_state
+        .mcp_server
+        .lock()
+        .map_err(|_| ApiError::MutexPoisonedError {
+            name: "mcp_server".into(),
+        })?;
+    let server = server
+        .as_ref()
+        .ok_or_else(|| ApiError::Custom("MCP server is unavailable".into()))?;
+    Ok(mcp_config_response(&server.info()))
+}
+
+#[tauri::command]
+pub fn regenerate_mcp_token(app_state: State<'_, AppState>) -> Result<McpConfigResponse, ApiError> {
+    let server = app_state
+        .mcp_server
+        .lock()
+        .map_err(|_| ApiError::MutexPoisonedError {
+            name: "mcp_server".into(),
+        })?;
+    let server = server
+        .as_ref()
+        .ok_or_else(|| ApiError::Custom("MCP server is unavailable".into()))?;
+    let token = uuid::Uuid::new_v4().to_string();
+    save_mcp_token(&token)?;
+    server.replace_token(token);
+
+    Ok(mcp_config_response(&server.info()))
+}
+
+#[tauri::command]
+pub async fn enable_mcp(app_state: State<'_, AppState>) -> Result<McpConfigResponse, ApiError> {
+    {
+        let server = app_state
+            .mcp_server
+            .lock()
+            .map_err(|_| ApiError::MutexPoisonedError {
+                name: "mcp_server".into(),
+            })?;
+        if let Some(server) = server.as_ref() {
+            return Ok(mcp_config_response(&server.info()));
+        }
+    }
+
+    let token = crate::utils::get_or_create_mcp_token()?;
+    let server = crate::mcp::start(app_state.db_pool.clone(), token)
+        .await
+        .map_err(ApiError::Custom)?;
+    let response = mcp_config_response(&server.info());
+
+    *app_state
+        .mcp_server
+        .lock()
+        .map_err(|_| ApiError::MutexPoisonedError {
+            name: "mcp_server".into(),
+        })? = Some(server);
+    app_state
+        .app_settings
+        .lock()
+        .map_err(|_| ApiError::MutexPoisonedError {
+            name: "app_settings".into(),
+        })?
+        .safe_set("mcpEnabled", true)?;
+
+    Ok(response)
+}
+
+#[tauri::command]
+pub fn disable_mcp(app_state: State<'_, AppState>) -> Result<(), ApiError> {
+    let server = app_state
+        .mcp_server
+        .lock()
+        .map_err(|_| ApiError::MutexPoisonedError {
+            name: "mcp_server".into(),
+        })?
+        .take();
+    if let Some(server) = server {
+        server.stop();
+    }
+
+    app_state
+        .app_settings
+        .lock()
+        .map_err(|_| ApiError::MutexPoisonedError {
+            name: "app_settings".into(),
+        })?
+        .safe_set("mcpEnabled", false)?;
+
+    Ok(())
+}
+
+fn mcp_config_response(server: &crate::mcp::McpServerInfo) -> McpConfigResponse {
+    let config = serde_json::json!({
+        "mcpServers": {
+            "smart-energy-explorer": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "mcp-remote",
+                    server.url,
+                    "--allow-http",
+                    "--header",
+                    "Authorization:${SMART_ENERGY_EXPLORER_AUTH}"
+                ],
+                "env": {
+                    "SMART_ENERGY_EXPLORER_AUTH": format!("Bearer {}", server.token)
+                }
+            }
+        }
+    });
+
+    McpConfigResponse {
+        url: server.url.clone(),
+        token: server.token.clone(),
+        config: serde_json::to_string_pretty(&config).expect("MCP config is serializable"),
+    }
 }
 
 #[tauri::command]
@@ -105,6 +233,7 @@ pub async fn reset(app_handle: AppHandle, app_state: State<'_, AppState>) -> Res
             "glowmarkt_credentials",
             "glowmarkt_username",
             "glowmarkt_password",
+            "mcp_token",
         ];
 
         for c in credentials {

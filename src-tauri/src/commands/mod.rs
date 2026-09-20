@@ -12,7 +12,7 @@ pub(crate) const APP_SERVICE_NAME: &str = "io.github.rars.smart_energy_explorer"
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
-    #[error("Error: {0}")]
+    #[error("{0}")]
     Custom(String),
     #[error("Database error: {0}")]
     DatabaseError(#[from] diesel::result::Error),

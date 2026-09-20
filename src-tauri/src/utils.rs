@@ -13,6 +13,8 @@ use crate::{
     AppError, AppState, MqttMessage,
 };
 
+const MCP_TOKEN_KEY: &str = "mcp_token";
+
 pub fn parse_iso_string_to_naive_date(iso_date_str: &str) -> Result<NaiveDate, ApiError> {
     NaiveDate::parse_from_str(&iso_date_str[..10], "%Y-%m-%d").map_err(ApiError::ChronoParseError)
 }
@@ -171,6 +173,28 @@ pub fn get_glowmarkt_credentials_opt() -> Result<Option<GlowmarktCredentials>, A
             _ => Ok(None),
         }
     }
+}
+
+pub fn get_or_create_mcp_token() -> Result<String, AppError> {
+    let entry = Entry::new(APP_SERVICE_NAME, MCP_TOKEN_KEY)
+        .map_err(|error| AppError::CustomError(error.to_string()))?;
+
+    if let Some(token) = get_entry_password(&entry)? {
+        return Ok(token);
+    }
+
+    let token = uuid::Uuid::new_v4().to_string();
+    save_mcp_token(&token)?;
+
+    Ok(token)
+}
+
+pub fn save_mcp_token(token: &str) -> Result<(), AppError> {
+    let entry = Entry::new(APP_SERVICE_NAME, MCP_TOKEN_KEY)
+        .map_err(|error| AppError::CustomError(error.to_string()))?;
+    entry
+        .set_password(token)
+        .map_err(|error| AppError::CustomError(format!("Failed to save MCP token: {error}")))
 }
 
 #[derive(Serialize, Deserialize)]

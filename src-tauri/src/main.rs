@@ -34,6 +34,7 @@ mod commands;
 mod data;
 mod db;
 mod download;
+mod mcp;
 mod mqtt;
 mod retry;
 mod schema;
@@ -47,6 +48,7 @@ struct AppState {
     app_settings: Arc<Mutex<AppSettings>>,
     mqtt_settings: Arc<Mutex<Option<MqttSettings>>>,
     mqtt_message_sender: Arc<Sender<MqttMessage>>,
+    mcp_server: Arc<Mutex<Option<mcp::McpServer>>>,
 }
 
 impl Clone for AppState {
@@ -58,6 +60,7 @@ impl Clone for AppState {
             app_settings: self.app_settings.clone(),
             mqtt_settings: self.mqtt_settings.clone(),
             mqtt_message_sender: self.mqtt_message_sender.clone(),
+            mcp_server: self.mcp_server.clone(),
         }
     }
 }
@@ -172,13 +175,37 @@ fn main() {
 
             let (tx, rx) = tokio::sync::mpsc::channel::<MqttMessage>(1);
 
+            let mcp_enabled = app_settings.get::<bool>("mcpEnabled")?.unwrap_or(false);
+
+            let mcp_server = if mcp_enabled {
+                match utils::get_or_create_mcp_token() {
+                    Ok(token) => {
+                        match async_runtime::block_on(mcp::start(db_connection_pool.clone(), token))
+                        {
+                            Ok(server) => Some(server),
+                            Err(error) => {
+                                error!("MCP server unavailable: {error}");
+                                None
+                            }
+                        }
+                    }
+                    Err(error) => {
+                        error!("MCP server token unavailable: {error}");
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+
             let app_state = AppState {
-                db_pool: db_connection_pool,
+                db_pool: db_connection_pool.clone(),
                 downloading: Arc::new(Mutex::new(false)),
                 client_available: Arc::new(Mutex::new(false)),
                 app_settings: Arc::new(Mutex::new(app_settings)),
                 mqtt_settings: Arc::new(Mutex::new(mqtt_settings)),
                 mqtt_message_sender: Arc::new(tx),
+                mcp_server: Arc::new(Mutex::new(mcp_server)),
             };
 
             app.manage(app_state.clone());
@@ -247,6 +274,10 @@ fn main() {
             close_welcome_screen,
             fetch_data,
             get_app_status,
+            get_mcp_config,
+            enable_mcp,
+            disable_mcp,
+            regenerate_mcp_token,
             get_app_version,
             get_daily_electricity_consumption,
             get_daily_gas_consumption,
