@@ -12,7 +12,7 @@ pub(crate) const APP_SERVICE_NAME: &str = "io.github.rars.smart_energy_explorer"
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
-    #[error("Error: {0}")]
+    #[error("{0}")]
     Custom(String),
     #[error("Database error: {0}")]
     DatabaseError(#[from] diesel::result::Error),
@@ -30,6 +30,8 @@ pub enum ApiError {
     ConnectionPoolError(#[from] diesel::r2d2::PoolError),
     #[error("Tauri error: {0}")]
     TauriError(#[from] tauri::Error),
+    #[error("IO error: {0}")]
+    IOError(#[from] std::io::Error),
 }
 
 impl serde::Serialize for ApiError {
@@ -45,6 +47,7 @@ impl From<AppError> for ApiError {
             AppError::CustomError(s) => ApiError::Custom(s),
             AppError::MutexPoisonedError { name } => ApiError::MutexPoisonedError { name },
             AppError::JoinError(e) => ApiError::JoinError(e),
+            AppError::IOError(e) => ApiError::IOError(e)
         }
     }
 }
