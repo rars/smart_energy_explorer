@@ -34,12 +34,14 @@ mod commands;
 mod data;
 mod db;
 mod download;
+mod mcp;
 mod mqtt;
 mod retry;
 mod schema;
 mod serde_utils;
 mod utils;
 
+#[derive(Clone)]
 struct AppState {
     db_pool: SqliteConnectionPool,
     downloading: Arc<Mutex<bool>>,
@@ -47,19 +49,7 @@ struct AppState {
     app_settings: Arc<Mutex<AppSettings>>,
     mqtt_settings: Arc<Mutex<Option<MqttSettings>>>,
     mqtt_message_sender: Arc<Sender<MqttMessage>>,
-}
-
-impl Clone for AppState {
-    fn clone(&self) -> Self {
-        Self {
-            db_pool: self.db_pool.clone(),
-            downloading: self.downloading.clone(),
-            client_available: self.client_available.clone(),
-            app_settings: self.app_settings.clone(),
-            mqtt_settings: self.mqtt_settings.clone(),
-            mqtt_message_sender: self.mqtt_message_sender.clone(),
-        }
-    }
+    mcp_server: Arc<Mutex<Option<mcp::McpServer>>>,
 }
 
 pub enum MqttMessage {
@@ -76,6 +66,8 @@ pub enum AppError {
     MutexPoisonedError { name: String },
     #[error("Background task execution failed: {0}")]
     JoinError(#[from] tokio::task::JoinError),
+    #[error("IO Error: {0}")]
+    IOError(#[from] std::io::Error)
 }
 
 fn set_close_handlers(window: &Window) {
@@ -172,13 +164,43 @@ fn main() {
 
             let (tx, rx) = tokio::sync::mpsc::channel::<MqttMessage>(1);
 
+            let mcp_enabled = app_settings.get::<bool>("mcpEnabled")?.unwrap_or(false);
+
+            let mcp_server = if mcp_enabled {
+                match utils::get_or_create_mcp_token() {
+                    Ok(token) => {
+                        let mcp_port = app_settings.get::<u16>("mcpPort")?;
+
+                        match async_runtime::block_on(mcp::start(mcp_port, db_connection_pool.clone(), token))
+                        {
+                            Ok(server) => {
+                                app_settings.safe_set("mcpPort", server.port())?;
+
+                                Some(server)
+                            },
+                            Err(error) => {
+                                error!("MCP server unavailable: {error}");
+                                None
+                            }
+                        }
+                    }
+                    Err(error) => {
+                        error!("MCP server token unavailable: {error}");
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+
             let app_state = AppState {
-                db_pool: db_connection_pool,
+                db_pool: db_connection_pool.clone(),
                 downloading: Arc::new(Mutex::new(false)),
                 client_available: Arc::new(Mutex::new(false)),
                 app_settings: Arc::new(Mutex::new(app_settings)),
                 mqtt_settings: Arc::new(Mutex::new(mqtt_settings)),
                 mqtt_message_sender: Arc::new(tx),
+                mcp_server: Arc::new(Mutex::new(mcp_server)),
             };
 
             app.manage(app_state.clone());
@@ -192,9 +214,9 @@ fn main() {
             }
 
             async_runtime::spawn({
-                let app_handle_clone = app.handle().clone();
+                let app_handle = app.handle().clone();
 
-                async move { start_mqtt_listener(&app_handle_clone, rx).await }
+                async move { start_mqtt_listener(&app_handle, rx).await }
             });
 
             async_runtime::spawn({
@@ -247,6 +269,10 @@ fn main() {
             close_welcome_screen,
             fetch_data,
             get_app_status,
+            get_mcp_config,
+            enable_mcp,
+            disable_mcp,
+            regenerate_mcp_token,
             get_app_version,
             get_daily_electricity_consumption,
             get_daily_gas_consumption,
