@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FieldContext,
@@ -14,6 +14,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
+
+import { from } from 'rxjs';
 
 import { MqttService } from '../../services/mqtt/mqtt.service';
 
@@ -51,6 +53,8 @@ interface MqttSettingsForm {
   styleUrl: './mqtt-settings.component.scss',
 })
 export class MqttSettingsComponent {
+  private readonly mqttService = inject(MqttService);
+
   protected readonly mqttSettings = signal<MqttSettingsForm>({
     hostname: '',
     topic: '',
@@ -104,9 +108,8 @@ export class MqttSettingsComponent {
     },
   );
 
-  public constructor(private readonly mqttService: MqttService) {
-    this.mqttService
-      .getMqttSettings()
+  public constructor() {
+    from(this.mqttService.getMqttSettings())
       .pipe(takeUntilDestroyed())
       .subscribe((settings) => {
         this.mqttSettings.set(settings);
