@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { EnergyCostHistoryComponent } from './energy-cost-history.component';
 
-describe('ElectricityCostHistoryComponent', () => {
+describe('EnergyCostHistoryComponent', () => {
   let component: EnergyCostHistoryComponent;
   let fixture: ComponentFixture<EnergyCostHistoryComponent>;
 
@@ -12,7 +12,7 @@ describe('ElectricityCostHistoryComponent', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(EnergyCostHistoryComponent);
-    fixture.componentRef.setInput('command', 'get_daily_electricity_cost');
+    fixture.componentRef.setInput('command', 'get_electricity_cost_history');
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
