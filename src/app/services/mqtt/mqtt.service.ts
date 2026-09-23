@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
 
-import { Observable, from } from 'rxjs';
-
 import { invoke } from '@tauri-apps/api/core';
 
 import { ErrorService } from '../error/error.service';
@@ -20,8 +18,8 @@ type MqttSettings = {
 export class MqttService {
   public constructor(private readonly errorService: ErrorService) {}
 
-  public getMqttSettings(): Observable<MqttSettings> {
-    return from(invoke<MqttSettings>('get_mqtt_settings', {}));
+  public getMqttSettings(): Promise<MqttSettings> {
+    return invoke<MqttSettings>('get_mqtt_settings', {});
   }
 
   public async saveMqttSettings(
