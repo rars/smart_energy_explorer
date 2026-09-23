@@ -1,12 +1,6 @@
 import { animate, style, transition, trigger } from '@angular/animations';
-import { CommonModule } from '@angular/common';
 import { Component, inject, signal, viewChild } from '@angular/core';
-import {
-  FormBuilder,
-  FormsModule,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormField, form, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
@@ -16,8 +10,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 
-import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
-
 import { ApiKeyService } from '../../services/api-key/api-key.service';
 import { ShellService } from '../../services/shell/shell.service';
 import { LicenseDialogComponent } from '../license-dialog/license-dialog.component';
@@ -26,9 +18,7 @@ import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-gui
 @Component({
   selector: 'app-welcome',
   imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
+    FormField,
     MatFormFieldModule,
     MatCheckboxModule,
     MatIconModule,
@@ -49,36 +39,37 @@ import { UsageGuidanceDialogComponent } from '../usage-guidance-dialog/usage-gui
   ],
 })
 export class WelcomeComponent {
+  protected readonly shellService = inject(ShellService);
+  private readonly apiKeyService = inject(ApiKeyService);
+  private readonly dialog = inject(MatDialog);
+
   public stepper = viewChild<MatStepper>('stepper');
 
   protected showElement = signal(false);
-  protected active$: Observable<boolean>;
-  protected isTestingConnection$: Observable<boolean>;
+  protected active = signal(false);
+  protected isTestingConnection = signal(false);
 
-  private readonly isActiveSubject = new ReplaySubject<boolean>(1);
-  private readonly isTestingConnectionSubject = new BehaviorSubject(false);
-  private readonly formBuilder = inject(FormBuilder);
-
-  protected readonly firstFormGroup = this.formBuilder.group({
-    agreement: [false, Validators.requiredTrue],
+  protected readonly firstFormValues = signal({
+    agreement: false,
   });
-  protected readonly secondFormGroup = this.formBuilder.group({
-    glowmarktUsernameCtrl: ['', [Validators.required]],
-    glowmarktPasswordCtrl: ['', [Validators.required]],
+  protected readonly secondFormValues = signal({
+    glowmarktUsername: '',
+    glowmarktPassword: '',
   });
 
-  public constructor(
-    protected readonly shellService: ShellService,
-    private readonly apiKeyService: ApiKeyService,
-    private readonly dialog: MatDialog,
-  ) {
-    this.active$ = this.isActiveSubject.asObservable();
-    this.isTestingConnection$ = this.isTestingConnectionSubject.asObservable();
+  protected readonly firstForm = form(this.firstFormValues, (tree) => {
+    required(tree.agreement);
+  });
+  protected readonly secondForm = form(this.secondFormValues, (tree) => {
+    required(tree.glowmarktUsername);
+    required(tree.glowmarktPassword);
+  });
 
+  public constructor() {
     setTimeout(() => this.showElement.set(true), 100);
   }
 
-  public showUsageGuidance() {
+  public showUsageGuidance(): void {
     const dialogRef = this.dialog.open(UsageGuidanceDialogComponent, {
       width: '90%',
       maxWidth: '90vw',
@@ -88,7 +79,9 @@ export class WelcomeComponent {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result?.accept !== undefined) {
-        this.firstFormGroup.get('agreement')?.setValue(result.accept);
+        this.firstFormValues.update((value) => {
+          return { ...value, agreement: result.accept };
+        });
       }
     });
   }
@@ -103,32 +96,41 @@ export class WelcomeComponent {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result?.accept !== undefined) {
-        this.firstFormGroup.get('agreement')?.setValue(result.accept);
+        this.firstFormValues.update((value) => {
+          return { ...value, agreement: result.accept };
+        });
       }
     });
   }
 
   public async saveApiKey(): Promise<void> {
-    this.isTestingConnectionSubject.next(true);
+    this.isTestingConnection.set(true);
+    this.active.set(false);
 
-    const glowmarktUsername =
-      this.secondFormGroup.get('glowmarktUsernameCtrl')?.value || '';
-    const glowmarktPassword =
-      this.secondFormGroup.get('glowmarktPasswordCtrl')?.value || '';
+    try {
+      const { glowmarktUsername, glowmarktPassword } = this.secondFormValues();
 
-    await this.apiKeyService.saveGlowmarktCredentials(
-      glowmarktUsername,
-      glowmarktPassword,
-    );
+      await this.apiKeyService.saveGlowmarktCredentials(
+        glowmarktUsername,
+        glowmarktPassword,
+      );
 
-    const testResponse = await this.apiKeyService.testGlowmarktConnection();
-    this.isActiveSubject.next(testResponse.active);
-
-    this.isTestingConnectionSubject.next(false);
+      const testResponse = await this.apiKeyService.testGlowmarktConnection();
+      this.active.set(testResponse.active);
+    } finally {
+      this.isTestingConnection.set(false);
+    }
   }
 
   public complete(): void {
     this.stepper()?.reset();
     this.apiKeyService.closeWelcomeScreen();
+  }
+
+  public reset(): void {
+    this.firstFormValues.set({ agreement: false });
+    this.secondFormValues.set({ glowmarktUsername: '', glowmarktPassword: '' });
+    this.active.set(false);
+    this.stepper()?.reset();
   }
 }

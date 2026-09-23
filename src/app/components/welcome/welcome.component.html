@@ -5,11 +5,11 @@
       Welcome to Smart Energy Explorer: your personal energy usage dashboard.
     </p>
     <mat-stepper orientation="vertical" [linear]="true" #stepper>
-      <mat-step [stepControl]="firstFormGroup">
-        <form [formGroup]="firstFormGroup">
-          <ng-template matStepLabel
-            >Review licensing and usage guidance</ng-template
-          >
+      <mat-step [stepControl]="firstForm" [completed]="firstForm().valid()">
+        <form>
+          <ng-template matStepLabel>
+            Review licensing and usage guidance
+          </ng-template>
           <p>
             Before proceeding, please review and accept the licensing terms and
             review the usage guidance.
@@ -26,23 +26,23 @@
               View Usage Guidance
             </button>
           </div>
-          <mat-checkbox formControlName="agreement"
-            >I have read and agree to the application's licensing
-            terms.</mat-checkbox
-          >
+          <mat-checkbox [formField]="firstForm.agreement">
+            I have read and agree to the application's licensing terms.
+          </mat-checkbox>
           <div>
             <button
+              type="button"
               mat-flat-button
               matStepperNext
-              [disabled]="firstFormGroup.invalid"
+              [disabled]="!firstForm().valid()"
             >
               Next
             </button>
           </div>
         </form>
       </mat-step>
-      <mat-step [stepControl]="secondFormGroup">
-        <form [formGroup]="secondFormGroup">
+      <mat-step [stepControl]="secondForm" [completed]="secondForm().valid()">
+        <form>
           <ng-template matStepLabel>Grant access to your data</ng-template>
           <p>
             This app uses the
@@ -77,7 +77,7 @@
               <mat-label>Bright Username</mat-label>
               <input
                 matInput
-                formControlName="glowmarktUsernameCtrl"
+                [formField]="secondForm.glowmarktUsername"
                 placeholder="Enter Bright username"
               />
             </mat-form-field>
@@ -86,7 +86,7 @@
               <input
                 matInput
                 type="password"
-                formControlName="glowmarktPasswordCtrl"
+                [formField]="secondForm.glowmarktPassword"
                 placeholder="Enter Bright password"
               />
             </mat-form-field>
@@ -102,11 +102,12 @@
             Glowmarkt or Hildebrand Technology Limited.
           </p>
           <div>
-            <button mat-button matStepperPrevious>Back</button>
+            <button type="button" mat-button matStepperPrevious>Back</button>
             <button
+              type="button"
               mat-flat-button
               matStepperNext
-              [disabled]="secondFormGroup.invalid"
+              [disabled]="!secondForm().valid()"
               (click)="saveApiKey()"
             >
               Next
@@ -116,7 +117,7 @@
       </mat-step>
       <mat-step>
         <ng-template matStepLabel>Done</ng-template>
-        @if (isTestingConnection$ | async) {
+        @if (isTestingConnection()) {
           <div class="flex flex-row items-center">
             <div>
               <mat-progress-spinner
@@ -127,19 +128,23 @@
             <div class="ml-4"><p>Testing connection...</p></div>
           </div>
         } @else {
-          @if (active$ | async) {
+          @if (active()) {
             <p>You're all set.</p>
-            <button mat-flat-button (click)="complete()">Start</button>
-            <button mat-button matStepperPrevious>Back</button>
-            <button mat-button (click)="stepper.reset()">Reset</button>
+            <button type="button" mat-flat-button (click)="complete()">
+              Start
+            </button>
+            <button type="button" mat-button matStepperPrevious>Back</button>
+            <button type="button" mat-button (click)="reset()">Reset</button>
           } @else {
             <p>
               Authorisation not correctly configured, please review your IHD MAC
               address.
             </p>
             <div>
-              <button mat-flat-button matStepperPrevious>Back</button>
-              <button mat-button (click)="stepper.reset()">Reset</button>
+              <button type="button" mat-flat-button matStepperPrevious>
+                Back
+              </button>
+              <button type="button" mat-button (click)="reset()">Reset</button>
             </div>
           }
         }
