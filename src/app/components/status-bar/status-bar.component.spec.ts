@@ -3,8 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { firstValueFrom } from 'rxjs';
-
 import { DataDownloadingComponent } from '../data-downloading/data-downloading.component';
 import { StatusBarComponent } from './status-bar.component';
 import {
@@ -62,8 +60,7 @@ describe('StatusBarComponent', () => {
     expect(component).toBeTruthy();
     expect(invoke).toHaveBeenCalledWith('get_app_status', {});
 
-    const isDownloading = await firstValueFrom(component.isDownloading$);
-    expect(isDownloading).toBe(true);
+    expect(component.isDownloading()).toBe(true);
   });
 
   it('should register listeners for Tauri events on initialization', () => {
@@ -80,7 +77,7 @@ describe('StatusBarComponent', () => {
     );
   });
 
-  it('should update isDownloading$ when appStatusUpdate event fires', async () => {
+  it('should update isDownloading when appStatusUpdate event fires', async () => {
     fixture.detectChanges();
 
     if (listenHandlers['appStatusUpdate']) {
@@ -89,8 +86,7 @@ describe('StatusBarComponent', () => {
       });
     }
 
-    const isDownloading = await firstValueFrom(component.isDownloading$);
-    expect(isDownloading).toBe(true);
+    expect(component.isDownloading()).toBe(true);
   });
 
   it('should format electricity data message correctly on electricityUpdate event', async () => {
@@ -110,15 +106,9 @@ describe('StatusBarComponent', () => {
       listenHandlers['electricityUpdate'](mockPayload);
     }
 
-    let powerMsg = '';
-    let dayMsg = '';
-    let updateReceived = false;
-
-    component['electricityPower$'].subscribe((val) => (powerMsg = val));
-    component['cumulativeDay$'].subscribe((val) => (dayMsg = val));
-    component['electricityUpdateReceived$'].subscribe(
-      (val) => (updateReceived = val),
-    );
+    let powerMsg = component['electricityPower']();
+    let dayMsg = component['cumulativeElectricityDay']();
+    let updateReceived = component['electricityUpdateReceived']();
 
     expect(powerMsg).toBe('350 W');
     expect(dayMsg).toContain('12.5 kWh used today');
@@ -127,7 +117,7 @@ describe('StatusBarComponent', () => {
     vi.runOnlyPendingTimers();
   });
 
-  it('should toggle electricityUpdateReceived$ to false after a 30 second timeout delay', async () => {
+  it('should toggle electricityUpdateReceived to false after a 30 second timeout delay', async () => {
     fixture.detectChanges();
 
     const mockPayload = {
@@ -144,15 +134,12 @@ describe('StatusBarComponent', () => {
       listenHandlers['electricityUpdate'](mockPayload);
     }
 
-    let updateReceived: boolean | undefined;
-    component['electricityUpdateReceived$'].subscribe(
-      (val) => (updateReceived = val),
-    );
-
+    let updateReceived = component['electricityUpdateReceived']();
     expect(updateReceived).toBe(true);
 
     vi.advanceTimersByTime(30000);
 
+    updateReceived = component['electricityUpdateReceived']();
     expect(updateReceived).toBe(false);
   });
 
