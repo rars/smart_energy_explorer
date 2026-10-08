@@ -49,14 +49,11 @@ pub fn london_date_id_to_naive_date(date_id: i32) -> NaiveDate {
     NaiveDate::from_ymd_opt(year, month, day).expect("Invalid date_id in the database")
 }
 
-pub fn emit_event<T, R: Runtime>(
+pub fn emit_event<T: Serialize + Clone, R: Runtime>(
     app_handle: &AppHandle<R>,
     event: &str,
     payload: T,
-) -> Result<(), AppError>
-where
-    T: Serialize + Clone,
-{
+) -> Result<(), AppError> {
     app_handle
         .emit(event, payload)
         .map_err(|e| AppError::CustomError(format!("Could not emit {} event: {}", event, e)))?;

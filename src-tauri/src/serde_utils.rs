@@ -1,10 +1,10 @@
 use chrono::{NaiveDateTime, TimeZone, Utc};
 use serde::Serializer;
 
-pub fn serialize_naive_as_utc<S>(date: &NaiveDateTime, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
+pub fn serialize_naive_as_utc<S: Serializer>(
+    date: &NaiveDateTime,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
     let utc_date = Utc.from_utc_datetime(date);
     serializer.serialize_str(&utc_date.to_rfc3339_opts(chrono::SecondsFormat::Secs, true))
 }

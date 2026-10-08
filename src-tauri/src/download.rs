@@ -36,27 +36,27 @@ pub struct AppStatusUpdateEvent {
     pub is_downloading: bool,
 }
 
-pub trait DataLoader<T> {
+pub trait DataLoader {
+    type Value;
     type LoadError: Error + Send + Sync + 'static;
     type InsertError: Error + Send + Sync + 'static;
 
-    async fn load(&self, start: NaiveDate, end: NaiveDate) -> Result<Vec<T>, Self::LoadError>;
-    fn insert_data(&self, data: Vec<T>) -> Result<(), Self::InsertError>;
+    async fn load(
+        &self,
+        start: NaiveDate,
+        end: NaiveDate,
+    ) -> Result<Vec<Self::Value>, Self::LoadError>;
+    fn insert_data(&self, data: Vec<Self::Value>) -> Result<(), Self::InsertError>;
 }
 
 #[derive(Clone)]
-struct ElectricityConsumptionDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+struct ElectricityConsumptionDataLoader<T: EnergyDataProvider> {
     data_provider: Arc<T>,
     connection_pool: SqliteConnectionPool,
 }
 
-impl<T> DataLoader<ElectricityConsumptionValue> for ElectricityConsumptionDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+impl<T: EnergyDataProvider> DataLoader for ElectricityConsumptionDataLoader<T> {
+    type Value = ElectricityConsumptionValue;
     type LoadError = T::Error;
     type InsertError = RepositoryError;
 
@@ -88,18 +88,13 @@ where
 }
 
 #[derive(Clone)]
-struct ElectricityTariffDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+struct ElectricityTariffDataLoader<T: EnergyDataProvider> {
     data_provider: Arc<T>,
     connection_pool: SqliteConnectionPool,
 }
 
-impl<T> DataLoader<TariffPlan> for ElectricityTariffDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+impl<T: EnergyDataProvider> DataLoader for ElectricityTariffDataLoader<T> {
+    type Value = TariffPlan;
     type LoadError = T::Error;
     type InsertError = RepositoryError;
 
@@ -137,18 +132,13 @@ where
 }
 
 #[derive(Clone)]
-struct GasConsumptionDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+struct GasConsumptionDataLoader<T: EnergyDataProvider> {
     data_provider: Arc<T>,
     connection_pool: SqliteConnectionPool,
 }
 
-impl<T> DataLoader<GasConsumptionValue> for GasConsumptionDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+impl<T: EnergyDataProvider> DataLoader for GasConsumptionDataLoader<T> {
+    type Value = GasConsumptionValue;
     type LoadError = T::Error;
     type InsertError = RepositoryError;
 
@@ -175,18 +165,13 @@ where
 }
 
 #[derive(Clone)]
-struct GasTariffDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+struct GasTariffDataLoader<T: EnergyDataProvider> {
     data_provider: Arc<T>,
     connection_pool: SqliteConnectionPool,
 }
 
-impl<T> DataLoader<TariffPlan> for GasTariffDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+impl<T: EnergyDataProvider> DataLoader for GasTariffDataLoader<T> {
+    type Value = TariffPlan;
     type LoadError = T::Error;
     type InsertError = RepositoryError;
 
@@ -242,16 +227,12 @@ impl<'a> DownloadUpdateEventEmitter<'a> {
     }
 }
 
-pub async fn download_history<T, U>(
+pub async fn download_history<T: DataLoader>(
     app_handle: AppHandle,
     data_loader: T,
     until_date_time: NaiveDateTime,
     download_name: &str,
-) -> Result<NaiveDate, AppError>
-where
-    T: DataLoader<U>,
-    T::LoadError: Error + Send + Sync + 'static,
-{
+) -> Result<NaiveDate, AppError> {
     let until_date = until_date_time.date();
 
     let today = Local::now().naive_local().date();
@@ -337,14 +318,11 @@ impl<'a, R: Runtime> Drop for DownloadGuard<'a, R> {
     }
 }
 
-pub async fn check_and_download_new_data<U>(
+pub async fn check_and_download_new_data<U: EnergyDataProvider>(
     app_handle: AppHandle,
     app_state: AppState,
     data_provider: Arc<U>,
-) -> Result<(), AppError>
-where
-    U: EnergyDataProvider,
-{
+) -> Result<(), AppError> {
     {
         let mut downloading = app_state
             .downloading
@@ -498,14 +476,11 @@ where
     Ok(())
 }
 
-pub fn spawn_download_tasks<T>(
+pub fn spawn_download_tasks<T: EnergyDataProvider + 'static>(
     app_handle: AppHandle,
     app_state: AppState,
     data_provider: T,
-) -> Result<(), AppError>
-where
-    T: EnergyDataProvider + 'static,
-{
+) -> Result<(), AppError> {
     info!("Spawning download tasks");
     let data_provider = Arc::new(data_provider);
 
