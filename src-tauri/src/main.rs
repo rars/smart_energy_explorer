@@ -187,7 +187,7 @@ fn main() {
                 let app_settings = app_state.app_settings.lock().unwrap();
 
                 if let Some(true) = app_settings.get::<bool>("termsAccepted")? {
-                    switch_splashscreen_to_main(app.handle());
+                    switch_splashscreen_to_main(app.handle())?;
                 }
             }
 

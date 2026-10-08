@@ -28,6 +28,8 @@ pub enum ApiError {
     MutexPoisonedError { name: String },
     #[error("Error with DB connection pool: {0}")]
     ConnectionPoolError(#[from] diesel::r2d2::PoolError),
+    #[error("Tauri error: {0}")]
+    TauriError(#[from] tauri::Error),
 }
 
 impl serde::Serialize for ApiError {

@@ -1,5 +1,5 @@
 use rust_decimal::{prelude::FromPrimitive, Decimal};
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use tauri::async_runtime::Mutex;
 
 use chrono::{Datelike, NaiveDate, NaiveDateTime};
@@ -41,13 +41,6 @@ struct ResourceIds {
 }
 
 async fn get_resource_ids(api: &GlowmarktApi) -> Result<ResourceIds, GlowmarktDataProviderError> {
-    let mut resource_ids = ResourceIds {
-        gas_cost: None,
-        gas_consumption: None,
-        electricity_cost: None,
-        electricity_consumption: None,
-    };
-
     let all_resources = api
         .resources()
         .await
@@ -57,6 +50,20 @@ async fn get_resource_ids(api: &GlowmarktApi) -> Result<ResourceIds, GlowmarktDa
         .virtual_entities()
         .await
         .map_err(|e| GlowmarktDataProviderError::GlowmarktApiError(e.to_string()))?;
+
+    extract_resource_ids(&all_resources, &virtual_entities)
+}
+
+fn extract_resource_ids(
+    all_resources: &HashMap<String, glowmarkt::Resource>,
+    virtual_entities: &HashMap<String, glowmarkt::VirtualEntity>,
+) -> Result<ResourceIds, GlowmarktDataProviderError> {
+    let mut resource_ids = ResourceIds {
+        gas_cost: None,
+        gas_consumption: None,
+        electricity_cost: None,
+        electricity_consumption: None,
+    };
 
     for virtual_entity in virtual_entities.values() {
         if virtual_entity.name == "DCC Sourced" {
@@ -350,4 +357,130 @@ impl EnergyDataProvider for GlowmarktDataProvider {
 
 fn is_retryable(error: &glowmarkt::Error) -> bool {
     matches!(error.kind, ErrorKind::Server | ErrorKind::Network)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glowmarkt::{api::ResourceInfo, Resource, VirtualEntity};
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_is_retryable_returns_true_for_server_error() {
+        let server_error = glowmarkt::Error {
+            kind: glowmarkt::ErrorKind::Server,
+            message: "Server error".to_string(),
+        };
+        assert!(is_retryable(&server_error));
+    }
+
+    #[test]
+    fn test_is_retryable_returns_true_for_network_error() {
+        let network_error = glowmarkt::Error {
+            kind: glowmarkt::ErrorKind::Network,
+            message: "Network error".to_string(),
+        };
+        assert!(is_retryable(&network_error));
+    }
+
+    #[test]
+    fn test_is_retryable_returns_false_for_not_authenticated_error() {
+        let unauthenticated_error = glowmarkt::Error {
+            kind: glowmarkt::ErrorKind::NotAuthenticated,
+            message: "Other error".to_string(),
+        };
+        assert!(!is_retryable(&unauthenticated_error));
+    }
+
+    #[test]
+    fn test_primitive_to_naive_date_time() {
+        let primitive_dt = PrimitiveDateTime::new(date!(2024 - 06 - 01), time!(12:30:45));
+        let naive_dt = primitive_to_naive_date_time(primitive_dt);
+        assert_eq!(
+            naive_dt,
+            NaiveDateTime::new(
+                chrono::NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
+                chrono::NaiveTime::from_hms_opt(12, 30, 45).unwrap()
+            )
+        );
+    }
+
+    #[test]
+    fn test_offset_to_naive_date_time() {
+        let offset_dt = OffsetDateTime::new_utc(
+            Date::from_calendar_date(2024, time::Month::June, 1).unwrap(),
+            Time::from_hms(12, 30, 45).unwrap(),
+        );
+        let naive_dt = to_naive_date_time(offset_dt);
+        assert_eq!(
+            naive_dt,
+            NaiveDateTime::new(
+                chrono::NaiveDate::from_ymd_opt(2024, 6, 1).unwrap(),
+                chrono::NaiveTime::from_hms_opt(12, 30, 45).unwrap()
+            )
+        );
+    }
+
+    fn resource(id: &str, classifier: Option<&str>) -> (String, Resource) {
+        (
+            id.to_string(),
+            Resource {
+                id: id.to_string(),
+                name: format!("Resource {id}"),
+                description: None,
+                label: None,
+                active: true,
+                type_id: "t".to_string(),
+                owner_id: "o".to_string(),
+                classifier: classifier.map(str::to_string),
+                base_unit: None,
+                data_source_type: "DCC".to_string(),
+                data_source_resource_type_info: None,
+                data_source_unit_info: None,
+                updated_at: OffsetDateTime::UNIX_EPOCH,
+                created_at: OffsetDateTime::UNIX_EPOCH,
+            },
+        )
+    }
+
+    fn entity(name: &str, resource_ids: &[&str]) -> VirtualEntity {
+        VirtualEntity {
+            id: format!("entity_{name}"),
+            name: name.to_string(),
+            active: true,
+            type_id: "t".to_string(),
+            owner_id: "o".to_string(),
+            resources: resource_ids
+                .iter()
+                .map(|&id| ResourceInfo {
+                    resource_id: id.to_string(),
+                    resource_type_id: "t".to_string(),
+                })
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn test_extract_resource_ids() -> Result<(), GlowmarktDataProviderError> {
+        let resources = HashMap::from([
+            resource("res1", Some("electricity.consumption")),
+            resource("res2", Some("electricity.consumption.cost")),
+            resource("res3", Some("gas.consumption")),
+            resource("res4", Some("gas.consumption.cost")),
+        ]);
+
+        let entities = HashMap::from([(
+            "entity1".to_string(),
+            entity("DCC Sourced", &["res1", "res2", "res3", "res4"]),
+        )]);
+
+        let ids = extract_resource_ids(&resources, &entities)?;
+
+        assert_eq!(ids.electricity_consumption, Some("res1".to_string()));
+        assert_eq!(ids.electricity_cost, Some("res2".to_string()));
+        assert_eq!(ids.gas_consumption, Some("res3".to_string()));
+        assert_eq!(ids.gas_cost, Some("res4".to_string()));
+
+        Ok(())
+    }
 }

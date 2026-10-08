@@ -3,7 +3,7 @@ use std::{cmp, error::Error, future::Future, sync::Arc};
 use chrono::{Duration, Local, NaiveDate, NaiveDateTime};
 use log::{debug, error, info};
 use serde::Serialize;
-use tauri::{async_runtime, AppHandle};
+use tauri::{async_runtime, AppHandle, Runtime};
 
 use crate::{
     clients::data_provider::EnergyDataProvider,
@@ -307,12 +307,12 @@ where
     Ok(today)
 }
 
-struct DownloadGuard<'a> {
-    app_handle: &'a AppHandle,
+struct DownloadGuard<'a, R: Runtime> {
+    app_handle: &'a AppHandle<R>,
     downloading: &'a std::sync::Mutex<bool>,
 }
 
-impl<'a> Drop for DownloadGuard<'a> {
+impl<'a, R: Runtime> Drop for DownloadGuard<'a, R> {
     fn drop(&mut self) {
         if let Ok(mut downloading) = self.downloading.lock() {
             *downloading = false;
@@ -520,4 +520,65 @@ where
     });
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::mpsc;
+
+    use super::*;
+    use pretty_assertions::assert_eq;
+    use tauri::{
+        test::{mock_builder, mock_context, noop_assets},
+        Listener,
+    };
+
+    fn app() -> tauri::App<tauri::test::MockRuntime> {
+        let app = mock_builder().build(mock_context(noop_assets())).unwrap();
+        app
+    }
+
+    #[test]
+    fn test_download_guard_unsets_downloading_on_drop() {
+        let app = app();
+
+        let downloading = std::sync::Mutex::new(true);
+
+        let guard = DownloadGuard {
+            app_handle: &app.handle(),
+            downloading: &downloading,
+        };
+
+        assert!((*downloading.lock().expect("Failed to lock downloading")));
+
+        drop(guard);
+
+        assert!(!(*downloading.lock().expect("Failed to lock downloading")));
+    }
+
+    #[test]
+    fn test_download_guard_emits_app_status_update_event_on_drop() {
+        let app = app();
+
+        let downloading = std::sync::Mutex::new(true);
+
+        let (tx, rx) = mpsc::channel::<String>();
+
+        let guard = DownloadGuard {
+            app_handle: &app.handle(),
+            downloading: &downloading,
+        };
+
+        app.once("appStatusUpdate", move |event| {
+            let _ = tx.send(event.payload().to_string());
+        });
+
+        drop(guard);
+
+        let payload = rx
+            .recv_timeout(std::time::Duration::from_secs(2))
+            .expect("Did not receive event in time");
+
+        assert_eq!(payload, r#"{"isDownloading":false}"#);
+    }
 }

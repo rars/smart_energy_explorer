@@ -47,7 +47,7 @@ pub async fn close_welcome_screen(
         .safe_set("termsAccepted", true)
         .map_err(|e| ApiError::Custom(format!("{}", e)))?;
 
-    switch_splashscreen_to_main(&app_handle);
+    switch_splashscreen_to_main(&app_handle)?;
 
     Ok(())
 }
@@ -123,7 +123,7 @@ pub async fn reset(app_handle: AppHandle, app_state: State<'_, AppState>) -> Res
         .await
         .map_err(|e| ApiError::Custom(e.to_string()))?;
 
-    switch_main_to_splashscreen(&app_handle);
+    switch_main_to_splashscreen(&app_handle)?;
 
     Ok(())
 }
