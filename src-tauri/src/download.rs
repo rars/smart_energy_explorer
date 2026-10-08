@@ -3,7 +3,7 @@ use std::{cmp, error::Error, future::Future, sync::Arc};
 use chrono::{Duration, Local, NaiveDate, NaiveDateTime};
 use log::{debug, error, info};
 use serde::Serialize;
-use tauri::{async_runtime, AppHandle};
+use tauri::{async_runtime, AppHandle, Runtime};
 
 use crate::{
     clients::data_provider::EnergyDataProvider,
@@ -36,27 +36,27 @@ pub struct AppStatusUpdateEvent {
     pub is_downloading: bool,
 }
 
-pub trait DataLoader<T> {
+pub trait DataLoader {
+    type Value;
     type LoadError: Error + Send + Sync + 'static;
     type InsertError: Error + Send + Sync + 'static;
 
-    async fn load(&self, start: NaiveDate, end: NaiveDate) -> Result<Vec<T>, Self::LoadError>;
-    fn insert_data(&self, data: Vec<T>) -> Result<(), Self::InsertError>;
+    async fn load(
+        &self,
+        start: NaiveDate,
+        end: NaiveDate,
+    ) -> Result<Vec<Self::Value>, Self::LoadError>;
+    fn insert_data(&self, data: Vec<Self::Value>) -> Result<(), Self::InsertError>;
 }
 
 #[derive(Clone)]
-struct ElectricityConsumptionDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+struct ElectricityConsumptionDataLoader<T: EnergyDataProvider> {
     data_provider: Arc<T>,
     connection_pool: SqliteConnectionPool,
 }
 
-impl<T> DataLoader<ElectricityConsumptionValue> for ElectricityConsumptionDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+impl<T: EnergyDataProvider> DataLoader for ElectricityConsumptionDataLoader<T> {
+    type Value = ElectricityConsumptionValue;
     type LoadError = T::Error;
     type InsertError = RepositoryError;
 
@@ -88,18 +88,13 @@ where
 }
 
 #[derive(Clone)]
-struct ElectricityTariffDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+struct ElectricityTariffDataLoader<T: EnergyDataProvider> {
     data_provider: Arc<T>,
     connection_pool: SqliteConnectionPool,
 }
 
-impl<T> DataLoader<TariffPlan> for ElectricityTariffDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+impl<T: EnergyDataProvider> DataLoader for ElectricityTariffDataLoader<T> {
+    type Value = TariffPlan;
     type LoadError = T::Error;
     type InsertError = RepositoryError;
 
@@ -137,18 +132,13 @@ where
 }
 
 #[derive(Clone)]
-struct GasConsumptionDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+struct GasConsumptionDataLoader<T: EnergyDataProvider> {
     data_provider: Arc<T>,
     connection_pool: SqliteConnectionPool,
 }
 
-impl<T> DataLoader<GasConsumptionValue> for GasConsumptionDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+impl<T: EnergyDataProvider> DataLoader for GasConsumptionDataLoader<T> {
+    type Value = GasConsumptionValue;
     type LoadError = T::Error;
     type InsertError = RepositoryError;
 
@@ -175,18 +165,13 @@ where
 }
 
 #[derive(Clone)]
-struct GasTariffDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+struct GasTariffDataLoader<T: EnergyDataProvider> {
     data_provider: Arc<T>,
     connection_pool: SqliteConnectionPool,
 }
 
-impl<T> DataLoader<TariffPlan> for GasTariffDataLoader<T>
-where
-    T: EnergyDataProvider,
-{
+impl<T: EnergyDataProvider> DataLoader for GasTariffDataLoader<T> {
+    type Value = TariffPlan;
     type LoadError = T::Error;
     type InsertError = RepositoryError;
 
@@ -242,16 +227,12 @@ impl<'a> DownloadUpdateEventEmitter<'a> {
     }
 }
 
-pub async fn download_history<T, U>(
+pub async fn download_history<T: DataLoader>(
     app_handle: AppHandle,
     data_loader: T,
     until_date_time: NaiveDateTime,
     download_name: &str,
-) -> Result<NaiveDate, AppError>
-where
-    T: DataLoader<U>,
-    T::LoadError: Error + Send + Sync + 'static,
-{
+) -> Result<NaiveDate, AppError> {
     let until_date = until_date_time.date();
 
     let today = Local::now().naive_local().date();
@@ -307,12 +288,12 @@ where
     Ok(today)
 }
 
-struct DownloadGuard<'a> {
-    app_handle: &'a AppHandle,
+struct DownloadGuard<'a, R: Runtime> {
+    app_handle: &'a AppHandle<R>,
     downloading: &'a std::sync::Mutex<bool>,
 }
 
-impl<'a> Drop for DownloadGuard<'a> {
+impl<'a, R: Runtime> Drop for DownloadGuard<'a, R> {
     fn drop(&mut self) {
         if let Ok(mut downloading) = self.downloading.lock() {
             *downloading = false;
@@ -337,14 +318,11 @@ impl<'a> Drop for DownloadGuard<'a> {
     }
 }
 
-pub async fn check_and_download_new_data<U>(
+pub async fn check_and_download_new_data<U: EnergyDataProvider>(
     app_handle: AppHandle,
     app_state: AppState,
     data_provider: Arc<U>,
-) -> Result<(), AppError>
-where
-    U: EnergyDataProvider,
-{
+) -> Result<(), AppError> {
     {
         let mut downloading = app_state
             .downloading
@@ -498,14 +476,11 @@ where
     Ok(())
 }
 
-pub fn spawn_download_tasks<T>(
+pub fn spawn_download_tasks<T: EnergyDataProvider + 'static>(
     app_handle: AppHandle,
     app_state: AppState,
     data_provider: T,
-) -> Result<(), AppError>
-where
-    T: EnergyDataProvider + 'static,
-{
+) -> Result<(), AppError> {
     info!("Spawning download tasks");
     let data_provider = Arc::new(data_provider);
 
@@ -520,4 +495,65 @@ where
     });
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::mpsc;
+
+    use super::*;
+    use pretty_assertions::assert_eq;
+    use tauri::{
+        test::{mock_builder, mock_context, noop_assets},
+        Listener,
+    };
+
+    fn app() -> tauri::App<tauri::test::MockRuntime> {
+        let app = mock_builder().build(mock_context(noop_assets())).unwrap();
+        app
+    }
+
+    #[test]
+    fn test_download_guard_unsets_downloading_on_drop() {
+        let app = app();
+
+        let downloading = std::sync::Mutex::new(true);
+
+        let guard = DownloadGuard {
+            app_handle: &app.handle(),
+            downloading: &downloading,
+        };
+
+        assert!((*downloading.lock().expect("Failed to lock downloading")));
+
+        drop(guard);
+
+        assert!(!(*downloading.lock().expect("Failed to lock downloading")));
+    }
+
+    #[test]
+    fn test_download_guard_emits_app_status_update_event_on_drop() {
+        let app = app();
+
+        let downloading = std::sync::Mutex::new(true);
+
+        let (tx, rx) = mpsc::channel::<String>();
+
+        let guard = DownloadGuard {
+            app_handle: &app.handle(),
+            downloading: &downloading,
+        };
+
+        app.once("appStatusUpdate", move |event| {
+            let _ = tx.send(event.payload().to_string());
+        });
+
+        drop(guard);
+
+        let payload = rx
+            .recv_timeout(std::time::Duration::from_secs(2))
+            .expect("Did not receive event in time");
+
+        assert_eq!(payload, r#"{"isDownloading":false}"#);
+    }
 }

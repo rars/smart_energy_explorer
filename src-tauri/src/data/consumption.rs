@@ -67,10 +67,13 @@ pub struct GasConsumptionRecord {
 
 type RepositoryResult<T> = Result<T, RepositoryError>;
 
-pub trait ConsumptionRepository<T, U> {
-    fn insert(&self, records: Vec<T>) -> RepositoryResult<()>;
+pub trait ConsumptionRepository {
+    type Record;
+    type RawRecord;
 
-    fn get_raw(&self, start: NaiveDate, end: NaiveDate) -> RepositoryResult<Vec<U>>;
+    fn insert(&self, records: Vec<Self::Record>) -> RepositoryResult<()>;
+
+    fn get_raw(&self, start: NaiveDate, end: NaiveDate) -> RepositoryResult<Vec<Self::RawRecord>>;
 
     fn get_daily(
         &self,
@@ -101,9 +104,10 @@ impl SqliteElectricityConsumptionRepository {
     }
 }
 
-impl ConsumptionRepository<ElectricityConsumptionValue, ElectricityConsumptionRecord>
-    for SqliteElectricityConsumptionRepository
-{
+impl ConsumptionRepository for SqliteElectricityConsumptionRepository {
+    type Record = ElectricityConsumptionValue;
+    type RawRecord = ElectricityConsumptionRecord;
+
     fn insert(&self, records: Vec<ElectricityConsumptionValue>) -> RepositoryResult<()> {
         let new_records: Vec<_> = records
             .into_iter()
@@ -237,9 +241,10 @@ impl SqliteGasConsumptionRepository {
     }
 }
 
-impl ConsumptionRepository<GasConsumptionValue, GasConsumptionRecord>
-    for SqliteGasConsumptionRepository
-{
+impl ConsumptionRepository for SqliteGasConsumptionRepository {
+    type Record = GasConsumptionValue;
+    type RawRecord = GasConsumptionRecord;
+
     fn insert(&self, records: Vec<GasConsumptionValue>) -> RepositoryResult<()> {
         let new_records: Vec<_> = records
             .into_iter()

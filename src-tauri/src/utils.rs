@@ -2,7 +2,7 @@ use chrono::{Datelike, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::Europe::London;
 use keyring_core::Entry;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 use crate::{
     app_settings::AppSettings,
@@ -49,10 +49,11 @@ pub fn london_date_id_to_naive_date(date_id: i32) -> NaiveDate {
     NaiveDate::from_ymd_opt(year, month, day).expect("Invalid date_id in the database")
 }
 
-pub fn emit_event<T>(app_handle: &AppHandle, event: &str, payload: T) -> Result<(), AppError>
-where
-    T: Serialize + Clone,
-{
+pub fn emit_event<T: Serialize + Clone, R: Runtime>(
+    app_handle: &AppHandle<R>,
+    event: &str,
+    payload: T,
+) -> Result<(), AppError> {
     app_handle
         .emit(event, payload)
         .map_err(|e| AppError::CustomError(format!("Could not emit {} event: {}", event, e)))?;
@@ -329,20 +330,30 @@ fn get_entry_password(entry: &Entry) -> Result<Option<String>, AppError> {
     }
 }
 
-pub fn switch_splashscreen_to_main(app_handle: &AppHandle) {
-    let splash_window = app_handle.get_webview_window("splashscreen").unwrap();
-    let main_window = app_handle.get_webview_window("main").unwrap();
-    splash_window.hide().unwrap();
-    main_window.show().unwrap();
-    main_window.eval("window.location.reload()").unwrap();
+pub fn switch_splashscreen_to_main<R: Runtime>(app_handle: &AppHandle<R>) -> tauri::Result<()> {
+    let splash_window = app_handle
+        .get_webview_window("splashscreen")
+        .ok_or(tauri::Error::WebviewNotFound)?;
+    let main_window = app_handle
+        .get_webview_window("main")
+        .ok_or(tauri::Error::WebviewNotFound)?;
+    splash_window.hide()?;
+    main_window.show()?;
+    main_window.eval("window.location.reload()")?;
+    Ok(())
 }
 
-pub fn switch_main_to_splashscreen(app_handle: &AppHandle) {
-    let splash_window = app_handle.get_webview_window("splashscreen").unwrap();
-    let main_window = app_handle.get_webview_window("main").unwrap();
-    main_window.hide().unwrap();
-    splash_window.show().unwrap();
-    splash_window.eval("window.location.reload()").unwrap();
+pub fn switch_main_to_splashscreen<R: Runtime>(app_handle: &AppHandle<R>) -> tauri::Result<()> {
+    let splash_window = app_handle
+        .get_webview_window("splashscreen")
+        .ok_or(tauri::Error::WebviewNotFound)?;
+    let main_window = app_handle
+        .get_webview_window("main")
+        .ok_or(tauri::Error::WebviewNotFound)?;
+    main_window.hide()?;
+    splash_window.show()?;
+    splash_window.eval("window.location.reload()")?;
+    Ok(())
 }
 
 pub fn delete_credential(key_name: &str) -> Result<(), AppError> {
@@ -412,6 +423,56 @@ mod tests {
     use super::*;
     use chrono::NaiveDate;
     use chrono::NaiveTime;
+    use tauri::{
+        test::{mock_builder, mock_context, noop_assets},
+        WebviewUrl, WebviewWindowBuilder,
+    };
+
+    fn app_with_windows(labels: &[&str]) -> tauri::App<tauri::test::MockRuntime> {
+        let app = mock_builder().build(mock_context(noop_assets())).unwrap();
+        for label in labels {
+            WebviewWindowBuilder::new(&app, *label, WebviewUrl::default())
+                .build()
+                .unwrap();
+        }
+        app
+    }
+
+    #[test]
+    fn test_switch_splashscreen_to_main_without_error() {
+        let app = app_with_windows(&["splashscreen", "main"]);
+        assert!(switch_splashscreen_to_main(app.handle()).is_ok());
+    }
+
+    #[test]
+    fn test_switch_splashscreen_to_main_with_missing_splashscreen_errors() {
+        let app = app_with_windows(&["main"]);
+        assert!(switch_splashscreen_to_main(app.handle()).is_err());
+    }
+
+    #[test]
+    fn test_switch_splashscreen_to_main_with_missing_main_errors() {
+        let app = app_with_windows(&["splashscreen"]);
+        assert!(switch_splashscreen_to_main(app.handle()).is_err());
+    }
+
+    #[test]
+    fn test_switch_main_to_splashscreen_without_error() {
+        let app = app_with_windows(&["splashscreen", "main"]);
+        assert!(switch_main_to_splashscreen(app.handle()).is_ok());
+    }
+
+    #[test]
+    fn test_switch_main_to_splashscreen_with_missing_splashscreen_errors() {
+        let app = app_with_windows(&["main"]);
+        assert!(switch_main_to_splashscreen(app.handle()).is_err());
+    }
+
+    #[test]
+    fn test_switch_main_to_splashscreen_with_missing_main_errors() {
+        let app = app_with_windows(&["splashscreen"]);
+        assert!(switch_main_to_splashscreen(app.handle()).is_err());
+    }
 
     fn complete_settings() -> MqttSettings {
         MqttSettings {
