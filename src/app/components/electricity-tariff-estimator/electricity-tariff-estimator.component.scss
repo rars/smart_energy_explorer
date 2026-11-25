@@ -1,0 +1,48 @@
+.hint {
+  margin-top: -0.5rem;
+  opacity: 0.75;
+}
+
+.rate-list {
+  max-width: 66rem;
+}
+
+.rate-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rate-row mat-form-field {
+  width: 10rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.result {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.result div {
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.result span {
+  opacity: 0.75;
+}
+
+.result strong {
+  font-size: 1.25rem;
+}

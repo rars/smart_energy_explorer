@@ -1,0 +1,144 @@
+<div class="h-full w-full flex flex-col overflow-auto">
+  <h2>Electricity Tariff Estimator</h2>
+  <p>
+    Apply a time-of-use tariff to your recorded electricity use. Prices are
+    pence per kWh; times and day rules use Europe/London time.
+  </p>
+
+  <div class="form-field-container flex gap-4">
+    <mat-form-field>
+      <mat-label>Date range</mat-label>
+      <mat-date-range-input [rangePicker]="picker">
+        <input
+          matStartDate
+          placeholder="Start date"
+          [formField]="dateForm.startDate"
+        />
+        <input
+          matEndDate
+          placeholder="End date"
+          [formField]="dateForm.endDate"
+        />
+      </mat-date-range-input>
+      <mat-datepicker-toggle matIconSuffix [for]="picker">
+      </mat-datepicker-toggle>
+      <mat-date-range-picker #picker></mat-date-range-picker>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>All other times (p/kWh)</mat-label>
+      <input
+        matInput
+        type="number"
+        min="0"
+        step="0.01"
+        [value]="fallbackUnitPricePence()"
+        (input)="setFallbackPrice($any($event.target).value)"
+      />
+    </mat-form-field>
+  </div>
+
+  <h3>Time-of-use prices</h3>
+  <p class="hint">
+    More specific day rules override everyday rules. Windows can cross midnight.
+  </p>
+  <div class="rate-list">
+    @for (rate of rates(); track $index) {
+      <div class="flex items-center gap-4">
+        <mat-form-field>
+          <mat-label>From</mat-label>
+          <input
+            matInput
+            type="time"
+            [value]="timeFor(rate.startMinutes)"
+            (input)="
+              updateRate($index, 'startMinutes', $any($event.target).value)
+            "
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>To</mat-label>
+          <input
+            matInput
+            type="time"
+            [value]="timeFor(rate.endMinutes)"
+            (input)="
+              updateRate($index, 'endMinutes', $any($event.target).value)
+            "
+          />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Price (p/kWh)</mat-label>
+          <input
+            matInput
+            type="number"
+            min="0"
+            step="0.01"
+            [value]="rate.unitPricePence"
+            (input)="
+              updateRate($index, 'unitPricePence', $any($event.target).value)
+            "
+        /></mat-form-field>
+        <mat-form-field>
+          <mat-label>Day</mat-label>
+          <mat-select
+            [value]="rate.dayOfWeek ?? ''"
+            (selectionChange)="updateRate($index, 'dayOfWeek', $event.value)"
+          >
+            <mat-option value="">Every day</mat-option>
+            <mat-option [value]="0">Sunday</mat-option>
+            <mat-option [value]="1">Monday</mat-option>
+            <mat-option [value]="2">Tuesday</mat-option>
+            <mat-option [value]="3">Wednesday</mat-option>
+            <mat-option [value]="4">Thursday</mat-option>
+            <mat-option [value]="5">Friday</mat-option>
+            <mat-option [value]="6">Saturday</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Remove tariff window"
+          (click)="removeRate($index)"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+
+  <div class="actions">
+    <button mat-button type="button" (click)="addRate()">
+      Add time window
+    </button>
+    <button
+      mat-raised-button
+      type="button"
+      [disabled]="isCalculating()"
+      (click)="calculate()"
+    >
+      {{ isCalculating() ? 'Calculating…' : 'Estimate cost' }}
+    </button>
+  </div>
+
+  @if (result(); as estimate) {
+    <section class="result" aria-live="polite">
+      <div>
+        <span>Consumption</span>
+        <strong
+          >{{ estimate.totalConsumptionKwh | number: '1.2-2' }} kWh</strong
+        >
+      </div>
+      <div>
+        <span>Total estimated cost</span>
+        <strong>{{ estimate.totalCostPence / 100 | currency: 'GBP' }}</strong>
+      </div>
+      <div>
+        <span>Average unit cost</span>
+        <strong
+          >{{ estimate.averageUnitPricePence | number: '1.2-3' }}p/kWh</strong
+        >
+      </div>
+    </section>
+  }
+</div>

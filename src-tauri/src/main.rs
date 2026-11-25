@@ -250,6 +250,7 @@ fn main() {
             get_app_version,
             get_daily_electricity_consumption,
             get_daily_gas_consumption,
+            estimate_electricity_tariff_cost,
             get_electricity_cost_history,
             get_electricity_tariff_history,
             get_energy_profiles,
